@@ -50,3 +50,36 @@ This project is developed for academic purposes under the CICS Automation Track 
 <p align="center">
   <em>CICS Automation Track, Batch '26 | Frassati Building, 20th Floor</em>
 </p>
+
+## Local Setup & Run
+
+- **Prerequisites:**
+  - Node.js (v16+ recommended, v18+ preferred)
+  - npm (bundled with Node.js) or an alternative package manager like `pnpm` or `yarn`
+
+- **Frontend (client) — run locally:**
+  1. Clone the repository:
+
+     git clone <your-repo-url>
+     cd cics-automation-track-batch-2026/frontend
+
+  2. Install dependencies:
+
+     npm install
+
+  3. Start the development server:
+
+     npm run dev
+
+  4. Build for production:
+
+     npm run build
+
+  5. Preview the production build locally:
+
+     npm run preview
+
+- **Backend:**
+  - The `backend/src` directory is currently empty (placeholder). When a backend is added, its run instructions and prerequisites will be added here.
+
+If you encounter issues, ensure Node.js and npm are correctly installed and that you are running the commands from the `frontend` folder.
