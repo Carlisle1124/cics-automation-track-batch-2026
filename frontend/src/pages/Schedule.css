@@ -1,0 +1,186 @@
+.schedule__room-info {
+  margin-bottom: 24px;
+}
+
+.schedule__room-name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--neutral-800);
+}
+
+.schedule__room-detail {
+  font-size: 0.85rem;
+  color: var(--neutral-500);
+  margin-top: 2px;
+}
+
+/* Calendar strip */
+.schedule__calendar {
+  margin-bottom: 24px;
+}
+
+.schedule__calendar-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--neutral-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.schedule__date-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.schedule__date-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--neutral-200);
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.schedule__date-btn:hover {
+  border-color: var(--primary);
+}
+
+.schedule__date-btn--active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.schedule__date-day {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.schedule__date-num {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+/* Time slots */
+.schedule__slots-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--neutral-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.schedule__legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+  font-size: 0.75rem;
+  color: var(--neutral-500);
+}
+
+.schedule__legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 4px;
+}
+
+.schedule__slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.time-slot {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  text-align: center;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.time-slot--available {
+  background: var(--green-light);
+  color: var(--green-dark);
+}
+.time-slot--available:hover {
+  border-color: var(--green-dark);
+}
+
+.time-slot--booked {
+  background: var(--red-light);
+  color: var(--red-dark);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.time-slot--pending {
+  background: var(--yellow-light);
+  color: var(--yellow-dark);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.time-slot--selected {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary-dark);
+}
+
+/* Summary panel */
+.schedule__summary {
+  background: #fff;
+  border: 1px solid var(--neutral-200);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.schedule__summary h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--neutral-800);
+  margin-bottom: 12px;
+}
+
+.schedule__summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--neutral-100);
+  font-size: 0.85rem;
+}
+
+.schedule__summary-row:last-of-type {
+  border-bottom: none;
+}
+
+.schedule__summary-label {
+  color: var(--neutral-500);
+}
+
+.schedule__summary-value {
+  color: var(--neutral-800);
+  font-weight: 600;
+}
+
+.schedule__summary-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}

@@ -1,0 +1,52 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.badge--available {
+  background: var(--green-light);
+  color: var(--green-dark);
+}
+.badge--occupied,
+.badge--booked {
+  background: var(--red-light);
+  color: var(--red-dark);
+}
+.badge--limited,
+.badge--pending {
+  background: var(--yellow-light);
+  color: var(--yellow-dark);
+}
+
+.badge--upcoming {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+.badge--completed {
+  background: var(--green-light);
+  color: var(--green-dark);
+}
+.badge--cancelled {
+  background: var(--neutral-200);
+  color: var(--neutral-500);
+}
+
+.badge--quiet {
+  background: #eef2ff;
+  color: #4338ca;
+}
+.badge--collaborative {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge--media {
+  background: #fce7f3;
+  color: #9d174d;
+}
