@@ -1,0 +1,253 @@
+.reserve-fab {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.95rem 1.15rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #6f0013 0%, #a90f27 50%, #d01b37 100%);
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(111, 0, 19, 0.28);
+  transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
+}
+
+.reserve-fab:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 18px 38px rgba(111, 0, 19, 0.34);
+}
+
+.reserve-fab:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.reserve-fab__icon {
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.reserve-fab__label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.reserve-modal-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.reserve-modal-form__tabs {
+  margin-bottom: 0.2rem;
+}
+
+.reserve-modal-form__search-box {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.reserve-modal-form__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reserve-modal-form__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid color-mix(in oklab, var(--primary-5) 20%, var(--border-subtle) 80%);
+  border-radius: var(--radius-pill);
+  background: white;
+  color: var(--text-primary);
+  padding: 0.45rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reserve-modal-form__chip span:last-child {
+  color: var(--primary-5);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.reserve-modal-form__search-results {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 16rem;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+}
+
+.reserve-modal-form__result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: white;
+  padding: 0.75rem 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+}
+
+.reserve-modal-form__result:hover {
+  border-color: var(--primary-5);
+  background: color-mix(in oklab, var(--primary-5) 5%, white 95%);
+  transform: translateY(-1px);
+}
+
+.reserve-modal-form__result-main {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.reserve-modal-form__result-main strong {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.reserve-modal-form__result-main span,
+.reserve-modal-form__result-meta {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.reserve-modal-form__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.reserve-modal-form__summary {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklab, var(--primary-5) 8%, white 92%);
+  color: var(--text-primary);
+}
+
+.reserve-modal-form__summary p,
+.reserve-modal-form__meta,
+.reserve-modal-form__message {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.reserve-modal-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.reserve-modal-field span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.reserve-modal-field input,
+.reserve-modal-field select,
+.reserve-modal-field textarea {
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: white;
+  color: var(--text-primary);
+  padding: 0.8rem 0.9rem;
+  font: inherit;
+  resize: vertical;
+}
+
+.reserve-modal-field input:focus,
+.reserve-modal-field select:focus,
+.reserve-modal-field textarea:focus {
+  outline: none;
+  border-color: var(--primary-5);
+  box-shadow: 0 0 0 3px rgba(190, 21, 46, 0.12);
+}
+
+.reserve-modal-form__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding-top: 0.1rem;
+}
+
+.reserve-modal-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.35rem;
+}
+
+.reserve-modal-form__secondary,
+.reserve-modal-form__primary {
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reserve-modal-form__secondary {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.reserve-modal-form__primary {
+  background: linear-gradient(135deg, #7c0014 0%, #b3172e 100%);
+  color: white;
+}
+
+.reserve-modal-form__primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.reserve-modal-form__message {
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, #10b981 12%, white 88%);
+  color: #047857;
+}
+
+@media (max-width: 640px) {
+  .reserve-fab {
+    right: 1rem;
+    bottom: 1rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .reserve-fab__label {
+    display: none;
+  }
+
+  .reserve-modal-form__actions {
+    justify-content: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .reserve-modal-form__secondary,
+  .reserve-modal-form__primary {
+    width: 100%;
+  }
+}

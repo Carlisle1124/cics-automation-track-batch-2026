@@ -1,0 +1,63 @@
+.ui-input-field {
+	display: grid;
+	gap: var(--space-2);
+}
+
+.ui-input-field__label {
+	font-size: var(--text-sm);
+	font-weight: 600;
+	color: var(--text-primary);
+}
+
+.ui-input {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	min-height: 3rem;
+	padding: 0 var(--space-3);
+	border: 1px solid color-mix(in oklab, var(--color-primary) 24%, var(--secondary-8) 76%);
+	border-radius: var(--radius-md);
+	background: color-mix(in oklab, var(--bg-card) 93%, transparent 7%);
+	transition:
+		border-color var(--duration-base) var(--ease-standard),
+		box-shadow var(--duration-base) var(--ease-standard),
+		background-color var(--duration-base) var(--ease-standard);
+}
+
+.ui-input:focus-within {
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 0.2rem color-mix(in oklab, var(--focus-ring) 45%, transparent 55%);
+	background: var(--bg-elevated);
+}
+
+.ui-input--error {
+	border-color: var(--primary-7);
+}
+
+.ui-input__icon {
+	color: var(--text-secondary);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.ui-input__control {
+	width: 100%;
+	border: 0;
+	outline: 0;
+	background: transparent;
+	color: var(--text-primary);
+}
+
+.ui-input__control::placeholder {
+	color: color-mix(in oklab, var(--text-secondary) 80%, white 20%);
+}
+
+.ui-input-field__message {
+	font-size: var(--text-sm);
+	color: var(--text-secondary);
+}
+
+.ui-input-field__message--error {
+	color: var(--primary-6);
+}

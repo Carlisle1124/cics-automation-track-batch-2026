@@ -1,0 +1,113 @@
+.ui-button {
+	--_bg: var(--color-primary);
+	--_color: var(--text-inverse);
+	--_border: transparent;
+
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-2);
+	border: 1px solid var(--_border);
+	border-radius: var(--radius-md);
+	background: var(--_bg);
+	color: var(--_color);
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	cursor: pointer;
+	text-decoration: none;
+	transition:
+		background-color var(--duration-base) var(--ease-standard),
+		border-color var(--duration-base) var(--ease-standard),
+		color var(--duration-base) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-base) var(--ease-standard);
+}
+
+.ui-button:hover {
+	transform: translateY(-1px);
+}
+
+.ui-button:active {
+	transform: translateY(0);
+}
+
+.ui-button:disabled,
+.ui-button[aria-disabled='true'] {
+	opacity: 0.55;
+	cursor: not-allowed;
+	transform: none;
+}
+
+.ui-button--sm {
+	min-height: 2.25rem;
+	padding: 0.5rem 0.8rem;
+	font-size: var(--text-sm);
+}
+
+.ui-button--md {
+	min-height: 2.6rem;
+	padding: 0.6rem 1rem;
+	font-size: var(--text-base);
+}
+
+.ui-button--lg {
+	min-height: 3rem;
+	padding: 0.75rem 1.15rem;
+	font-size: var(--text-lg);
+}
+
+.ui-button--full {
+	width: 100%;
+}
+
+.ui-button--icon-only {
+	width: 2.6rem;
+	padding-inline: 0;
+}
+
+.ui-button--primary {
+	--_bg: linear-gradient(135deg, var(--primary-4), var(--primary-6));
+	--_color: #fff;
+}
+
+.ui-button--primary:hover {
+	box-shadow: 0 8px 16px rgba(190, 21, 46, 0.28);
+}
+
+.ui-button--secondary {
+	--_bg: rgba(41, 41, 41, 0.12);
+	--_color: var(--text-primary);
+}
+
+.ui-button--secondary:hover {
+	--_bg: rgba(41, 41, 41, 0.2);
+}
+
+.ui-button--inverted {
+	--_bg: var(--secondary-2);
+	--_color: #ffffff;
+}
+
+.ui-button--inverted:hover {
+	--_bg: var(--secondary-3);
+}
+
+.ui-button--outlined {
+	--_bg: transparent;
+	--_color: var(--text-primary);
+	--_border: color-mix(in oklab, var(--color-primary) 32%, var(--secondary-7) 68%);
+}
+
+.ui-button--outlined:hover {
+	--_bg: color-mix(in oklab, var(--color-primary) 10%, transparent 90%);
+}
+
+.ui-button__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.ui-button__label {
+	white-space: nowrap;
+}

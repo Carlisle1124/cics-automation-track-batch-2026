@@ -1,0 +1,53 @@
+.slot-indicator {
+	width: 100%;
+	aspect-ratio: 1;
+	border-radius: 0.75rem;
+	transition: all 0.2s ease;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.slot-indicator--vacant {
+	background-color: #e5e5e5;
+	border: 2px solid transparent;
+}
+
+.slot-indicator--vacant:hover {
+	background-color: #d4d4d8;
+	transform: scale(1.05);
+}
+
+.slot-indicator--occupied {
+	background-color: #ae192a;
+	border: 2px solid transparent;
+}
+
+.slot-indicator--occupied:hover {
+	background-color: #8b1423;
+	transform: scale(1.05);
+}
+
+.slot-indicator--reserved {
+	background: repeating-linear-gradient(
+		45deg,
+		#d4a853,
+		#d4a853 10px,
+		#e8c76d 10px,
+		#e8c76d 20px
+	);
+	border: 2px solid transparent;
+	position: relative;
+}
+
+.slot-indicator--reserved:hover {
+	background: repeating-linear-gradient(
+		45deg,
+		#c49a48,
+		#c49a48 10px,
+		#d9b85a 10px,
+		#d9b85a 20px
+	);
+	transform: scale(1.05);
+}

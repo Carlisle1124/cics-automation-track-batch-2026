@@ -1,0 +1,37 @@
+.ui-card {
+	border-radius: var(--radius-xl);
+	border: 1px solid var(--border-subtle);
+	background:
+		linear-gradient(145deg, color-mix(in oklab, var(--bg-card) 92%, white 8%), var(--bg-card));
+	color: var(--text-primary);
+	box-shadow: var(--shadow-sm);
+}
+
+.ui-card--pad-sm {
+	padding: var(--space-3);
+}
+
+.ui-card--pad-md {
+	padding: var(--space-5);
+}
+
+.ui-card--pad-lg {
+	padding: var(--space-8);
+}
+
+.ui-card--elevated {
+	box-shadow: var(--shadow-md);
+}
+
+.ui-card--interactive {
+	transition:
+		transform var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-base) var(--ease-standard),
+		border-color var(--duration-base) var(--ease-standard);
+}
+
+.ui-card--interactive:hover {
+	transform: translateY(-2px);
+	border-color: var(--border-strong);
+	box-shadow: var(--shadow-md);
+}

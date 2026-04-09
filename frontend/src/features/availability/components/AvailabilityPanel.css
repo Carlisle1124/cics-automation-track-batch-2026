@@ -1,0 +1,200 @@
+.availability-panel {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.availability-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.availability-panel__eyebrow {
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.availability-panel__title {
+  margin-top: var(--space-1);
+}
+
+.availability-panel__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.availability-panel__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--bg-elevated) 90%, transparent 10%);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+}
+
+.availability-panel__grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.availability-panel__card {
+  display: grid;
+  gap: var(--space-3);
+  min-height: 12rem;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--bg-card) 96%, white 4%), var(--bg-card));
+}
+
+.availability-panel__card-label {
+  font-size: 1.05rem;
+  color: color-mix(in oklab, var(--text-primary) 68%, white 32%);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.availability-panel__card-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.availability-panel__card-value {
+  font-size: clamp(2.25rem, 6vw, 4.1rem);
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.availability-panel__card-unit {
+  font-size: var(--text-lg);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 0.3rem;
+}
+
+.availability-panel__card-description {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.availability-panel__progress {
+  width: 100%;
+  height: 0.6rem;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  background: color-mix(in oklab, var(--secondary-8) 30%, transparent 70%);
+}
+
+.availability-panel__progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--tertiary-5), var(--primary-5));
+}
+
+.availability-panel__section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.availability-panel__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.availability-panel__section-title {
+  font-size: var(--text-lg);
+  color: var(--text-primary);
+}
+
+.availability-panel__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.availability-panel__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-pill);
+  padding: 0.35rem 0.7rem;
+  background: color-mix(in oklab, var(--bg-elevated) 88%, transparent 12%);
+  border: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.availability-panel__legend-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--primary-5);
+}
+
+.availability-panel__legend-dot--available {
+  background: #2e9b57;
+}
+
+.availability-panel__legend-dot--nearly-full {
+  background: var(--tertiary-5);
+}
+
+.availability-panel__legend-dot--full {
+  background: var(--primary-5);
+}
+
+.availability-panel__rules {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.availability-panel__rule {
+  display: grid;
+  gap: 0.2rem;
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklab, var(--bg-elevated) 88%, transparent 12%);
+  border: 1px solid var(--border-subtle);
+}
+
+.availability-panel__rule-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.availability-panel__rule-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .availability-panel__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .availability-panel__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+

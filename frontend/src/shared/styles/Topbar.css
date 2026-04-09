@@ -1,0 +1,93 @@
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: rgba(247, 245, 239, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-topbar__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.app-topbar__eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary-5);
+}
+
+.app-topbar__title {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.app-topbar__subtitle {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.app-topbar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.app-topbar__user {
+  padding: 0.45rem 0.8rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--primary-5) 10%, white 90%);
+  color: var(--primary-5);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.app-topbar__logout {
+  border: 1px solid rgba(190, 21, 46, 0.18);
+  border-radius: var(--radius-pill);
+  padding: 0.5rem 0.9rem;
+  background: linear-gradient(135deg, #7c0014 0%, #b3172e 100%);
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
+}
+
+.app-topbar__logout:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(124, 0, 20, 0.2);
+}
+
+.app-topbar__logout:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .app-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .app-topbar__actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

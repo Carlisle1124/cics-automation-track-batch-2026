@@ -1,0 +1,27 @@
+.ui-layout-container {
+	width: min(100% - (var(--container-pad) * 2), var(--container-max));
+	margin-inline: auto;
+	padding-block: var(--space-6);
+}
+
+.ui-layout-container--centered {
+	display: grid;
+	place-items: center;
+}
+
+.ui-layout-container--split {
+	display: grid;
+	gap: var(--space-4);
+	grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+	.ui-layout-container {
+		padding-block: var(--space-8);
+	}
+
+	.ui-layout-container--split {
+		gap: var(--space-5);
+		grid-template-columns: 1fr 1fr;
+	}
+}
