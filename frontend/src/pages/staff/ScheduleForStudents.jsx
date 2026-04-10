@@ -62,6 +62,8 @@ export default function ScheduleForStudents() {
 
 		setIsSubmitting(true);
 		setStatusMessage('Creating reservation request...');
+		const schedulingStaffId = staffUser?.id ?? null;
+		const schedulingStaffName = staffUser?.name ?? null;
 
 		try {
 			const reservation = await createReservation({
@@ -70,8 +72,8 @@ export default function ScheduleForStudents() {
 				date: formValues.date,
 				slotIds: [formValues.timeSlot],
 				notes: formValues.notes,
-				scheduledByStaffId: staffUser?.id ?? null,
-				scheduledByStaffName: staffUser?.name ?? 'Staff',
+				scheduledByStaffId: schedulingStaffId,
+				scheduledByStaffName: schedulingStaffName,
 			});
 
 			setStatusMessage(
