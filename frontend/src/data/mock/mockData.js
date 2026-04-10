@@ -141,6 +141,63 @@ export const RESERVATIONS = [
     checkInTime: '2026-04-09T09:05:00Z',
     createdAt: '2026-04-08T08:30:00Z',
   },
+  {
+    id: 'res-003',
+    userId: 'user-003',
+    roomId: 'room-001',
+    date: '2026-04-10',
+    slotIds: ['ts-13'],
+    status: 'pending',
+    qrCode: 'QR-res-003',
+    checkInTime: null,
+    createdAt: '2026-04-09T13:00:00Z',
+  },
+  {
+    id: 'res-004',
+    userId: 'user-001',
+    roomId: 'room-001',
+    date: '2026-04-11',
+    slotIds: ['ts-09', 'ts-10'],
+    status: 'pending',
+    qrCode: 'QR-res-004',
+    checkInTime: null,
+    createdAt: '2026-04-09T14:20:00Z',
+  },
+];
+
+// =====================
+// 📨 REQUESTS
+// =====================
+export const REQUESTS = [
+  {
+    id: 'req-001',
+    reservationId: 'res-003',
+    requestedBy: 'user-003',
+    requestType: 'new_reservation',
+    status: 'pending',
+    note: 'Needs 1-hour slot after class.',
+    createdAt: '2026-04-09T13:00:00Z',
+  },
+  {
+    id: 'req-002',
+    reservationId: 'res-004',
+    requestedBy: 'user-001',
+    requestType: 'new_reservation',
+    status: 'pending',
+    note: 'Requested by student through staff assistance.',
+    createdAt: '2026-04-09T14:20:00Z',
+  },
+  {
+    id: 'req-003',
+    reservationId: 'res-001',
+    requestedBy: 'user-001',
+    requestType: 'reschedule',
+    status: 'approved',
+    reviewedBy: 'staff-001',
+    reviewedAt: '2026-04-09T10:00:00Z',
+    note: 'Moved to an earlier slot due to schedule conflict.',
+    createdAt: '2026-04-09T09:30:00Z',
+  },
 ];
 
 // =====================
