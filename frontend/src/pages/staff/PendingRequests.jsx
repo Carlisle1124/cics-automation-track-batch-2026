@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getAllReservations } from '../../data/services/reservationService';
 
 export default function PendingRequests() {
-	const TABLE_COLUMN_COUNT = 5;
+	const tableHeaders = ['Request ID', 'Student', 'Date', 'Time Slot(s)', 'Actions'];
 	const [pendingReservations, setPendingReservations] = useState([]);
 	const [statusMessage, setStatusMessage] = useState('');
 
@@ -40,11 +40,9 @@ export default function PendingRequests() {
 			<table>
 				<thead>
 					<tr>
-						<th>Request ID</th>
-						<th>Student</th>
-						<th>Date</th>
-						<th>Time Slot(s)</th>
-						<th>Actions</th>
+						{tableHeaders.map((header) => (
+							<th key={header}>{header}</th>
+						))}
 					</tr>
 				</thead>
 				<tbody>
@@ -78,7 +76,7 @@ export default function PendingRequests() {
 					))}
 					{pendingReservations.length === 0 ? (
 						<tr>
-							<td colSpan={TABLE_COLUMN_COUNT}>No pending requests right now.</td>
+							<td colSpan={tableHeaders.length}>No pending requests right now.</td>
 						</tr>
 					) : null}
 				</tbody>
