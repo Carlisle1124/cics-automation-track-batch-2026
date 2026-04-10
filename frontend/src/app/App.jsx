@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 //layouts
 import StudentLayout from '../layouts/StudentLayout';
 import AdminLayout from '../layouts/AdminLayout';
+import StaffLayout from '../layouts/StaffLayout';
 
 //student pages
 import StudentOverview from '../pages/student/Overview';
@@ -15,6 +16,10 @@ import AdminOverview from '../pages/admin/Overview';
 import ManageReservations from '../pages/admin/ManageReservations';
 import Analytics from '../pages/admin/Analytics';
 import Users from '../pages/admin/Users';
+
+//staff pages
+import PendingRequests from '../pages/staff/PendingRequests';
+import ScheduleForStudents from '../pages/staff/ScheduleForStudents';
 
 //auth pages
 import Login from '../pages/auth/Login';
@@ -35,6 +40,12 @@ export default function App() {
                 <Route path="reservations" element={<ManageReservations />} />
                 <Route path="analytics" element={<Analytics />} />
                 <Route path="users" element={<Users />} />
+            </Route>
+
+            <Route path="/staff" element={<StaffLayout />}>
+                <Route index element={<PendingRequests />} />
+                <Route path="pending-requests" element={<PendingRequests />} />
+                <Route path="schedule-for-students" element={<ScheduleForStudents />} />
             </Route>
 
             <Route path="/auth/login" element={<Login />} />

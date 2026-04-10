@@ -57,6 +57,13 @@ export const USERS = [
     role: 'admin',
     emailVerified: true,
   },
+  {
+    id: 'staff-001',
+    name: 'Staff User',
+    email: 'staff@ust.edu.ph',
+    role: 'staff',
+    emailVerified: true,
+  },
 ];
 
 // =====================

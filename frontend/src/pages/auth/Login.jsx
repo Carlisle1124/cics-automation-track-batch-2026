@@ -30,6 +30,12 @@ export default function Login() {
 		};
 	}, []);
 
+	function getRoleRoute(role) {
+		if (role === 'admin') return '/admin';
+		if (role === 'staff') return '/staff';
+		return '/';
+	}
+
 	async function handleQuickLogin(targetEmail = 'juan@ust.edu.ph') {
 		setIsSubmitting(true);
 		setStatusMessage('Signing you in...');
@@ -39,7 +45,7 @@ export default function Login() {
 
 		if (user) {
 			setStatusMessage(`Welcome back, ${user.name}. Redirecting...`);
-			navigate(user.role === 'admin' ? '/admin' : '/');
+			navigate(getRoleRoute(user.role));
 		} else {
 			setStatusMessage('Unable to sign in. Please try again.');
 		}
@@ -117,6 +123,7 @@ export default function Login() {
 					<div className="auth-panel__quick-buttons">
 						<button type="button" onClick={() => handleQuickLogin('juan@ust.edu.ph')}>Student</button>
 						<button type="button" onClick={() => handleQuickLogin('admin@ust.edu.ph')}>Admin</button>
+						<button type="button" onClick={() => handleQuickLogin('staff@ust.edu.ph')}>Staff</button>
 					</div>
 				</div>
 

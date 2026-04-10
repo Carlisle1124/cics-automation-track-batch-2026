@@ -24,8 +24,19 @@ const adminLinks = [
     { to: '/admin/users', label: 'Users', icon: Users },
 ];
 
+const staffLinks = [
+    { to: '/staff', label: 'Pending Requests', icon: ClipboardText, end: true },
+    { to: '/staff/schedule-for-students', label: 'Schedule for Students', icon: CalendarDots },
+];
+
 export default function Navbar({ role }) {
-    const links = role === 'admin' ? adminLinks : studentLinks;
+    const linksByRole = {
+        admin: adminLinks,
+        staff: staffLinks,
+        student: studentLinks,
+    };
+    const links = linksByRole[role] ?? studentLinks;
+    const roleLabel = role ? `${role.charAt(0).toUpperCase()}${role.slice(1)}` : 'Student';
 
     return (
         <aside className="app-sidebar" aria-label="Primary navigation">
@@ -52,7 +63,7 @@ export default function Navbar({ role }) {
                 ))}
             </nav>
 
-            <div className="app-sidebar__role">{role === 'admin' ? 'Admin' : 'Student'}</div>
+            <div className="app-sidebar__role">{roleLabel}</div>
         </aside>
     );
 }
