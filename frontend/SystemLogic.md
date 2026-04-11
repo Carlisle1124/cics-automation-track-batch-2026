@@ -93,7 +93,7 @@ At +15 min → auto-cancel
 Only allowed:
 within last 15 minutes of reservation
 AND next slot has available capacity
-Extension = +1 hour only (controlled)
+Extension = +1 hour only (controlled) unless reservation is already 3 hours (max na kase)
 
 ## 👥 Group Booking (Important Decision)
 
@@ -115,3 +115,6 @@ You need structured notification types:
 ## 🔐 Authentication
 
 Login with school email (SSO-style simulation) and OTP-based
+
+## Staff Account Role
+auto-accept function

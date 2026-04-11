@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import './SlotsBreakdown.css';
 
 // Hardcoded hourly slots for the day
@@ -26,22 +26,12 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
   const now = new Date();
   const currentHour = now.getHours();
 
-  // Calculate days in month
-  const daysInMonth = useMemo(() => {
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    const first = new Date(year, month, 1);
-    const last = new Date(year, month + 1, 0);
-    const daysArray = [];
-
-    for (let i = 1; i <= last.getDate(); i++) {
-      daysArray.push(new Date(year, month, i));
-    }
-    return daysArray;
-  }, [selectedDate]);
-
-  const monthName = selectedDate.toLocaleString('default', { month: 'long', year: 'numeric' });
   const dayOfWeek = selectedDate.toLocaleString('default', { weekday: 'short', month: 'short', day: 'numeric' });
+  const selectedDateValue = [
+    selectedDate.getFullYear(),
+    String(selectedDate.getMonth() + 1).padStart(2, '0'),
+    String(selectedDate.getDate()).padStart(2, '0'),
+  ].join('-');
 
   const handleSlotClick = (slotId) => {
     setSelectedSlotId(slotId);
@@ -50,16 +40,11 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
     }
   };
 
-  const handleDateClick = (date) => {
-    setSelectedDate(date);
-  };
-
-  const handlePrevMonth = () => {
-    setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1));
-  };
-
-  const handleNextMonth = () => {
-    setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1));
+  const handleDateChange = (event) => {
+    const nextDate = new Date(event.target.value);
+    if (!Number.isNaN(nextDate.getTime())) {
+      setSelectedDate(nextDate);
+    }
   };
 
   const handleToday = () => {
@@ -97,27 +82,20 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
 
   // Calculate stats for selected day
   const availableSlots = HOURLY_SLOTS.filter(s => s.status === 'available').length;
-  const totalAvailable = HOURLY_SLOTS.reduce((sum, s) => sum + getAvailableCount(s.reserved), 0);
-  const totalReserved = HOURLY_SLOTS.reduce((sum, s) => sum + s.reserved, 0);
+  const minutesSinceStart = Math.max(0, Math.min(540, (now.getHours() - 8) * 60 + now.getMinutes()));
+  const currentTimeTop = `${(minutesSinceStart / 540) * 100}%`;
 
   return (
     <div className="slots-breakdown">
       {/* Main Content */}
       <div className="slots-breakdown__main">
         {/* Timeline */}
-        <div className="slots-breakdown__timeline">
-          {/* Header */}
-          <div className="timeline__header">
-            <div>
-              <div className="timeline__date">{dayOfWeek}</div>
-              <p className="timeline__subtitle">Select an available time slot for your reservation</p>
-            </div>
-          </div>
-
+        <div className="slots-breakdown__timeline-wrap">
+          <div className="slots-breakdown__timeline">
           {/* Hourly Timeline */}
           <div className="timeline__container">
             {/* Current time indicator */}
-            <div className="timeline__current-time" style={{ top: `${(currentHour - 8) * 60 + (now.getMinutes())}px` }}>
+            <div className="timeline__current-time" style={{ top: currentTimeTop }}>
               <div className="current-time__line" />
               <div className="current-time__dot" />
               <div className="current-time__label">{now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</div>
@@ -171,135 +149,134 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
                     </div>
 
                     {/* Selection checkmark */}
-                    {isSelected && <div className="timeline__slot-checkmark">✓</div>}
+                    <div className={`timeline__slot-checkmark ${isSelected ? 'timeline__slot-checkmark--visible' : ''}`}>✓</div>
                   </div>
                 </div>
               );
             })}
           </div>
         </div>
+        </div>
       </div>
 
       {/* Sidebar */}
-      <div className="slots-breakdown__sidebar">
-        {/* Calendar */}
-        <div className="sidebar__calendar">
-          <div className="calendar__header">
-            <button className="calendar__nav-btn" onClick={handlePrevMonth}>‹</button>
-            <h3 className="calendar__month">{monthName}</h3>
-            <button className="calendar__nav-btn" onClick={handleNextMonth}>›</button>
-          </div>
-
-          {/* Day labels */}
-          <div className="calendar__weekdays">
-            {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(day => (
-              <div key={day} className="calendar__weekday">{day}</div>
-            ))}
-          </div>
-
-          {/* Days grid */}
-          <div className="calendar__days">
-            {daysInMonth.map((day, index) => {
-              const isSelected = day.toDateString() === selectedDate.toDateString();
-              const isToday = day.toDateString() === new Date().toDateString();
-
-              return (
-                <button
-                  key={index}
-                  className={`calendar__day ${isSelected ? 'calendar__day--selected' : ''} ${isToday ? 'calendar__day--today' : ''}`}
-                  onClick={() => handleDateClick(day)}
-                >
-                  {day.getDate()}
-                </button>
-              );
-            })}
-          </div>
-
-          <button className="calendar__today-btn" onClick={handleToday}>
-            Today
-          </button>
-        </div>
-
-        {/* Availability Stats */}
-        <div className="sidebar__stats">
-          <h4 className="stats__title">Availability Stats</h4>
-
-          <div className="stats__card">
-            <div className="stat-row">
-              <span className="stat-label">Total Slots</span>
-              <span className="stat-value">{HOURLY_SLOTS.length}</span>
-            </div>
-            <div className="stat-row">
-              <span className="stat-label">Available</span>
-              <span className="stat-value stat-value--available">{availableSlots}</span>
-            </div>
-            <div className="stat-row">
-              <span className="stat-label">Limited</span>
-              <span className="stat-value stat-value--busy">{HOURLY_SLOTS.filter(s => s.status === 'busy').length}</span>
-            </div>
-            <div className="stat-row">
-              <span className="stat-label">Full</span>
-              <span className="stat-value stat-value--full">{HOURLY_SLOTS.filter(s => s.status === 'full').length}</span>
+      <div className="slots-breakdown__sidebar-wrap">
+        <div className="slots-breakdown__sidebar">
+          {/* Header moved above sidebar content */}
+          <div className="timeline__header">
+            <div>
+              <div className="timeline__date">{dayOfWeek}</div>
+              <p className="timeline__subtitle">Select an available time slot for your reservation</p>
             </div>
           </div>
 
-          {selectedSlotId && (
-            <div className="sidebar__selection-info">
-              {(() => {
-                const selectedSlot = HOURLY_SLOTS.find(s => s.id === selectedSlotId);
-                const statusInfo = getStatusInfo(selectedSlot.status);
-                const availableCount = getAvailableCount(selectedSlot.reserved);
+          {/* Content Wrapper */}
+          <div className="sidebar__content-wrapper">
+            {/* Calendar */}
+            <div className="sidebar__calendar">
+              <label className="calendar__label" htmlFor="slots-date-picker">Pick reservation date</label>
+              <input
+                id="slots-date-picker"
+                className="calendar__input"
+                type="date"
+                value={selectedDateValue}
+                onChange={handleDateChange}
+              />
 
-                return (
-                  <div className="selection-info">
-                    <h4 className="selection-info__title">Selected Slot</h4>
+              <p className="calendar__selected-date">
+                {selectedDate.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </p>
 
-                    <div className="selection-info__details">
-                      <div className="info-row">
-                        <span className="info-label">Time</span>
-                        <span className="info-value">{selectedSlot.hour}</span>
+              <button className="calendar__today-btn" onClick={handleToday}>
+                Today
+              </button>
+            </div>
+
+            {/* Availability Stats */}
+            <div className="sidebar__stats">
+            <h4 className="stats__title">Availability Stats</h4>
+
+            <div className="stats__card">
+              <div className="stat-row">
+                <span className="stat-label">Total Slots</span>
+                <span className="stat-value">{HOURLY_SLOTS.length}</span>
+              </div>
+              <div className="stat-row">
+                <span className="stat-label">Available</span>
+                <span className="stat-value stat-value--available">{availableSlots}</span>
+              </div>
+              <div className="stat-row">
+                <span className="stat-label">Limited</span>
+                <span className="stat-value stat-value--busy">{HOURLY_SLOTS.filter(s => s.status === 'busy').length}</span>
+              </div>
+              <div className="stat-row">
+                <span className="stat-label">Full</span>
+                <span className="stat-value stat-value--full">{HOURLY_SLOTS.filter(s => s.status === 'full').length}</span>
+              </div>
+            </div>
+
+            {selectedSlotId && (
+              <div className="sidebar__selection-info">
+                {(() => {
+                  const selectedSlot = HOURLY_SLOTS.find(s => s.id === selectedSlotId);
+                  const statusInfo = getStatusInfo(selectedSlot.status);
+                  const availableCount = getAvailableCount(selectedSlot.reserved);
+
+                  return (
+                    <div className="selection-info">
+                      <h4 className="selection-info__title">Selected Slot</h4>
+
+                      <div className="selection-info__details">
+                        <div className="info-row">
+                          <span className="info-label">Time</span>
+                          <span className="info-value">{selectedSlot.hour}</span>
+                        </div>
+                        <div className="info-row">
+                          <span className="info-label">Range</span>
+                          <span className="info-value">{selectedSlot.start} — {selectedSlot.end}</span>
+                        </div>
+                        <div className="info-row">
+                          <span className="info-label">Status</span>
+                          <span className={`status-badge ${statusInfo.className}`}>{statusInfo.label}</span>
+                        </div>
+                        <div className="info-row">
+                          <span className="info-label">Available</span>
+                          <span className="info-value">{availableCount}/{CAPACITY}</span>
+                        </div>
                       </div>
-                      <div className="info-row">
-                        <span className="info-label">Range</span>
-                        <span className="info-value">{selectedSlot.start} — {selectedSlot.end}</span>
+
+                      <div className="selection-info__capacity">
+                        <div className="capacity-bar">
+                          <div
+                            className={`capacity-bar__fill capacity-bar__fill--${selectedSlot.status}`}
+                            style={{ width: `${getCapacityPercent(selectedSlot.reserved)}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="info-row">
-                        <span className="info-label">Status</span>
-                        <span className={`status-badge ${statusInfo.className}`}>{statusInfo.label}</span>
-                      </div>
-                      <div className="info-row">
-                        <span className="info-label">Available</span>
-                        <span className="info-value">{availableCount}/{CAPACITY}</span>
-                      </div>
+
+                      {availableCount === 0 && (
+                        <div className="warning-message">
+                          This slot is fully booked.
+                        </div>
+                      )}
+
+                      <button
+                        className="selection-info__btn"
+                        disabled={availableCount === 0}
+                      >
+                        Reserve This Slot
+                      </button>
                     </div>
-
-                    <div className="selection-info__capacity">
-                      <div className="capacity-bar">
-                        <div
-                          className={`capacity-bar__fill capacity-bar__fill--${selectedSlot.status}`}
-                          style={{ width: `${getCapacityPercent(selectedSlot.reserved)}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {availableCount === 0 && (
-                      <div className="warning-message">
-                        This slot is fully booked.
-                      </div>
-                    )}
-
-                    <button
-                      className="selection-info__btn"
-                      disabled={availableCount === 0}
-                    >
-                      Reserve This Slot
-                    </button>
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-        </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>          </div>        </div>
       </div>
     </div>
   );
