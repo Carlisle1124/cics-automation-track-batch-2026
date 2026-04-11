@@ -46,6 +46,7 @@
   display: grid;
   gap: var(--space-4);
   grid-template-columns: repeat(1, minmax(0, 1fr));
+  margin-top: 1.4rem;
 }
 
 .availability-panel__card {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import SlotsBreakdown from '../../features/availability/components/SlotsBreakdown';
+import PageHeader from '../../shared/components/PageHeader';
 
 export default function Schedule() {
 	const [selectedSlot, setSelectedSlot] = useState(null);
@@ -10,12 +11,10 @@ export default function Schedule() {
 
 	return (
 		<section style={{ padding: '2rem', display: 'flex', flexDirection: 'column', height: '100%', gap: '1.5rem' }}>
-			<div>
-				<h1 style={{ margin: '0 0 0.5rem 0', fontSize: '1.75rem', fontWeight: 600 }}>Schedule</h1>
-				<p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-					Browse available time slots and reserve a spot for today.
-				</p>
-			</div>
+			<PageHeader
+				title="Schedule"
+				subtitle="Browse available time slots and reserve a spot for today."
+			/>
 
 			<div style={{ flex: 1, minHeight: 0, overflow: 'hidden', overflowY: 'auto' }}>
 				<SlotsBreakdown onSlotSelect={handleSlotSelect} />

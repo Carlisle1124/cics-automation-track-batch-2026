@@ -4,6 +4,7 @@ import { getAvailabilityByDate } from '../../features/availability/services/avai
 import AvailabilityPanel from '../../features/availability/components/AvailabilityPanel';
 import CapacityMap from '../../features/availability/components/CapacityMap';
 import Card from '../../shared/components/Card';
+import PageHeader from '../../shared/components/PageHeader';
 
 export default function Overview() {
     const [user, setUser] = useState(null);
@@ -37,10 +38,13 @@ export default function Overview() {
 
     return (
         <section style={{ padding: '2rem' }}>
-            <AvailabilityPanel
-                availability={availability}
+            <PageHeader
                 title="Student Overview"
                 subtitle={user ? `Welcome, ${user.name}.` : 'Quick view of today\'s learning commons availability and reservation status.'}
+            />
+
+            <AvailabilityPanel
+                availability={availability}
             />
 
             <div style={{ marginTop: '2rem' }}>

@@ -13,8 +13,6 @@ function getLegendClass(status) {
 
 export default function AvailabilityPanel({
 	availability,
-	title = 'Today\'s Availability',
-	subtitle = 'Real-time view of room occupancy and booking pressure.',
 	showRules = true,
 	selectedSlotId,
 	onSlotSelect,
@@ -25,26 +23,6 @@ export default function AvailabilityPanel({
 
 	return (
 		<div className="availability-panel">
-			<div className="availability-panel__header">
-				<div>
-					<div className="availability-panel__eyebrow">Learning Commons</div>
-					<h2 className="availability-panel__title">{title}</h2>
-					<p>{subtitle}</p>
-				</div>
-
-				<div className="availability-panel__meta">
-					<span className="availability-panel__pill">{availability.room.name}</span>
-					<span className="availability-panel__pill">
-						{availability.room.openTime} - {availability.room.closeTime}
-					</span>
-					{availability.isToday ? (
-						<span className="availability-panel__pill">Live for today</span>
-					) : (
-						<span className="availability-panel__pill">Date: {availability.date}</span>
-					)}
-				</div>
-			</div>
-
 			<div className="availability-panel__grid">
 					{availability.cards.map((card, index) => (
 						<Card

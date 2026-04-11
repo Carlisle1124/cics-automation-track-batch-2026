@@ -7,6 +7,7 @@ import {
 	RESERVATIONS,
 	ROOMS,
 } from '../../data/mock/mockData';
+import PageHeader from '../../shared/components/PageHeader';
 import './Profile.css';
 
 function formatDate(dateValue) {
@@ -107,6 +108,11 @@ export default function Profile() {
 
 	return (
 		<section className="profile-page">
+			<PageHeader
+				title="Profile"
+				subtitle="Review your account details, reservation activity, and learning commons insights."
+			/>
+
 			<header className="profile-hero">
 				<div className="profile-hero__identity">
 					<div className="profile-hero__avatar">{getInitials(user.name)}</div>

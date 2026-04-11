@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getAllReservations } from '../../data/services/reservationService';
+import PageHeader from '../../shared/components/PageHeader';
 
 export default function Analytics() {
 	const [analytics, setAnalytics] = useState(null);
@@ -34,8 +35,10 @@ export default function Analytics() {
 
 	return (
 		<section style={{ padding: '2rem' }}>
-			<h2>Analytics</h2>
-			<p>Usage trends and capacity metrics will be expanded here.</p>
+			<PageHeader
+				title="Analytics"
+				subtitle="Usage trends and capacity metrics will be expanded here."
+			/>
 			<ul>
 				{analytics.map((item) => (
 					<li key={item.label}>

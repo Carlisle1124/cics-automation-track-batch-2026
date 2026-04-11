@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUsers } from '../../data/services/authService';
+import PageHeader from '../../shared/components/PageHeader';
 
 export default function Users() {
 	const [users, setUsers] = useState([]);
@@ -24,8 +25,10 @@ export default function Users() {
 
 	return (
 		<section style={{ padding: '2rem' }}>
-			<h2>Users</h2>
-			<p>View registered students and administrators.</p>
+			<PageHeader
+				title="Users"
+				subtitle="View registered students and administrators."
+			/>
 			<ul>
 				{users.map((user) => (
 					<li key={user.id}>

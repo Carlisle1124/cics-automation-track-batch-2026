@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getUsers } from '../../data/services/authService';
 import { getAllReservations } from '../../data/services/reservationService';
+import PageHeader from '../../shared/components/PageHeader';
 
 export default function Overview() {
 	const [metrics, setMetrics] = useState(null);
@@ -36,8 +37,10 @@ export default function Overview() {
 
 	return (
 		<section style={{ padding: '2rem' }}>
-			<h2>Admin Overview</h2>
-			<p>High-level operational snapshot for the learning commons.</p>
+			<PageHeader
+				title="Admin Overview"
+				subtitle="High-level operational snapshot for the learning commons."
+			/>
 			<div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', marginTop: '1.5rem' }}>
 				{metrics.map((metric) => (
 					<article key={metric.label}>

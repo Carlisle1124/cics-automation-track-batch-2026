@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getAllReservations } from '../../data/services/reservationService';
+import PageHeader from '../../shared/components/PageHeader';
 
 export default function PendingRequests() {
 	const tableHeaders = ['Request ID', 'Student', 'Date', 'Time Slot(s)', 'Actions'];
@@ -34,8 +35,10 @@ export default function PendingRequests() {
 
 	return (
 		<section style={{ padding: '2rem' }}>
-			<h2>Pending Requests</h2>
-			<p>Approve, decline, or reschedule requests submitted by students.</p>
+			<PageHeader
+				title="Pending Requests"
+				subtitle="Approve, decline, or reschedule requests submitted by students."
+			/>
 			{statusMessage ? <p>{statusMessage}</p> : null}
 			<table>
 				<thead>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getAllReservations } from '../../data/services/reservationService';
+import PageHeader from '../../shared/components/PageHeader';
 
 export default function ManageReservations() {
 	const [reservations, setReservations] = useState([]);
@@ -24,8 +25,10 @@ export default function ManageReservations() {
 
 	return (
 		<section style={{ padding: '2rem' }}>
-			<h2>Manage Reservations</h2>
-			<p>Review, approve, or cancel reservations here.</p>
+			<PageHeader
+				title="Manage Reservations"
+				subtitle="Review, approve, or cancel reservations here."
+			/>
 			<table>
 				<thead>
 					<tr>

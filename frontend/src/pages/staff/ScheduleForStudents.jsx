@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { getCurrentUser, getUsers } from '../../data/services/authService';
 import { createReservation } from '../../data/services/reservationService';
 import { ROOMS, TIME_SLOTS } from '../../data/mock/mockData';
+import PageHeader from '../../shared/components/PageHeader';
 
 export default function ScheduleForStudents() {
 	const [staffUser, setStaffUser] = useState(null);
@@ -91,8 +92,10 @@ export default function ScheduleForStudents() {
 
 	return (
 		<section style={{ padding: '2rem' }}>
-			<h2>Schedule for Students</h2>
-			<p>Create a reservation on behalf of students who request scheduling help.</p>
+			<PageHeader
+				title="Schedule for Students"
+				subtitle="Create a reservation on behalf of students who request scheduling help."
+			/>
 
 			<form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem', marginTop: '1rem', maxWidth: '480px' }}>
 				<label>

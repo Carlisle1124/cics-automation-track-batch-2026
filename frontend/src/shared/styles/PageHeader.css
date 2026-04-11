@@ -1,0 +1,20 @@
+.page-header {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.page-header__title {
+	margin: 0;
+	font-size: clamp(1.4rem, 1.9vw, 1.75rem);
+	font-weight: 600;
+	line-height: 1.2;
+	color: var(--text-primary);
+}
+
+.page-header__subtitle {
+	margin: 0;
+	font-size: 0.95rem;
+	line-height: 1.5;
+	color: var(--text-secondary);
+}
