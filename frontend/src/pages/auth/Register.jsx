@@ -78,10 +78,32 @@ export default function Register() {
 				</div>
 			</aside>
 
-			<div className="auth-mobile-brand">
-				<img src="/UST-CICS Logo.png" alt="UST CICS" className="auth-mobile-brand__logo" />
+			<div className="auth-mobile-brand auth-mobile-brand--register">
+				<div className="auth-mobile-brand__logo-wrap">
+					<img src="/UST-CICS Logo.png" alt="UST CICS" className="auth-mobile-brand__logo" />
+				</div>
+
+				<div className="auth-mobile-brand__institution">
+					<span className="auth-mobile-brand__org">UST CICS</span>
+					<span className="auth-mobile-brand__university">UNIVERSITY OF SANTO TOMAS</span>
+				</div>
+
+				<div className="auth-mobile-brand__divider" />
+
 				<h1 className="auth-mobile-brand__title">CICS Learning Common Room</h1>
-				<p className="auth-mobile-brand__subtitle">University of Santo Tomas</p>
+
+				<p className="auth-mobile-brand__desc">
+					Register once and get access to scheduling, check-in tracking, and reservation history.
+				</p>
+
+				<div className="auth-mobile-brand__feature-card">
+					<h3>What you get</h3>
+					<ul className="auth-mobile-brand__feature-list">
+						<li>Fast 1-hour slot reservations</li>
+						<li>Usage insights and attendance stats</li>
+						<li>Real-time availability monitoring</li>
+					</ul>
+				</div>
 			</div>
 
 			<div className="auth-panel">
