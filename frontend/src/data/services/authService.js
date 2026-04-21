@@ -1,65 +1,40 @@
-import { handleRequest } from './baseService';
+import { supabase } from '../supabaseClient';
 import { USERS } from '../mock/mockData';
 
-const CURRENT_USER_KEY = 'lc-current-user-id';
+export async function getCurrentUser() {
+	const { data: { session } } = await supabase.auth.getSession();
+	if (!session?.user) return null;
 
-function getStoredUserId() {
-	return localStorage.getItem(CURRENT_USER_KEY);
+	const { data, error } = await supabase
+		.from('users')
+		.select('id, full_name, role, email')
+		.eq('id', session.user.id)
+		.single();
+
+	if (error || !data) return null;
+	return data;
 }
 
-function setStoredUserId(userId) {
-	localStorage.setItem(CURRENT_USER_KEY, userId);
+export async function login(email, password) {
+	const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+	if (error) throw new Error(`Auth error: ${error.message}`);
+
+	const { data: userData, error: userError } = await supabase
+		.from('users')
+		.select('id, full_name, role, email')
+		.eq('id', data.user.id)
+		.single();
+
+	if (userError) throw new Error(`Profile fetch error: ${userError.message}`);
+	return userData;
 }
 
-function clearStoredUserId() {
-	localStorage.removeItem(CURRENT_USER_KEY);
+export async function logout() {
+	await supabase.auth.signOut();
+	return null;
 }
 
-function getDefaultUser() {
-	return USERS.find((user) => user.role === 'student') ?? USERS[0] ?? null;
-}
-
-export function getCurrentUser() {
-	return handleRequest(
-		() => {
-			const storedUserId = getStoredUserId();
-			return USERS.find((user) => user.id === storedUserId) ?? getDefaultUser();
-		},
-		'/api/auth/me'
-	);
-}
-
-export function login(email) {
-	return handleRequest(
-		() => {
-			const user = USERS.find((item) => item.email === email) ?? getDefaultUser();
-			if (user) {
-				setStoredUserId(user.id);
-			}
-			return user;
-		},
-		'/api/auth/login',
-		{
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({ email }),
-		}
-	);
-}
-
-export function logout() {
-	return handleRequest(
-		() => {
-			clearStoredUserId();
-			return null;
-		},
-		'/api/auth/logout',
-		{ method: 'POST' }
-	);
-}
-
+// Still mock — backend integration for user listing is out of scope for this step
 export function getUsers() {
-	return handleRequest(() => USERS, '/api/users');
+	return Promise.resolve(USERS);
 }

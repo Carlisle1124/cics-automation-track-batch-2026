@@ -8,6 +8,12 @@ import './AuthPages.css';
 const UST_DOMAIN = '@ust.edu.ph';
 const MOCK_OTP = '123456';
 
+const QUICK_LOGIN_ACCOUNTS = {
+	student: { email: 'juan.delacruz.cics@ust.edu.ph', password: 'password123' },
+	admin: { email: 'admin.cics@ust.edu.ph', password: 'password123' },
+	staff: { email: 'staff.cics@ust.edu.ph', password: 'password123' },
+};
+
 function validateEmail(value) {
 	const trimmed = value.trim().toLowerCase();
 
@@ -112,22 +118,24 @@ export default function Login() {
 		setStatusType(type);
 	}, []);
 
-	async function handleQuickLogin(targetEmail = 'juan@ust.edu.ph') {
+	async function handleQuickLogin(role) {
+		const account = QUICK_LOGIN_ACCOUNTS[role];
+		setEmail(account.email);
+		setPassword(account.password);
 		setHasSubmitted(false);
 		setIsSubmitting(true);
 		setStatus('Signing you in...', 'info');
 
-		const user = await login(targetEmail);
-		setCurrentUser(user);
-
-		if (user) {
-			setStatus(`Welcome back, ${user.name}. Redirecting...`, 'success');
+		try {
+			const user = await login(account.email, account.password);
+			setCurrentUser(user);
+			setStatus(`Welcome back, ${user.full_name}. Redirecting...`, 'success');
 			navigate(getRoleRoute(user.role));
-		} else {
-			setStatus('Unable to sign in. Please try again.', 'error');
+		} catch (err) {
+			setStatus(err.message || 'Unable to sign in. Please try again.', 'error');
+		} finally {
+			setIsSubmitting(false);
 		}
-
-		setIsSubmitting(false);
 	}
 
 	async function handleSubmit(event) {
@@ -142,7 +150,19 @@ export default function Login() {
 			return;
 		}
 
-		await handleQuickLogin(email);
+		setIsSubmitting(true);
+		setStatus('Signing you in...', 'info');
+
+		try {
+			const user = await login(email, password);
+			setCurrentUser(user);
+			setStatus(`Welcome back, ${user.full_name}. Redirecting...`, 'success');
+			navigate(getRoleRoute(user.role));
+		} catch (err) {
+			setStatus(err.message || 'Invalid email or password.', 'error');
+		} finally {
+			setIsSubmitting(false);
+		}
 	}
 
 	// Forgot password handlers
@@ -325,9 +345,9 @@ export default function Login() {
 				<div className="auth-panel__quick-actions">
 					<span className="auth-panel__quick-label">Quick mock sessions</span>
 					<div className="auth-panel__quick-buttons">
-						<button type="button" onClick={() => handleQuickLogin('juan@ust.edu.ph')}>Student</button>
-						<button type="button" onClick={() => handleQuickLogin('admin@ust.edu.ph')}>Admin</button>
-						<button type="button" onClick={() => handleQuickLogin('staff@ust.edu.ph')}>Staff</button>
+						<button type="button" onClick={() => handleQuickLogin('student')}>Student</button>
+						<button type="button" onClick={() => handleQuickLogin('admin')}>Admin</button>
+						<button type="button" onClick={() => handleQuickLogin('staff')}>Staff</button>
 					</div>
 				</div>
 

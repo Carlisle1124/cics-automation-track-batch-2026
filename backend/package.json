@@ -1,0 +1,17 @@
+{
+  "name": "cics-backend",
+  "version": "1.0.0",
+  "description": "CICS Learning Commons backend — cron jobs and server-side logic",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.104.0",
+    "dotenv": "^17.4.2",
+    "node-cron": "^4.2.1"
+  }
+}
