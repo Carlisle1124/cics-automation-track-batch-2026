@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentUser, login } from '../../data/services/authService';
 import Modal from '../../shared/components/Modal';
-import cicsLogo from '../../assets/CICS-Logo.png';
 import './AuthPages.css';
 
 const UST_DOMAIN = '@ust.edu.ph';
@@ -26,7 +25,6 @@ function validatePassword(value) {
 export default function Login() {
 	const navigate = useNavigate();
 	const [currentUser, setCurrentUser] = useState(null);
-	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [rememberMe, setRememberMe] = useState(true);
@@ -55,36 +53,14 @@ export default function Login() {
 	useEffect(() => {
 		let active = true;
 
-		async function loadLoginPage() {
-			try {
-				const [user] = await Promise.all([
-					getCurrentUser(),
-					new Promise((resolve) => setTimeout(resolve, 700)),
-				]);
-
-				if (!active) return;
-				setCurrentUser(user);
-			} finally {
-				if (active) {
-					setIsPageLoading(false);
-				}
-			}
+		async function loadCurrentUser() {
+			const user = await getCurrentUser();
+			if (!active) return;
+			setCurrentUser(user);
 		}
 
-		loadLoginPage();
-
-		return () => {
-			active = false;
-		};
-	}, []);
-
-	useEffect(() => {
-		const previousTitle = document.title;
-		document.title = 'Login - UST CICS Learning Common Room';
-
-		return () => {
-			document.title = previousTitle;
-		};
+		loadCurrentUser();
+		return () => { active = false; };
 	}, []);
 
 	function getRoleRoute(role) {
@@ -178,11 +154,7 @@ export default function Login() {
 	}
 
 	return (
-		<section
-			className={`auth-page auth-page--login ${
-				isPageLoading ? 'auth-page--content-hidden' : 'auth-page--content-visible'
-			}`}
-		>
+		<section className="auth-page auth-page--login">
 			<aside className="auth-showcase">
 				<img src="/UST-CICS Logo.png" alt="UST CICS" className="auth-showcase__logo" />
 				<div className="auth-showcase__institution">
@@ -224,7 +196,7 @@ export default function Login() {
 				<form className="auth-form" onSubmit={handleSubmit} noValidate>
 					<div className={getFieldClassName(emailError, emailValid)}>
 						<label htmlFor="login-email">
-							<span>UST Email Address</span>
+							<span>Email Address</span>
 						</label>
 						<div className="auth-field__input-wrap">
 							<svg className="auth-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -235,7 +207,7 @@ export default function Login() {
 								id="login-email"
 								type="email"
 								value={email}
-								placeholder="Enter your UST email address"
+								placeholder="name@ust.edu.ph"
 								autoComplete="email"
 								aria-describedby={emailError ? 'login-email-error' : undefined}
 								aria-invalid={emailError ? 'true' : undefined}
@@ -279,9 +251,9 @@ export default function Login() {
 								checked={rememberMe}
 								onChange={(event) => setRememberMe(event.target.checked)}
 							/>
-							<span>Remember Me</span>
+							<span>Remember me</span>
 						</label>
-						<button type="button" className="auth-link-btn" onClick={openForgotModal}>Forgot Password?</button>
+						<button type="button" className="auth-link-btn" onClick={openForgotModal}>Forgot password?</button>
 					</div>
 
 					<button type="submit" className="auth-primary-btn" disabled={isSubmitting}>
@@ -312,26 +284,6 @@ export default function Login() {
 					New here? <Link to="/auth/register">Create an account</Link>
 				</p>
 			</div>
-
-			{isPageLoading ? (
-				<div
-					className="auth-register-transition"
-					role="status"
-					aria-live="polite"
-					aria-label="Loading login page"
-				>
-					<div className="auth-register-transition__card">
-						<img
-							src={cicsLogo}
-							alt="UST CICS logo"
-							className="auth-register-transition__logo"
-						/>
-						<div className="auth-register-transition__loader" aria-hidden="true">
-							<span></span>
-						</div>
-					</div>
-				</div>
-			) : null}
 
 			{/* Forgot Password Modal */}
 			<Modal isOpen={forgotOpen} title={forgotStep === 3 ? 'Check Complete' : 'Reset Password'} onClose={() => setForgotOpen(false)}>

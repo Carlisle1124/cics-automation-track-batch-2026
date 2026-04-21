@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import cicsLogo from '../../assets/CICS-Logo.png';
 import './AuthPages.css';
 
 export default function Register() {
@@ -13,22 +12,7 @@ export default function Register() {
 		confirmPassword: '',
 	});
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [feedback, setFeedback] = useState('Create your account to reserve hourly slots in the Learning Commons.');
-
-	useEffect(() => {
-		const previousTitle = document.title;
-		document.title = 'Create Account - UST CICS Learning Common Room';
-
-		const timeoutId = window.setTimeout(() => {
-			setIsPageLoading(false);
-		}, 700);
-
-		return () => {
-			document.title = previousTitle;
-			window.clearTimeout(timeoutId);
-		};
-	}, []);
 
 	function updateField(key, value) {
 		setFormValues((prev) => ({
@@ -56,11 +40,7 @@ export default function Register() {
 	}
 
 	return (
-		<section
-			className={`auth-page auth-page--register ${
-				isPageLoading ? 'auth-page--content-hidden' : 'auth-page--content-visible'
-			}`}
-		>
+		<section className="auth-page auth-page--register">
 			<aside className="auth-showcase auth-showcase--register">
 				<img src="/UST-CICS Logo.png" alt="UST CICS" className="auth-showcase__logo" />
 				<h1 className="auth-showcase__title">CICS Learning Common Room</h1>
@@ -93,90 +73,55 @@ export default function Register() {
 				<form className="auth-form" onSubmit={handleSubmit}>
 					<label className="auth-field">
 						<span>Full Name</span>
-						<div className="auth-field__input-wrap">
-							<svg className="auth-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-								<path d="M10 10a3.5 3.5 0 100-7 3.5 3.5 0 000 7Z" />
-								<path d="M3.5 17a6.5 6.5 0 0113 0" />
-							</svg>
-							<input
-								type="text"
-								value={formValues.fullName}
-								onChange={(event) => updateField('fullName', event.target.value)}
-								placeholder="Juan A. Dela Cruz"
-								required
-							/>
-						</div>
+						<input
+							type="text"
+							value={formValues.fullName}
+							onChange={(event) => updateField('fullName', event.target.value)}
+							required
+						/>
 					</label>
 
 					<label className="auth-field">
-						<span>UST Email Address</span>
-						<div className="auth-field__input-wrap">
-							<svg className="auth-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-								<rect x="2" y="4" width="16" height="12" rx="2" />
-								<path d="M2 4l8 6 8-6" />
-							</svg>
-							<input
-								type="email"
-								value={formValues.email}
-								onChange={(event) => updateField('email', event.target.value)}
-								placeholder="yourname@ust.edu.ph"
-								required
-							/>
-						</div>
+						<span>School Email</span>
+						<input
+							type="email"
+							value={formValues.email}
+							onChange={(event) => updateField('email', event.target.value)}
+							placeholder="name@ust.edu.ph"
+							required
+						/>
 					</label>
 
 					<label className="auth-field">
-						<span>Student Number</span>
-						<div className="auth-field__input-wrap">
-							<svg className="auth-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-								<rect x="3" y="4" width="14" height="12" rx="2" />
-								<path d="M6.5 8h7" />
-								<path d="M6.5 11h4.5" />
-							</svg>
-							<input
-								type="text"
-								value={formValues.studentId}
-								onChange={(event) => updateField('studentId', event.target.value)}
-								placeholder="2026-123456"
-								required
-							/>
-						</div>
+						<span>Student ID</span>
+						<input
+							type="text"
+							value={formValues.studentId}
+							onChange={(event) => updateField('studentId', event.target.value)}
+							placeholder="2026-00000"
+							required
+						/>
 					</label>
 
 					<div className="auth-form__two-column">
 						<label className="auth-field">
 							<span>Password</span>
-							<div className="auth-field__input-wrap">
-								<svg className="auth-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-									<rect x="5" y="9" width="10" height="8" rx="2" />
-									<path d="M7 9V6a3 3 0 016 0v3" />
-								</svg>
-								<input
-									type="password"
-									value={formValues.password}
-									onChange={(event) => updateField('password', event.target.value)}
-									placeholder="Min. 4 chars"
-									required
-								/>
-							</div>
+							<input
+								type="password"
+								value={formValues.password}
+								onChange={(event) => updateField('password', event.target.value)}
+								required
+							/>
 						</label>
 
 						<label className="auth-field">
 							<span>Confirm Password</span>
-							<div className="auth-field__input-wrap">
-								<svg className="auth-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-									<rect x="5" y="9" width="10" height="8" rx="2" />
-									<path d="M7 9V6a3 3 0 016 0v3" />
-									<path d="M8.25 13l1.1 1.1 2.4-2.4" />
-								</svg>
-								<input
-									type="password"
-									value={formValues.confirmPassword}
-									onChange={(event) => updateField('confirmPassword', event.target.value)}
-									placeholder="Re-enter your password"
-									required
-								/>
-							</div>
+							<input
+								type="password"
+								value={formValues.confirmPassword}
+								onChange={(event) => updateField('confirmPassword', event.target.value)}
+								required
+							/>
 						</label>
 					</div>
 
@@ -190,26 +135,6 @@ export default function Register() {
 					Already registered? <Link to="/auth/login">Sign in</Link>
 				</p>
 			</div>
-
-			{isPageLoading ? (
-				<div
-					className="auth-register-transition"
-					role="status"
-					aria-live="polite"
-					aria-label="Loading create account page"
-				>
-					<div className="auth-register-transition__card">
-						<img
-							src={cicsLogo}
-							alt="UST CICS logo"
-							className="auth-register-transition__logo"
-						/>
-						<div className="auth-register-transition__loader" aria-hidden="true">
-							<span></span>
-						</div>
-					</div>
-				</div>
-			) : null}
 		</section>
 	);
 }
