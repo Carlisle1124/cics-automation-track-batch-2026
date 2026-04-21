@@ -339,7 +339,7 @@ export default function Login() {
 					<form className="auth-forgot-form" onSubmit={handleForgotEmailSubmit} noValidate>
 						<p className="auth-forgot-desc">Enter your UST email and we'll send a one-time code.</p>
 						<div className={forgotEmailError ? 'auth-field auth-field--error' : 'auth-field'}>
-							<label htmlFor="forgot-email"><span>UST Email Address</span></label>
+							<label htmlFor="forgot-email"><span>Email Address</span></label>
 							<input
 								id="forgot-email"
 								type="email"
