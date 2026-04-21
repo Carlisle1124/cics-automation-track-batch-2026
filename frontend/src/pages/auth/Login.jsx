@@ -9,27 +9,17 @@ const UST_DOMAIN = '@ust.edu.ph';
 const MOCK_OTP = '123456';
 
 function validateEmail(value) {
-	const trimmed = value.trim().toLowerCase();
-
-	if (!trimmed) return 'Please enter your UST email address.';
-	if (!trimmed.includes('@')) return 'Please enter a valid email address.';
-	if (!trimmed.endsWith(UST_DOMAIN)) return 'Only @ust.edu.ph emails are allowed.';
-	const local = trimmed.slice(0, trimmed.indexOf('@'));
-	if (local.length < 1) return 'Please enter your UST email username.';
+	if (!value) return '';
+	if (!value.includes('@')) return 'Enter a valid email address.';
+	if (!value.toLowerCase().endsWith(UST_DOMAIN)) return 'Only @ust.edu.ph emails are allowed.';
+	const local = value.slice(0, value.indexOf('@'));
+	if (local.length < 1) return 'Enter your UST email username.';
 	return '';
 }
 
 function validatePassword(value) {
-	if (!value) return 'Please enter your password.';
-	if (value.length < 6) return 'Password must be 6 or more characters.';
-	return '';
-}
-
-function validateOtp(value) {
-	const trimmed = value.trim();
-
-	if (!trimmed) return 'Please enter the OTP.';
-	if (!/^\d{6}$/.test(trimmed)) return 'OTP must be exactly 6 digits.';
+	if (!value) return '';
+	if (value.length < 4) return 'Password must be at least 4 characters.';
 	return '';
 }
 
@@ -45,26 +35,22 @@ export default function Login() {
 	const [statusType, setStatusType] = useState('info');
 
 	// Field-level validation
-	const [hasSubmitted, setHasSubmitted] = useState(false);
-
-	const loginErrors = {
-		email: hasSubmitted ? validateEmail(email) : '',
-		password: hasSubmitted ? validatePassword(password) : '',
-	};
+	const [emailTouched, setEmailTouched] = useState(false);
+	const [passwordTouched, setPasswordTouched] = useState(false);
+	const emailError = emailTouched ? validateEmail(email) : '';
+	const passwordError = passwordTouched ? validatePassword(password) : '';
+	const emailValid = emailTouched && email && !emailError;
+	const passwordValid = passwordTouched && password && !passwordError;
 
 	// Forgot password modal
 	const [forgotOpen, setForgotOpen] = useState(false);
 	const [forgotStep, setForgotStep] = useState(1); // 1=email, 2=OTP, 3=success
 	const [forgotEmail, setForgotEmail] = useState('');
-	const [forgotEmailSubmitted, setForgotEmailSubmitted] = useState(false);
+	const [forgotEmailTouched, setForgotEmailTouched] = useState(false);
 	const [forgotOtp, setForgotOtp] = useState('');
 	const [forgotLoading, setForgotLoading] = useState(false);
 	const [forgotError, setForgotError] = useState('');
-	const [forgotOtpSubmitted, setForgotOtpSubmitted] = useState(false);
-
-	const forgotEmailError = forgotEmailSubmitted ? validateEmail(forgotEmail) : '';
-	const forgotOtpValidationError = forgotOtpSubmitted ? validateOtp(forgotOtp) : '';
-	const forgotOtpDisplayError = forgotOtpValidationError || forgotError;
+	const forgotEmailError = forgotEmailTouched ? validateEmail(forgotEmail) : '';
 
 	useEffect(() => {
 		let active = true;
@@ -113,7 +99,6 @@ export default function Login() {
 	}, []);
 
 	async function handleQuickLogin(targetEmail = 'juan@ust.edu.ph') {
-		setHasSubmitted(false);
 		setIsSubmitting(true);
 		setStatus('Signing you in...', 'info');
 
@@ -132,13 +117,13 @@ export default function Login() {
 
 	async function handleSubmit(event) {
 		event.preventDefault();
-		setHasSubmitted(true);
+		setEmailTouched(true);
+		setPasswordTouched(true);
 
 		const eErr = validateEmail(email);
 		const pErr = validatePassword(password);
-
 		if (eErr || pErr) {
-			setStatus('Please fix the highlighted fields and try again.', 'error');
+			setStatus('Please fix the errors above.', 'error');
 			return;
 		}
 
@@ -149,9 +134,8 @@ export default function Login() {
 	function openForgotModal() {
 		setForgotStep(1);
 		setForgotEmail('');
-		setForgotEmailSubmitted(false);
+		setForgotEmailTouched(false);
 		setForgotOtp('');
-		setForgotOtpSubmitted(false);
 		setForgotError('');
 		setForgotLoading(false);
 		setForgotOpen(true);
@@ -159,29 +143,23 @@ export default function Login() {
 
 	async function handleForgotEmailSubmit(e) {
 		e.preventDefault();
-		setForgotEmailSubmitted(true);
-		setForgotError('');
-
+		setForgotEmailTouched(true);
 		const err = validateEmail(forgotEmail);
-		if (err) return;
+		if (err) { setForgotError(err); return; }
 
 		setForgotLoading(true);
+		setForgotError('');
 		await new Promise((r) => setTimeout(r, 800));
 		setForgotLoading(false);
-		setForgotOtp('');
-		setForgotOtpSubmitted(false);
 		setForgotStep(2);
 	}
 
 	async function handleOtpSubmit(e) {
 		e.preventDefault();
-		setForgotOtpSubmitted(true);
-		setForgotError('');
-
-		const otpValidationError = validateOtp(forgotOtp);
-		if (otpValidationError) return;
+		if (!forgotOtp.trim()) { setForgotError('Please enter the OTP.'); return; }
 
 		setForgotLoading(true);
+		setForgotError('');
 		await new Promise((r) => setTimeout(r, 800));
 
 		if (forgotOtp.trim() === MOCK_OTP) {
@@ -193,8 +171,10 @@ export default function Login() {
 		}
 	}
 
-	function getFieldClassName(error) {
-		return error ? 'auth-field auth-field--error' : 'auth-field';
+	function getFieldClassName(error, valid) {
+		if (error) return 'auth-field auth-field--error';
+		if (valid) return 'auth-field auth-field--success';
+		return 'auth-field';
 	}
 
 	return (
@@ -206,8 +186,8 @@ export default function Login() {
 			<aside className="auth-showcase">
 				<img src="/UST-CICS Logo.png" alt="UST CICS" className="auth-showcase__logo" />
 				<div className="auth-showcase__institution">
-					<span className="auth-showcase__org">UNIVERSITY OF SANTO TOMAS</span>
-					<span className="auth-showcase__subtitle">COLLEGE OF INFORMATION AND COMPUTING SCIENCES</span>
+					<span className="auth-showcase__org">UST CICS</span>
+					<span className="auth-showcase__subtitle">University of Santo Tomas</span>
 				</div>
 				<div className="auth-showcase__divider" />
 				<h1 className="auth-showcase__title">CICS Learning Common Room</h1>
@@ -222,8 +202,8 @@ export default function Login() {
 				</div>
 
 				<div className="auth-mobile-brand__institution">
-					<span className="auth-mobile-brand__org">UNIVERSITY OF SANTO TOMAS</span>
-					<span className="auth-mobile-brand__university">COLLEGE OF INFORMATION AND COMPUTING SCIENCES</span>
+					<span className="auth-mobile-brand__org">UST CICS</span>
+					<span className="auth-mobile-brand__university">University of Santo Tomas</span>
 				</div>
 
 				<div className="auth-mobile-brand__divider" />
@@ -242,7 +222,7 @@ export default function Login() {
 				</div>
 
 				<form className="auth-form" onSubmit={handleSubmit} noValidate>
-					<div className={getFieldClassName(loginErrors.email)}>
+					<div className={getFieldClassName(emailError, emailValid)}>
 						<label htmlFor="login-email">
 							<span>UST Email Address</span>
 						</label>
@@ -257,21 +237,17 @@ export default function Login() {
 								value={email}
 								placeholder="Enter your UST email address"
 								autoComplete="email"
-								aria-describedby={loginErrors.email ? 'login-email-error' : undefined}
-								aria-invalid={loginErrors.email ? 'true' : undefined}
+								aria-describedby={emailError ? 'login-email-error' : undefined}
+								aria-invalid={emailError ? 'true' : undefined}
 								onChange={(e) => setEmail(e.target.value)}
+								onBlur={() => setEmailTouched(true)}
 								required
 							/>
 						</div>
-						{loginErrors.email ? (
-							<span id="login-email-error" className="auth-field__error-row" role="alert">
-								<span className="auth-field__error-icon" aria-hidden="true">!</span>
-								<span className="auth-field__error-text">{loginErrors.email}</span>
-							</span>
-						) : null}
+						{emailError && <span id="login-email-error" className="auth-field__error" role="alert">{emailError}</span>}
 					</div>
 
-					<div className={getFieldClassName(loginErrors.password)}>
+					<div className={getFieldClassName(passwordError, passwordValid)}>
 						<label htmlFor="login-password">
 							<span>Password</span>
 						</label>
@@ -285,19 +261,15 @@ export default function Login() {
 								type="password"
 								value={password}
 								placeholder="Enter your password"
-								autoComplete="current-password"
-								aria-describedby={loginErrors.password ? 'login-password-error' : undefined}
-								aria-invalid={loginErrors.password ? 'true' : undefined}
-								onChange={(e) => setPassword(e.target.value)}
+							autoComplete="current-password"
+							aria-describedby={passwordError ? 'login-password-error' : undefined}
+							aria-invalid={passwordError ? 'true' : undefined}
+							onChange={(e) => setPassword(e.target.value)}
+								onBlur={() => setPasswordTouched(true)}
 								required
 							/>
 						</div>
-						{loginErrors.password ? (
-							<span id="login-password-error" className="auth-field__error-row" role="alert">
-								<span className="auth-field__error-icon" aria-hidden="true">!</span>
-								<span className="auth-field__error-text">{loginErrors.password}</span>
-							</span>
-						) : null}
+						{passwordError && <span id="login-password-error" className="auth-field__error" role="alert">{passwordError}</span>}
 					</div>
 
 					<div className="auth-form__row">
@@ -366,7 +338,7 @@ export default function Login() {
 				{forgotStep === 1 && (
 					<form className="auth-forgot-form" onSubmit={handleForgotEmailSubmit} noValidate>
 						<p className="auth-forgot-desc">Enter your UST email and we'll send a one-time code.</p>
-						<div className={getFieldClassName(forgotEmailError)}>
+						<div className={forgotEmailError ? 'auth-field auth-field--error' : 'auth-field'}>
 							<label htmlFor="forgot-email"><span>UST Email Address</span></label>
 							<input
 								id="forgot-email"
@@ -377,15 +349,12 @@ export default function Login() {
 								aria-describedby={forgotEmailError ? 'forgot-email-error' : undefined}
 								aria-invalid={forgotEmailError ? 'true' : undefined}
 								onChange={(e) => setForgotEmail(e.target.value)}
+								onBlur={() => setForgotEmailTouched(true)}
 								required
 							/>
-							{forgotEmailError ? (
-								<span id="forgot-email-error" className="auth-field__error-row" role="alert">
-									<span className="auth-field__error-icon" aria-hidden="true">!</span>
-									<span className="auth-field__error-text">{forgotEmailError}</span>
-								</span>
-							) : null}
+							{forgotEmailError && <span id="forgot-email-error" className="auth-field__error" role="alert">{forgotEmailError}</span>}
 						</div>
+						{forgotError && <p className="auth-forgot-error" role="alert">{forgotError}</p>}
 						<button type="submit" className="auth-primary-btn" disabled={forgotLoading}>
 							{forgotLoading ? <span className="auth-btn-loading"><span className="auth-spinner" aria-hidden="true" />Sending...</span> : 'Send OTP'}
 						</button>
@@ -395,7 +364,7 @@ export default function Login() {
 				{forgotStep === 2 && (
 					<form className="auth-forgot-form" onSubmit={handleOtpSubmit} noValidate>
 						<p className="auth-forgot-desc">A 6-digit code was sent to <strong>{forgotEmail}</strong>. Enter it below.</p>
-						<div className={getFieldClassName(forgotOtpDisplayError)}>
+						<div className="auth-field">
 							<label htmlFor="forgot-otp"><span>One-Time Code</span></label>
 							<input
 								id="forgot-otp"
@@ -405,33 +374,15 @@ export default function Login() {
 								value={forgotOtp}
 								placeholder="000000"
 								autoComplete="one-time-code"
-								onChange={(e) => {
-									setForgotOtp(e.target.value.replace(/\D/g, ''));
-									if (forgotError) setForgotError('');
-								}}
+								onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ''))}
 								required
 							/>
-							{forgotOtpDisplayError ? (
-								<span className="auth-field__error-row" role="alert">
-									<span className="auth-field__error-icon" aria-hidden="true">!</span>
-									<span className="auth-field__error-text">{forgotOtpDisplayError}</span>
-								</span>
-							) : null}
 						</div>
+						{forgotError && <p className="auth-forgot-error" role="alert">{forgotError}</p>}
 						<button type="submit" className="auth-primary-btn" disabled={forgotLoading}>
 							{forgotLoading ? <span className="auth-btn-loading"><span className="auth-spinner" aria-hidden="true" />Verifying...</span> : 'Verify Code'}
 						</button>
-						<button
-							type="button"
-							className="auth-link-btn auth-forgot-resend"
-							onClick={() => {
-								setForgotStep(1);
-								setForgotError('');
-								setForgotOtp('');
-								setForgotOtpSubmitted(false);
-								setForgotEmailSubmitted(false);
-							}}
-						>
+						<button type="button" className="auth-link-btn auth-forgot-resend" onClick={() => { setForgotStep(1); setForgotError(''); }}>
 							Use a different email
 						</button>
 					</form>

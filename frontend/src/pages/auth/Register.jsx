@@ -3,48 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import cicsLogo from '../../assets/CICS-Logo.png';
 import './AuthPages.css';
 
-const UST_DOMAIN = '@ust.edu.ph';
-const FULL_NAME_REGEX = /^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.'-]{2,}$/;
-const STUDENT_NUMBER_REGEX = /^\d{4}-\d{6}$/;
-
-function validateFullName(value) {
-	const trimmed = value.trim();
-
-	if (!trimmed) return 'Please enter your full name.';
-	if (trimmed.length < 5) return 'Full name must be at least 5 characters.';
-	if (!FULL_NAME_REGEX.test(trimmed)) return 'Please enter a valid full name.';
-	return '';
-}
-
-function validateUstEmail(value) {
-	const trimmed = value.trim().toLowerCase();
-
-	if (!trimmed) return 'Please enter your UST email address.';
-	if (!trimmed.includes('@')) return 'Please enter a valid email address.';
-	if (!trimmed.endsWith(UST_DOMAIN)) return 'Only @ust.edu.ph emails are allowed.';
-	return '';
-}
-
-function validateStudentNumber(value) {
-	const trimmed = value.trim();
-
-	if (!trimmed) return 'Please enter your student number.';
-	if (!STUDENT_NUMBER_REGEX.test(trimmed)) return 'Use the format YYYY-XXXXXX.';
-	return '';
-}
-
-function validatePassword(value) {
-	if (!value) return 'Please enter your password.';
-	if (value.length < 6) return 'Password must be 6 or more characters.';
-	return '';
-}
-
-function validateConfirmPassword(confirmPassword, password) {
-	if (!confirmPassword) return 'Please confirm your password.';
-	if (confirmPassword !== password) return 'Passwords do not match.';
-	return '';
-}
-
 export default function Register() {
 	const navigate = useNavigate();
 	const [formValues, setFormValues] = useState({
@@ -57,20 +15,6 @@ export default function Register() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [feedback, setFeedback] = useState('Create your account to reserve hourly slots in the Learning Commons.');
-	const [hasSubmitted, setHasSubmitted] = useState(false);
-
-	const registerErrors = {
-		fullName: hasSubmitted ? validateFullName(formValues.fullName) : '',
-		email: hasSubmitted ? validateUstEmail(formValues.email) : '',
-		studentId: hasSubmitted ? validateStudentNumber(formValues.studentId) : '',
-		password: hasSubmitted ? validatePassword(formValues.password) : '',
-		confirmPassword: hasSubmitted
-			? validateConfirmPassword(formValues.confirmPassword, formValues.password)
-			: '',
-	};
-
-	const getFieldClassName = (error) =>
-		error ? 'auth-field auth-field--error' : 'auth-field';
 
 	useEffect(() => {
 		const previousTitle = document.title;
@@ -95,18 +39,9 @@ export default function Register() {
 
 	async function handleSubmit(event) {
 		event.preventDefault();
-		setHasSubmitted(true);
 
-		const nextErrors = {
-			fullName: validateFullName(formValues.fullName),
-			email: validateUstEmail(formValues.email),
-			studentId: validateStudentNumber(formValues.studentId),
-			password: validatePassword(formValues.password),
-			confirmPassword: validateConfirmPassword(formValues.confirmPassword, formValues.password),
-		};
-
-		if (Object.values(nextErrors).some(Boolean)) {
-			setFeedback('Please fix the highlighted fields and try again.');
+		if (formValues.password !== formValues.confirmPassword) {
+			setFeedback('Passwords do not match. Please try again.');
 			return;
 		}
 
@@ -128,20 +63,11 @@ export default function Register() {
 		>
 			<aside className="auth-showcase auth-showcase--register">
 				<img src="/UST-CICS Logo.png" alt="UST CICS" className="auth-showcase__logo" />
-
-				<div className="auth-showcase__institution">
-					<span className="auth-showcase__org">UNIVERSITY OF SANTO TOMAS</span>
-					<span className="auth-showcase__subtitle">COLLEGE OF INFORMATION AND COMPUTING SCIENCES</span>
-				</div>
-
-				<div className="auth-showcase__divider" />
-
 				<h1 className="auth-showcase__title">CICS Learning Common Room</h1>
-
+				<p className="auth-showcase__subtitle">University of Santo Tomas</p>
 				<p className="auth-showcase__desc">
 					Register once and get access to scheduling, check-in tracking, and reservation history.
 				</p>
-
 				<div className="auth-showcase__list-card">
 					<h3>What you get</h3>
 					<ul>
@@ -158,8 +84,8 @@ export default function Register() {
 				</div>
 
 				<div className="auth-mobile-brand__institution">
-					<span className="auth-mobile-brand__org">UNIVERSITY OF SANTO TOMAS</span>
-					<span className="auth-mobile-brand__university">COLLEGE OF INFORMATION AND COMPUTING SCIENCES</span>
+					<span className="auth-mobile-brand__org">UST CICS</span>
+					<span className="auth-mobile-brand__university">UNIVERSITY OF SANTO TOMAS</span>
 				</div>
 
 				<div className="auth-mobile-brand__divider" />
@@ -186,8 +112,8 @@ export default function Register() {
 					<p>Use your school details to get started.</p>
 				</div>
 
-				<form className="auth-form" onSubmit={handleSubmit} noValidate>
-					<label className={getFieldClassName(registerErrors.fullName)}>
+				<form className="auth-form" onSubmit={handleSubmit}>
+					<label className="auth-field">
 						<span>Full Name</span>
 						<div className="auth-field__input-wrap">
 							<svg className="auth-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -202,15 +128,9 @@ export default function Register() {
 								required
 							/>
 						</div>
-						{registerErrors.fullName ? (
-							<span className="auth-field__error-row" role="alert">
-								<span className="auth-field__error-icon" aria-hidden="true">!</span>
-								<span className="auth-field__error-text">{registerErrors.fullName}</span>
-							</span>
-						) : null}
 					</label>
 
-					<label className={getFieldClassName(registerErrors.email)}>
+					<label className="auth-field">
 						<span>UST Email Address</span>
 						<div className="auth-field__input-wrap">
 							<svg className="auth-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -225,15 +145,9 @@ export default function Register() {
 								required
 							/>
 						</div>
-						{registerErrors.email ? (
-							<span className="auth-field__error-row" role="alert">
-								<span className="auth-field__error-icon" aria-hidden="true">!</span>
-								<span className="auth-field__error-text">{registerErrors.email}</span>
-							</span>
-						) : null}
 					</label>
 
-					<label className={getFieldClassName(registerErrors.studentId)}>
+					<label className="auth-field">
 						<span>Student Number</span>
 						<div className="auth-field__input-wrap">
 							<svg className="auth-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -249,16 +163,10 @@ export default function Register() {
 								required
 							/>
 						</div>
-						{registerErrors.studentId ? (
-							<span className="auth-field__error-row" role="alert">
-								<span className="auth-field__error-icon" aria-hidden="true">!</span>
-								<span className="auth-field__error-text">{registerErrors.studentId}</span>
-							</span>
-						) : null}
 					</label>
 
 					<div className="auth-form__two-column">
-						<label className={getFieldClassName(registerErrors.password)}>
+						<label className="auth-field">
 							<span>Password</span>
 							<div className="auth-field__input-wrap">
 								<svg className="auth-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -269,19 +177,13 @@ export default function Register() {
 									type="password"
 									value={formValues.password}
 									onChange={(event) => updateField('password', event.target.value)}
-									placeholder="Min. 6 chars"
+									placeholder="Min. 4 chars"
 									required
 								/>
 							</div>
-							{registerErrors.password ? (
-								<span className="auth-field__error-row" role="alert">
-									<span className="auth-field__error-icon" aria-hidden="true">!</span>
-									<span className="auth-field__error-text">{registerErrors.password}</span>
-								</span>
-							) : null}
 						</label>
 
-						<label className={getFieldClassName(registerErrors.confirmPassword)}>
+						<label className="auth-field">
 							<span>Confirm Password</span>
 							<div className="auth-field__input-wrap">
 								<svg className="auth-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -297,12 +199,6 @@ export default function Register() {
 									required
 								/>
 							</div>
-							{registerErrors.confirmPassword ? (
-								<span className="auth-field__error-row" role="alert">
-									<span className="auth-field__error-icon" aria-hidden="true">!</span>
-									<span className="auth-field__error-text">{registerErrors.confirmPassword}</span>
-								</span>
-							) : null}
 						</label>
 					</div>
 
