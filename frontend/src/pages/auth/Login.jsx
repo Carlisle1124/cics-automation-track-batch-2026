@@ -83,6 +83,10 @@ export default function Login() {
 				]);
 
 				if (!active) return;
+				if (user) {
+					navigate(getRoleRoute(user.role), { replace: true });
+					return;
+				}
 				setCurrentUser(user);
 			} finally {
 				if (active) {
@@ -110,7 +114,7 @@ export default function Login() {
 	function getRoleRoute(role) {
 		if (role === 'admin') return '/admin';
 		if (role === 'staff') return '/staff';
-		return '/';
+		return '/dashboard';
 	}
 
 	const setStatus = useCallback((message, type = 'info') => {
