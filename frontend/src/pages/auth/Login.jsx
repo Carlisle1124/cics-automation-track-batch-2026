@@ -6,7 +6,6 @@ import cicsLogo from '../../assets/CICS-Logo.png';
 import './AuthPages.css';
 
 const UST_DOMAIN = '@ust.edu.ph';
-const MOCK_OTP = '123456';
 
 const QUICK_LOGIN_ACCOUNTS = {
 	student: { email: 'juan.delacruz.cics@ust.edu.ph', password: 'password123' },
@@ -205,14 +204,8 @@ export default function Login() {
 
 		setForgotLoading(true);
 		await new Promise((r) => setTimeout(r, 800));
-
-		if (forgotOtp.trim() === MOCK_OTP) {
-			setForgotLoading(false);
-			setForgotStep(3);
-		} else {
-			setForgotLoading(false);
-			setForgotError('Invalid OTP. Try 123456 for the mock flow.');
-		}
+		setForgotLoading(false);
+		setForgotStep(3);
 	}
 
 	function getFieldClassName(error) {
