@@ -1,12 +1,14 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from '../shared/components/Navbar';
 import Topbar from '../shared/components/Topbar';
 import ReserveButton from '../features/reservations/components/ReserveButton';
 import '../shared/styles/LayoutShell.css';
 
 export default function AdminLayout() {
+	const location = useLocation();
+	const isAdminOverview = location.pathname === '/admin';
 	return (
-		<div className="app-shell">
+		<div className={`app-shell${isAdminOverview ? ' app-shell--admin-overview-entry' : ''}`}>
 			<Navbar role="admin" />
 			<main className="app-main">
 				<div className="app-main__surface">

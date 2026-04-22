@@ -149,6 +149,8 @@
   text-decoration: none;
   transition: all var(--duration-fast) var(--ease-standard),
               transform var(--duration-fast) var(--ease-standard);
+  overflow: visible;
+  isolation: isolate;
 }
 
 .app-sidebar__link:hover {
@@ -188,6 +190,22 @@
 
 .app-sidebar__label {
   display: none;
+}
+
+.app-sidebar::selection,
+.app-sidebar *::selection,
+.app-mobile-header::selection,
+.app-mobile-header *::selection {
+  background: rgba(229, 194, 122, 0.42);
+  color: #3a1119;
+}
+
+.app-sidebar::-moz-selection,
+.app-sidebar *::-moz-selection,
+.app-mobile-header::-moz-selection,
+.app-mobile-header *::-moz-selection {
+  background: rgba(229, 194, 122, 0.42);
+  color: #3a1119;
 }
 
 /* --- Role badge --- */
@@ -277,26 +295,84 @@
   }
 
   .app-sidebar__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
     position: absolute;
-    left: calc(100% + var(--space-2));
+    left: calc(100% + 0.95rem);
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-50%) translateX(-10px) scale(0.96);
+    transform-origin: left center;
     opacity: 0;
     pointer-events: none;
-    background: var(--bg-elevated);
-    color: var(--text-primary);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    padding: var(--space-1) var(--space-2);
-    font-size: var(--text-sm);
-    font-weight: 500;
-    transition: opacity var(--duration-fast) var(--ease-standard);
+    white-space: nowrap;
+    min-height: 2.5rem;
+    padding: 0.72rem 1rem 0.72rem 0.95rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(229, 194, 122, 0.24);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(247, 241, 233, 0.98) 100%
+    );
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    color: #2a2222;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    box-shadow:
+      0 18px 34px rgba(90, 0, 16, 0.16),
+      0 0 0 1px rgba(123, 0, 20, 0.05);
+    transition:
+      opacity 220ms var(--ease-standard),
+      transform 260ms var(--ease-standard),
+      box-shadow 260ms var(--ease-standard),
+      color 220ms var(--ease-standard);
     z-index: 1000;
+  }
+
+  .app-sidebar__label::before {
+    content: '';
+    position: absolute;
+    left: -0.38rem;
+    top: 50%;
+    width: 0.82rem;
+    height: 0.82rem;
+    transform: translateY(-50%) rotate(45deg);
+    border-left: 1px solid rgba(229, 194, 122, 0.24);
+    border-bottom: 1px solid rgba(229, 194, 122, 0.24);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(247, 241, 233, 0.98) 100%
+    );
+    border-radius: 0.18rem;
+    z-index: -1;
+  }
+
+  .app-sidebar__label::after {
+    content: '';
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8f001a 0%, #c91c35 100%);
+    box-shadow: 0 0 0 5px rgba(201, 28, 53, 0.08);
+    flex: 0 0 auto;
   }
 
   .app-sidebar__link:hover .app-sidebar__label,
   .app-sidebar__link:focus-visible .app-sidebar__label {
     opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+
+  .app-sidebar__link:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 3px rgba(229, 194, 122, 0.2),
+      0 8px 18px rgba(0, 0, 0, 0.16);
   }
 
   .app-sidebar__role {

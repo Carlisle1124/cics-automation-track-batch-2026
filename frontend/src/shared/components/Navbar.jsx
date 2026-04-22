@@ -105,7 +105,7 @@ export default function Navbar({ role }) {
                 className={`app-sidebar ${isOpen ? 'app-sidebar--open' : ''}`}
                 aria-label="Primary navigation"
             >
-                <div className="app-sidebar__brand" title="UST CICS Learning Commons">
+                <div className="app-sidebar__brand">
                     <img className="app-sidebar__brand-mark" src={cicsLogo} alt="UST CICS logo" />
                     <span className="app-sidebar__brand-text">Learning Common Rooms</span>
                 </div>
@@ -119,12 +119,12 @@ export default function Navbar({ role }) {
                             className={({ isActive }) =>
                                 isActive ? 'app-sidebar__link is-active' : 'app-sidebar__link'
                             }
-                            title={item.label}
+                            aria-label={item.label}
                         >
                             <span className="app-sidebar__glyph" aria-hidden="true">
                                 <item.icon weight="duotone" />
                             </span>
-                            <span className="app-sidebar__label">{item.label}</span>
+                            <span className="app-sidebar__label" aria-hidden="true">{item.label}</span>
                         </NavLink>
                     ))}
                 </nav>
