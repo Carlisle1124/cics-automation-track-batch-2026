@@ -14,10 +14,10 @@ import cicsLogo from '../../assets/CICS-Logo.png';
 import '../styles/Navbar.css';
 
 const studentLinks = [
-    { to: '/', label: 'Overview', icon: House, end: true },
-    { to: '/reservations', label: 'Reservations', icon: ClipboardText },
-    { to: '/schedule', label: 'Schedule', icon: CalendarDots },
-    { to: '/profile', label: 'Profile', icon: IdentificationCard },
+    { to: '/dashboard', label: 'Overview', icon: House, end: true },
+    { to: '/dashboard/reservations', label: 'Reservations', icon: ClipboardText },
+    { to: '/dashboard/schedule', label: 'Schedule', icon: CalendarDots },
+    { to: '/dashboard/profile', label: 'Profile', icon: IdentificationCard },
 ];
 
 const adminLinks = [
