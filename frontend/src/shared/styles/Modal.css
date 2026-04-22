@@ -264,6 +264,11 @@
     border-radius: var(--radius-xl);
   }
 
+  .ui-modal--small {
+    width: min(100%, 22rem);
+    max-height: min(90vh, 22rem);
+  }
+
   .ui-modal__header {
     gap: 1rem;
     padding: 1rem 1.25rem;

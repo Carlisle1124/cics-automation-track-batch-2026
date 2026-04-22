@@ -1663,3 +1663,5 @@
 .ui-modal .auth-forgot-success .auth-primary-btn {
   min-width: 12.5rem;
 }
+
+.auth-error-modal__icon { display: flex; justify-content: center; margin-bottom: 1rem; }

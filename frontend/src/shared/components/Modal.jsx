@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import '../styles/Modal.css';
 
-export default function Modal({ isOpen, title, children, onClose }) {
+export default function Modal({ isOpen, title, children, onClose, className = '' }) {
 	const [shouldRender, setShouldRender] = useState(isOpen);
 	const [isClosing, setIsClosing] = useState(false);
 
@@ -37,7 +37,7 @@ export default function Modal({ isOpen, title, children, onClose }) {
 		isClosing ? 'ui-modal__backdrop--closing' : 'ui-modal__backdrop--opening',
 	].join(' ');
 
-	const modalClassName = ['ui-modal', isClosing ? 'ui-modal--closing' : 'ui-modal--opening'].join(' ');
+	const modalClassName = ['ui-modal', isClosing ? 'ui-modal--closing' : 'ui-modal--opening', className].filter(Boolean).join(' ');
 
 	return createPortal(
 		<div className={backdropClassName} role="presentation" onClick={onClose}>

@@ -6,6 +6,7 @@ import cicsLogo from '../../assets/CICS-Logo.png';
 import './AuthPages.css';
 
 const UST_DOMAIN = '@ust.edu.ph';
+const MOCK_OTP = '123456';
 
 const QUICK_LOGIN_ACCOUNTS = {
 	student: { email: 'juan.delacruz.cics@ust.edu.ph', password: 'password123' },
@@ -47,6 +48,8 @@ export default function Login() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [statusMessage, setStatusMessage] = useState('Sign in using your university credentials to reserve slots.');
 	const [statusType, setStatusType] = useState('info');
+	const [errorModalOpen, setErrorModalOpen] = useState(false);
+	const [errorModalMessage, setErrorModalMessage] = useState('');
 
 	// Field-level validation
 	const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -120,6 +123,26 @@ export default function Login() {
 		setStatusType(type);
 	}, []);
 
+	function getFriendlyError(message = '') {
+		const msg = message.toLowerCase();
+		if (msg.includes('invalid login credentials') || msg.includes('invalid email or password'))
+			return 'The email or password you entered is incorrect. Please check your details and try again.';
+		if (msg.includes('email not confirmed'))
+			return 'Your email address has not been verified yet. Please check your inbox for a verification link.';
+		if (msg.includes('too many requests'))
+			return 'Too many sign-in attempts. Please wait a few minutes before trying again.';
+		if (msg.includes('user not found'))
+			return 'No account was found with that email address.';
+		if (msg.includes('profile fetch error'))
+			return 'Your account was found but your profile could not be loaded. Please contact support.';
+		return 'Something went wrong while signing you in. Please try again.';
+	}
+
+	function showErrorModal(message) {
+		setErrorModalMessage(getFriendlyError(message));
+		setErrorModalOpen(true);
+	}
+
 	async function handleQuickLogin(role) {
 		const account = QUICK_LOGIN_ACCOUNTS[role];
 		setEmail(account.email);
@@ -133,8 +156,9 @@ export default function Login() {
 			setCurrentUser(user);
 			setStatus(`Welcome back, ${user.full_name}. Redirecting...`, 'success');
 			navigate(getRoleRoute(user.role));
-		} catch {
-			setStatus('Unable to sign in right now. Please try again.', 'error');
+		} catch (err) {
+			setStatus('Sign in failed.', 'error');
+			showErrorModal(err.message || 'Invalid email or password. Please try again.');
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -148,6 +172,7 @@ export default function Login() {
 		const pErr = validatePassword(password);
 
 		if (eErr || pErr) {
+			setStatus('Please fix the highlighted fields and try again.', 'error');
 			return;
 		}
 
@@ -159,8 +184,9 @@ export default function Login() {
 			setCurrentUser(user);
 			setStatus(`Welcome back, ${user.full_name}. Redirecting...`, 'success');
 			navigate(getRoleRoute(user.role));
-		} catch {
-			setStatus('Unable to sign in right now. Please try again.', 'error');
+		} catch (err) {
+			setStatus('Sign in failed.', 'error');
+			showErrorModal(err.message || 'Invalid email or password. Please try again.');
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -204,8 +230,14 @@ export default function Login() {
 
 		setForgotLoading(true);
 		await new Promise((r) => setTimeout(r, 800));
-		setForgotLoading(false);
-		setForgotStep(3);
+
+		if (forgotOtp.trim() === MOCK_OTP) {
+			setForgotLoading(false);
+			setForgotStep(3);
+		} else {
+			setForgotLoading(false);
+			setForgotError('Invalid OTP. Please check the code and try again.');
+		}
 	}
 
 	function getFieldClassName(error) {
@@ -348,7 +380,7 @@ export default function Login() {
 
 				<p className={`auth-status-message auth-status-message--${statusType}`}>{statusMessage}</p>
 				<p className="auth-session-message">
-					{currentUser ? `Active session: ${currentUser.name}` : 'No active session yet.'}
+					{currentUser ? `Active session: ${currentUser.full_name}` : 'No active session yet.'}
 				</p>
 
 				<p className="auth-panel__footer">
@@ -375,6 +407,22 @@ export default function Login() {
 					</div>
 				</div>
 			) : null}
+
+			{/* Error Modal */}
+			<Modal isOpen={errorModalOpen} title="Sign In Failed" onClose={() => setErrorModalOpen(false)} className="ui-modal--small">
+				<div className="auth-forgot-form">
+					<div className="auth-error-modal__icon" aria-hidden="true">
+						<svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+							<circle cx="20" cy="20" r="20" fill="#FDECEA" />
+							<path d="M13 13l14 14M27 13L13 27" stroke="#D32F2F" strokeWidth="2.5" strokeLinecap="round"/>
+						</svg>
+					</div>
+					<p className="auth-forgot-desc">{errorModalMessage}</p>
+					<button type="button" className="auth-primary-btn" onClick={() => setErrorModalOpen(false)}>
+						Try Again
+					</button>
+				</div>
+			</Modal>
 
 			{/* Forgot Password Modal */}
 			<Modal isOpen={forgotOpen} title={forgotStep === 3 ? 'Check Complete' : 'Reset Password'} onClose={() => setForgotOpen(false)}>
