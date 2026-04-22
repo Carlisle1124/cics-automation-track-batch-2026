@@ -26,8 +26,7 @@ function validateEmail(value) {
 }
 
 function validatePassword(value) {
-	if (!value) return 'Please enter your password.';
-	if (value.length < 6) return 'Password must be 6 or more characters.';
+	if (!value.trim()) return 'Please enter your password.';
 	return '';
 }
 
@@ -135,8 +134,8 @@ export default function Login() {
 			setCurrentUser(user);
 			setStatus(`Welcome back, ${user.full_name}. Redirecting...`, 'success');
 			navigate(getRoleRoute(user.role));
-		} catch (err) {
-			setStatus(err.message || 'Unable to sign in. Please try again.', 'error');
+		} catch {
+			setStatus('Unable to sign in right now. Please try again.', 'error');
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -150,7 +149,6 @@ export default function Login() {
 		const pErr = validatePassword(password);
 
 		if (eErr || pErr) {
-			setStatus('Please fix the highlighted fields and try again.', 'error');
 			return;
 		}
 
@@ -162,8 +160,8 @@ export default function Login() {
 			setCurrentUser(user);
 			setStatus(`Welcome back, ${user.full_name}. Redirecting...`, 'success');
 			navigate(getRoleRoute(user.role));
-		} catch (err) {
-			setStatus(err.message || 'Invalid email or password.', 'error');
+		} catch {
+			setStatus('Unable to sign in right now. Please try again.', 'error');
 		} finally {
 			setIsSubmitting(false);
 		}

@@ -16,17 +16,45 @@ export async function getCurrentUser() {
 }
 
 export async function login(email, password) {
-	const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-	if (error) throw new Error(`Auth error: ${error.message}`);
+	const normalizedEmail = email.trim().toLowerCase();
+	const trimmedPassword = password.trim();
 
-	const { data: userData, error: userError } = await supabase
-		.from('users')
-		.select('id, full_name, role, email')
-		.eq('id', data.user.id)
-		.single();
+	if (!normalizedEmail.endsWith('@ust.edu.ph')) {
+		throw new Error('Only @ust.edu.ph emails are allowed.');
+	}
 
-	if (userError) throw new Error(`Profile fetch error: ${userError.message}`);
-	return userData;
+	if (!trimmedPassword) {
+		throw new Error('Please enter your password.');
+	}
+
+	const matchedUser = USERS.find(
+		(user) => user.email.toLowerCase() === normalizedEmail
+	);
+
+	const localPart = normalizedEmail.split('@')[0];
+
+	const fallbackName =
+		localPart
+			.split(/[._-]+/)
+			.filter(Boolean)
+			.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+			.join(' ') || 'UST User';
+
+	const derivedRole =
+		matchedUser?.role ||
+		(localPart.includes('admin')
+			? 'admin'
+			: localPart.includes('staff')
+				? 'staff'
+				: 'student');
+
+	return {
+		id: matchedUser?.id ?? `mock-${localPart}`,
+		full_name: matchedUser?.name ?? fallbackName,
+		name: matchedUser?.name ?? fallbackName,
+		email: normalizedEmail,
+		role: derivedRole,
+	};
 }
 
 export async function logout() {
