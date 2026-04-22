@@ -15,7 +15,14 @@ function enrichReservation(reservation) {
 
 export function getReservationsByUser(userId) {
 	return handleRequest(
-		() => RESERVATIONS.filter((reservation) => reservation.userId === userId).map(enrichReservation),
+		() => {
+			const matches = RESERVATIONS.filter((r) => r.userId === userId);
+			if (matches.length > 0) return matches.map(enrichReservation);
+
+			// Real Supabase UUID won't match mock IDs — fall back to the default mock student
+			const fallbackId = USERS.find((u) => u.role === 'student')?.id;
+			return RESERVATIONS.filter((r) => r.userId === fallbackId).map(enrichReservation);
+		},
 		`/api/reservations?userId=${encodeURIComponent(userId)}`
 	);
 }

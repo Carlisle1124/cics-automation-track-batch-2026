@@ -186,11 +186,14 @@ export default function ReservationsTable({ userRole = 'student', userId = null 
     return `${firstSlot.start} — ${lastSlot.end}`;
   };
 
+  // If the real Supabase UUID doesn't match any mock user, fall back to user-001
+  const effectiveUserId = USERS_DATA.find(u => u.id === userId) ? userId : 'user-001';
+
   // Filter data based on role and active tab
   let filteredData = reservations.filter(item => {
     // If student, only show their reservations
     if (userRole === 'student' && userId) {
-      if (item.userId !== userId) return false;
+      if (item.userId !== effectiveUserId) return false;
     }
     // Apply tab filter
     if (activeTab === 'all') return true;

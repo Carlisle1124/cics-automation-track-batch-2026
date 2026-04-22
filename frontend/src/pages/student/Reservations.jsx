@@ -29,7 +29,7 @@ export default function Reservations() {
 		<section className="dashboard-page">
 			<PageHeader
 				title="My Reservations"
-				subtitle={user ? `Review upcoming and past bookings for ${user.name}.` : 'Review upcoming and past bookings here.'}
+				subtitle={user ? `Review upcoming and past bookings for ${user.full_name}.` : 'Review upcoming and past bookings here.'}
 			/>
 
 			<div style={{ flex: 1, minHeight: 0 }}>

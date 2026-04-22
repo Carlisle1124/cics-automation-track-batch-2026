@@ -53,3 +53,4 @@ hardware/firmware/build/
 *.temp
 *.bak
 *.sqlite3
+.vercel
