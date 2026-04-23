@@ -1,7 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from '../shared/components/Navbar';
 import Topbar from '../shared/components/Topbar';
-import ReserveButton from '../features/reservations/components/ReserveButton';
 import '../shared/styles/LayoutShell.css';
 
 export default function AdminLayout() {
@@ -23,7 +22,6 @@ export default function AdminLayout() {
                     </div>
 				</div>
 			</main>
-			<ReserveButton role="admin" />
 		</div>
 	);
 }

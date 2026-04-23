@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import Navbar from '../shared/components/Navbar';
 import Topbar from '../shared/components/Topbar';
-import ReserveButton from '../features/reservations/components/ReserveButton';
 import '../shared/styles/LayoutShell.css';
 
 export default function StaffLayout() {
@@ -21,7 +20,6 @@ export default function StaffLayout() {
 					</div>
 				</div>
 			</main>
-			<ReserveButton role="staff" />
 		</div>
 	);
 }
