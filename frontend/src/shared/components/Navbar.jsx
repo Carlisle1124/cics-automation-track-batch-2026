@@ -10,7 +10,7 @@ import {
     Users,
     X,
 } from '@phosphor-icons/react';
-import cicsLogo from '../../assets/CICS-Logo.png';
+import cicsLogo from '../../assets/CICS-Logo.webp';
 import '../styles/Navbar.css';
 
 const studentLinks = [

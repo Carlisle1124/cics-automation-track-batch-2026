@@ -3,7 +3,7 @@ import { getUsers } from '../../data/services/authService';
 import { getAllReservations } from '../../data/services/reservationService';
 import PageHeader from '../../shared/components/PageHeader';
 import Card from '../../shared/components/Card';
-import cicsLogo from '../../assets/CICS-Logo.png';
+import cicsLogo from '../../assets/CICS-Logo.webp';
 import './Overview.css';
 
 export default function Overview() {

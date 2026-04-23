@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentUser, login } from '../../data/services/authService';
 import Modal from '../../shared/components/Modal';
-import cicsLogo from '../../assets/CICS-Logo.png';
+import cicsLogo from '../../assets/CICS-Logo.webp';
 import './AuthPages.css';
 
 const UST_DOMAIN = '@ust.edu.ph';
