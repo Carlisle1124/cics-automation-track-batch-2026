@@ -39,11 +39,12 @@ export async function registerUser(email, password, fullName, studentId) {
 		email,
 		password,
 		options: {
+			emailRedirectTo: `${window.location.origin}/auth/verify`,
 			data: {
 				full_name: fullName,
-				student_id: studentId
-			}
-		}
+				student_id: studentId,
+			},
+		},
 	});
 
 	if (error) throw new Error(error.message);
