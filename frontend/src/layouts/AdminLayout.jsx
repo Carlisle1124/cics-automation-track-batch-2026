@@ -7,7 +7,7 @@ export default function AdminLayout() {
 	const location = useLocation();
 	const isAdminOverview = location.pathname === '/admin';
 	return (
-		<div className={`app-shell${isAdminOverview ? ' app-shell--admin-overview-entry' : ''}`}>
+		<div className={`app-shell app-shell--admin${isAdminOverview ? ' app-shell--admin-overview-entry' : ''}`}>
 			<Navbar role="admin" />
 			<main className="app-main">
 				<div className="app-main__surface">

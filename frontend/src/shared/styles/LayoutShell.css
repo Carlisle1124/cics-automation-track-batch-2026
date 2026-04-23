@@ -13,6 +13,13 @@
   overflow-x: hidden;
 }
 
+.app-shell--admin {
+  height: 100vh;
+  height: 100svh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .app-main {
   min-width: 0;
   flex: 1;
@@ -53,6 +60,52 @@
   gap: var(--space-4);
 }
 
+.app-shell--admin .app-main {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.app-shell--admin .app-main__surface {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell--admin .app-main__wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell--admin .app-main__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-bottom: 0;
+  scrollbar-width: none;
+}
+
+.app-shell--admin .app-main__content::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .app-shell--admin .app-main {
+    height: 100vh;
+    height: 100svh;
+    height: 100dvh;
+  }
+}
+
 /* ============================================================
    Desktop (≥768px): sidebar grid layout
    ============================================================ */
@@ -86,6 +139,10 @@
   .app-main__content {
     height: 100%;
     padding-bottom: calc(6.75rem + env(safe-area-inset-bottom));
+  }
+
+  .app-shell--admin .app-main__content {
+    padding-bottom: 0;
   }
 }
 
