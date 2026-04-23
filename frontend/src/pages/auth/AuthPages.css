@@ -1665,3 +1665,45 @@
 }
 
 .auth-error-modal__icon { display: flex; justify-content: center; margin-bottom: 1rem; }
+
+/* === Email Verification Page === */
+.auth-verify__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-align: center;
+  padding: 2rem 1rem;
+  height: 100%;
+}
+
+.auth-verify__icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.auth-verify__title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.auth-verify__desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 22rem;
+  margin: 0;
+}
+
+.auth-verify__back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.5rem;
+  text-decoration: none;
+}

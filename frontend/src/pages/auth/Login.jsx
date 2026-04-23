@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getCurrentUser, login } from '../../data/services/authService';
+import { getRoleRoute } from '../../shared/utils/routeUtils';
 import Modal from '../../shared/components/Modal';
 import cicsLogo from '../../assets/CICS-Logo.webp';
 import './AuthPages.css';
@@ -112,13 +113,7 @@ export default function Login() {
 		};
 	}, []);
 
-	function getRoleRoute(role) {
-		if (role === 'admin') return '/admin';
-		if (role === 'staff') return '/staff';
-		return '/dashboard';
-	}
-
-	const setStatus = useCallback((message, type = 'info') => {
+const setStatus = useCallback((message, type = 'info') => {
 		setStatusMessage(message);
 		setStatusType(type);
 	}, []);

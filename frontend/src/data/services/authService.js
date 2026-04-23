@@ -34,6 +34,62 @@ export async function logout() {
 	return null;
 }
 
+export async function registerUser(email, password, fullName, studentId) {
+	const { data, error } = await supabase.auth.signUp({
+		email,
+		password,
+		options: {
+			data: {
+				full_name: fullName,
+				student_id: studentId
+			}
+		}
+	});
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
+export async function verifyEmailFromUrl() {
+	const hash = window.location.hash.replace('#', '');
+	const search = window.location.search;
+	const hashParams = Object.fromEntries(new URLSearchParams(hash));
+	const searchParams = Object.fromEntries(new URLSearchParams(search));
+
+	const errorCode = hashParams.error || searchParams.error;
+	const errorDesc = hashParams.error_description || searchParams.error_description;
+
+	if (errorCode || errorDesc) {
+		const desc = decodeURIComponent((errorDesc || '').replace(/\+/g, ' '));
+		const isExpiredOrInvalid =
+			desc.toLowerCase().includes('expired') || desc.toLowerCase().includes('invalid');
+
+		throw new Error(
+			isExpiredOrInvalid
+				? 'This verification link has expired or is no longer valid. Please request a new one.'
+				: 'The verification link could not be processed. Please try again or request a new link.'
+		);
+	}
+
+	// Allow Supabase time to exchange the token from the URL hash
+	await new Promise((r) => setTimeout(r, 800));
+
+	const { data: { session } } = await supabase.auth.getSession();
+	if (!session?.user) {
+		throw new Error(
+			'We could not confirm your email address. The link may have already been used or expired.'
+		);
+	}
+
+	const { data: userData } = await supabase
+		.from('users')
+		.select('role')
+		.eq('id', session.user.id)
+		.single();
+
+	return { user: session.user, role: userData?.role ?? 'student' };
+}
+
 // Still mock — backend integration for user listing is out of scope for this step
 export function getUsers() {
 	return Promise.resolve(USERS);

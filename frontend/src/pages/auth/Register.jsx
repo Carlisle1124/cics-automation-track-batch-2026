@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { registerUser } from '../../data/services/authService';
 import cicsLogo from '../../assets/CICS-Logo.webp';
 import './AuthPages.css';
 
@@ -113,11 +114,19 @@ export default function Register() {
 		setIsSubmitting(true);
 		setFeedback('Creating account...');
 
-		await new Promise((resolve) => setTimeout(resolve, 450));
-
-		setFeedback('Account created (mock). Redirecting to sign in...');
-		setIsSubmitting(false);
-		navigate('/auth/login');
+		try {
+			await registerUser(
+				formValues.email,
+				formValues.password,
+				formValues.fullName,
+				formValues.studentId
+			);
+			setFeedback('Account created! Please check your email to click the verification link.');
+		} catch (error) {
+			setFeedback(`Error: ${error.message}`);
+		} finally {
+			setIsSubmitting(false);
+		}
 	}
 
 	return (

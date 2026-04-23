@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { getCurrentUser } from '../../data/services/authService';
-
-function getRoleRoute(role) {
-	if (role === 'admin') return '/admin';
-	if (role === 'staff') return '/staff';
-	return '/dashboard';
-}
+import { getRoleRoute } from '../utils/routeUtils';
 
 export default function ProtectedRoute({ requiredRole, children }) {
 	const [status, setStatus] = useState('loading');
