@@ -6,8 +6,14 @@ import '../shared/styles/LayoutShell.css';
 export default function AdminLayout() {
 	const location = useLocation();
 	const isAdminOverview = location.pathname === '/admin';
+	const isAdminReservations = location.pathname === '/admin/reservations';
+
 	return (
-		<div className={`app-shell app-shell--admin${isAdminOverview ? ' app-shell--admin-overview-entry' : ''}`}>
+		<div
+			className={`app-shell app-shell--admin${
+				isAdminOverview ? ' app-shell--admin-overview-entry' : ''
+			}${isAdminReservations ? ' app-shell--admin-reservations-entry' : ''}`}
+		>
 			<Navbar role="admin" />
 			<main className="app-main">
 				<div className="app-main__surface">
