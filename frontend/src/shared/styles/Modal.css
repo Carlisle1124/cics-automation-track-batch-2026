@@ -269,6 +269,15 @@
     max-height: min(90vh, 22rem);
   }
 
+  .ui-modal--flexible {
+    width: min(100%, 26rem);
+    max-height: none;
+  }
+
+  .ui-modal--flexible .ui-modal__body {
+    overflow-y: visible;
+  }
+
   .ui-modal__header {
     gap: 1rem;
     padding: 1rem 1.25rem;

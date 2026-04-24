@@ -56,3 +56,4 @@ hardware/firmware/build/
 *.bak
 *.sqlite3
 .vercel
+.claude

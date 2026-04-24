@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { registerUser } from '../../data/services/authService';
+import Modal from '../../shared/components/Modal';
 import cicsLogo from '../../assets/CICS-Logo.webp';
 import './AuthPages.css';
+
+const RESEND_COOLDOWN_SECONDS = 180;
 
 const UST_DOMAIN = '@ust.edu.ph';
 const FULL_NAME_REGEX = /^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.'-]{2,}$/;
@@ -47,7 +50,6 @@ function validateConfirmPassword(confirmPassword, password) {
 }
 
 export default function Register() {
-	const navigate = useNavigate();
 	const [formValues, setFormValues] = useState({
 		fullName: '',
 		email: '',
@@ -57,8 +59,13 @@ export default function Register() {
 	});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isPageLoading, setIsPageLoading] = useState(true);
-	const [feedback, setFeedback] = useState('Create your account to reserve hourly slots in the Learning Commons.');
+	const [errorFeedback, setErrorFeedback] = useState('');
 	const [hasSubmitted, setHasSubmitted] = useState(false);
+	const [emailModalOpen, setEmailModalOpen] = useState(false);
+	const [emailModalState, setEmailModalState] = useState('loading'); // 'loading' | 'success'
+	const [emailSent, setEmailSent] = useState(false);
+	const [resendCountdown, setResendCountdown] = useState(0);
+	const countdownRef = useRef(null);
 
 	const registerErrors = {
 		fullName: hasSubmitted ? validateFullName(formValues.fullName) : '',
@@ -87,16 +94,57 @@ export default function Register() {
 		};
 	}, []);
 
+	function formatCountdown(seconds) {
+		const m = Math.floor(seconds / 60);
+		const s = seconds % 60;
+		return `${m}:${String(s).padStart(2, '0')}`;
+	}
+
+	function startCountdown() {
+		setResendCountdown(RESEND_COOLDOWN_SECONDS);
+		countdownRef.current = setInterval(() => {
+			setResendCountdown((prev) => {
+				if (prev <= 1) {
+					clearInterval(countdownRef.current);
+					return 0;
+				}
+				return prev - 1;
+			});
+		}, 1000);
+	}
+
 	function updateField(key, value) {
-		setFormValues((prev) => ({
-			...prev,
-			[key]: value,
-		}));
+		setFormValues((prev) => ({ ...prev, [key]: value }));
+	}
+
+	async function submitRegistration() {
+		setIsSubmitting(true);
+		setEmailModalState('loading');
+		setEmailModalOpen(true);
+
+		try {
+			await registerUser(
+				formValues.email,
+				formValues.password,
+				formValues.fullName,
+				formValues.studentId
+			);
+			setEmailSent(true);
+			setEmailModalState('success');
+			clearInterval(countdownRef.current);
+			startCountdown();
+		} catch (error) {
+			setEmailModalOpen(false);
+			setErrorFeedback(error.message);
+		} finally {
+			setIsSubmitting(false);
+		}
 	}
 
 	async function handleSubmit(event) {
 		event.preventDefault();
 		setHasSubmitted(true);
+		setErrorFeedback('');
 
 		const nextErrors = {
 			fullName: validateFullName(formValues.fullName),
@@ -106,27 +154,13 @@ export default function Register() {
 			confirmPassword: validateConfirmPassword(formValues.confirmPassword, formValues.password),
 		};
 
-		if (Object.values(nextErrors).some(Boolean)) {
-			setFeedback('Please fix the highlighted fields and try again.');
-			return;
-		}
+		if (Object.values(nextErrors).some(Boolean)) return;
 
-		setIsSubmitting(true);
-		setFeedback('Creating account...');
+		await submitRegistration();
+	}
 
-		try {
-			await registerUser(
-				formValues.email,
-				formValues.password,
-				formValues.fullName,
-				formValues.studentId
-			);
-			setFeedback('Account created! Please check your email to click the verification link.');
-		} catch (error) {
-			setFeedback(`Error: ${error.message}`);
-		} finally {
-			setIsSubmitting(false);
-		}
+	async function handleResend() {
+		await submitRegistration();
 	}
 
 	return (
@@ -315,16 +349,72 @@ export default function Register() {
 						</label>
 					</div>
 
-					<button type="submit" className="auth-primary-btn" disabled={isSubmitting}>
-						{isSubmitting ? 'Creating...' : 'Create Account'}
-					</button>
+					{!emailSent ? (
+						<button type="submit" className="auth-primary-btn" disabled={isSubmitting}>
+							{isSubmitting ? (
+								<span className="auth-btn-loading">
+									<span className="auth-spinner" aria-hidden="true" />
+									Creating...
+								</span>
+							) : 'Create Account'}
+						</button>
+					) : (
+						<button
+							type="button"
+							className="auth-primary-btn"
+							disabled={resendCountdown > 0 || isSubmitting}
+							onClick={handleResend}
+						>
+							{isSubmitting ? (
+								<span className="auth-btn-loading">
+									<span className="auth-spinner" aria-hidden="true" />
+									Sending...
+								</span>
+							) : resendCountdown > 0
+								? `Resend Email (${formatCountdown(resendCountdown)})`
+								: 'Resend Email'
+							}
+						</button>
+					)}
 				</form>
 
-				<p className="auth-status-message">{feedback}</p>
+				{errorFeedback ? (
+					<p className="auth-status-message auth-status-message--error">{errorFeedback}</p>
+				) : null}
+
 				<p className="auth-panel__footer">
 					Already registered? <Link to="/auth/login">Sign in</Link>
 				</p>
 			</div>
+
+			<Modal isOpen={emailModalOpen} title="Verify Your Email" onClose={() => setEmailModalOpen(false)} className="ui-modal--flexible">
+				<div className="auth-forgot-form">
+					{emailModalState === 'loading' ? (
+						<div className="auth-verify__state">
+							<div className="auth-register-transition__card">
+								<img src={cicsLogo} alt="UST CICS logo" className="auth-register-transition__logo" />
+								<div className="auth-register-transition__loader" aria-hidden="true">
+									<span></span>
+								</div>
+							</div>
+							<p className="auth-verify__label">Sending verification email...</p>
+						</div>
+					) : (
+						<div className="auth-verify__state">
+							<div className="auth-verify__icon" aria-hidden="true">
+								<svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+									<circle cx="28" cy="28" r="28" fill="#E8F5E9" />
+									<path d="M16 28l8 8 16-16" stroke="#2E7D32" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+								</svg>
+							</div>
+							<h3 className="auth-verify__title">Email Sent!</h3>
+							<p className="auth-verify__desc">
+								A verification link has been sent to <strong>{formValues.email}</strong>. Please check your inbox and click the link to activate your account.
+							</p>
+						</div>
+					)}
+				</div>
+			</Modal>
 
 			{isPageLoading ? (
 				<div
