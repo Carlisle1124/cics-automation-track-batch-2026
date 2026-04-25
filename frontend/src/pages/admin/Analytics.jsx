@@ -6,12 +6,12 @@ import {
 	Export,
 } from '@phosphor-icons/react';
 import PageHeader from '../../shared/components/PageHeader';
+import cicsLogo from '../../assets/CICS-Logo.webp';
 import { generateAnalyticsData } from './analytics/analyticsData';
 import KPICard from './analytics/KPICard';
 import ReservationTrendChart from './analytics/ReservationTrendChart';
 import TimeSlotChart from './analytics/TimeSlotChart';
 import UserActivityChart from './analytics/UserActivityChart';
-import SkeletonBlock from './analytics/SkeletonBlock';
 import './analytics/Analytics.css';
 
 const DATE_RANGES = [
@@ -36,8 +36,15 @@ export default function Analytics() {
 	}, []);
 
 	useEffect(() => {
+		const previousTitle = document.title;
+		document.title = 'Analytics - UST CICS Learning Common Room';
+
 		const timer = loadData(range);
-		return () => clearTimeout(timer);
+
+		return () => {
+			document.title = previousTitle;
+			clearTimeout(timer);
+		};
 	}, [range, loadData]);
 
 	function handleRangeChange(value) {
@@ -45,9 +52,14 @@ export default function Analytics() {
 	}
 
 	return (
-		<section className="dashboard-page analytics-page">
+		<section
+			className={`dashboard-page analytics-page ${
+				loading ? 'analytics-page--content-hidden' : 'analytics-page--content-visible'
+			}`}
+		>
 			<div className="analytics-page__header">
 				<PageHeader
+					className="analytics-page__page-header"
 					title="Analytics"
 					subtitle="Reservation insights and capacity metrics for Learning Common Rooms."
 				/>
@@ -70,20 +82,7 @@ export default function Analytics() {
 				</div>
 			</div>
 
-			{loading ? (
-				<div className="analytics-page__skeleton">
-					<div className="analytics-page__kpis">
-						{Array.from({ length: 3 }).map((_, i) => (
-							<SkeletonBlock key={i} height={100} />
-						))}
-					</div>
-					<div className="analytics-page__charts">
-						<SkeletonBlock height={340} />
-						<SkeletonBlock height={340} />
-						<SkeletonBlock height={340} />
-					</div>
-				</div>
-			) : data && (
+			{data ? (
 				<div className="analytics-page__content">
 					<div className="analytics-page__kpis">
 						<KPICard
@@ -111,7 +110,27 @@ export default function Analytics() {
 						<UserActivityChart data={data.userActivity} />
 					</div>
 				</div>
-			)}
+			) : null}
+
+			{loading ? (
+				<div
+					className="analytics-page-transition"
+					role="status"
+					aria-live="polite"
+					aria-label="Loading analytics page"
+				>
+					<div className="analytics-page-transition__card">
+						<img
+							src={cicsLogo}
+							alt="UST CICS logo"
+							className="analytics-page-transition__logo"
+						/>
+						<div className="analytics-page-transition__loader" aria-hidden="true">
+							<span></span>
+						</div>
+					</div>
+				</div>
+			) : null}
 		</section>
 	);
 }

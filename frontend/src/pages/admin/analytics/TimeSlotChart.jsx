@@ -11,7 +11,7 @@ export default function TimeSlotChart({ data }) {
 			<h3 className="analytics-chart__title">Time Slot Distribution</h3>
 			<p className="analytics-chart__subtitle">Usage frequency across time slots</p>
 			<div className="analytics-chart__container">
-				<ResponsiveContainer width="100%" height={280}>
+				<ResponsiveContainer width="100%" height="100%">
 					<AreaChart data={data} margin={{ top: 8, right: 16, left: -8, bottom: 0 }}>
 						<CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
 						<XAxis dataKey="slot" tick={{ fontSize: 12 }} stroke="var(--text-secondary)" />

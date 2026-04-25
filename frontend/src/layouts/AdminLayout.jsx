@@ -7,12 +7,15 @@ export default function AdminLayout() {
 	const location = useLocation();
 	const isAdminOverview = location.pathname === '/admin';
 	const isAdminReservations = location.pathname === '/admin/reservations';
+	const isAdminAnalytics = location.pathname === '/admin/analytics';
 
 	return (
 		<div
 			className={`app-shell app-shell--admin${
 				isAdminOverview ? ' app-shell--admin-overview-entry' : ''
-			}${isAdminReservations ? ' app-shell--admin-reservations-entry' : ''}`}
+			}${isAdminReservations ? ' app-shell--admin-reservations-entry' : ''}${
+				isAdminAnalytics ? ' app-shell--admin-analytics-entry' : ''
+			}`}
 		>
 			<Navbar role="admin" />
 			<main className="app-main">
