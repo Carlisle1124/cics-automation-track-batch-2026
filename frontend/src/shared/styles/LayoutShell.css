@@ -54,6 +54,44 @@
   scrollbar-width: none;
 }
 
+.app-main__content-card {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-main__content-scroll {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding-bottom: calc(6.25rem + env(safe-area-inset-bottom));
+  scrollbar-width: none;
+}
+
+.app-main__content-no-scroll {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Student-only reset to avoid double-card visuals from global section defaults. */
+.app-shell .app-main__content-scroll > .dashboard-page,
+.app-shell .app-main__content-scroll > .profile-page,
+.app-shell .app-main__content-no-scroll > .dashboard-page,
+.app-shell .app-main__content-no-scroll > .profile-page {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .app-main__wrapper {
   display: flex;
   flex-direction: column;
@@ -140,8 +178,7 @@
     height: 100%;
     padding-bottom: calc(6.75rem + env(safe-area-inset-bottom));
   }
-
-  .app-shell--admin .app-main__content {
+  .app-shell--admin {
     padding-bottom: 0;
   }
 }
