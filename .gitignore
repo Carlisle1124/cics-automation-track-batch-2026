@@ -57,3 +57,7 @@ hardware/firmware/build/
 *.sqlite3
 .vercel
 .claude
+student_backend_tasks.md
+email_verification_plan.md
+database_schema.md
+database_erd.md
