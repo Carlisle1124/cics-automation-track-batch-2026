@@ -12,7 +12,7 @@ export async function getCurrentUser() {
 		.single();
 
 	if (error || !data) return null;
-	return data;
+	return { ...data, name: data.full_name };
 }
 
 export async function login(email, password) {
@@ -26,7 +26,7 @@ export async function login(email, password) {
 		.single();
 
 	if (userError) throw new Error(`Profile fetch error: ${userError.message}`);
-	return userData;
+	return { ...userData, name: userData.full_name };
 }
 
 export async function logout() {

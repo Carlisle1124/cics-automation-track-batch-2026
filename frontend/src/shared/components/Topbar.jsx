@@ -41,7 +41,7 @@ export default function Topbar({ title = 'Dashboard', subtitle = '' }) {
 			</div>
 
 			<div className="app-topbar__actions">
-				{user ? <span className="app-topbar__user">{user.name}</span> : null}
+				{user ? <span className="app-topbar__user">{user.role}</span> : null}
 				<button type="button" className="app-topbar__logout" onClick={handleLogout} disabled={isLoggingOut}>
 					{isLoggingOut ? 'Logging out...' : 'Logout'}
 				</button>
