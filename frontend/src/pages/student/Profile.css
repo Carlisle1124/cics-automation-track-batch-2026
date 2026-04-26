@@ -6,7 +6,6 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  padding: 1rem;
 }
 
 .profile-page__loading {
@@ -217,7 +216,6 @@
    ============================================================ */
 @media (min-width: 640px) {
   .profile-page {
-    padding: 1.5rem;
     gap: 1.5rem;
   }
 
@@ -255,10 +253,6 @@
    Desktop (≥980px)
    ============================================================ */
 @media (min-width: 980px) {
-  .profile-page {
-    padding: 2rem;
-  }
-
   .profile-stats-grid {
     grid-template-columns: repeat(3, minmax(180px, 1fr));
     gap: 1rem;

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import SlotsBreakdown from '../../features/availability/components/SlotsBreakdown';
 import PageHeader from '../../shared/components/PageHeader';
+import './Schedule.css';
 
 export default function Schedule() {
 	const [selectedSlot, setSelectedSlot] = useState(null);
@@ -10,15 +11,14 @@ export default function Schedule() {
 	};
 
 	return (
-		<section className="dashboard-page">
+		<section className="dashboard-page schedule-page">
 			<PageHeader
+				className="page-header--student-sticky"
 				title="Schedule"
 				subtitle="Browse available time slots and reserve a spot for today."
 			/>
 
-			<div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-				<SlotsBreakdown onSlotSelect={handleSlotSelect} />
-			</div>
+			<SlotsBreakdown onSlotSelect={handleSlotSelect} />
 		</section>
 	);
 }

@@ -109,6 +109,7 @@ export default function Profile() {
 	return (
 		<section className="profile-page">
 			<PageHeader
+				className="page-header--student-sticky"
 				title="Profile"
 				subtitle="Review your account details, reservation activity, and learning commons insights."
 			/>
@@ -193,10 +194,6 @@ export default function Profile() {
 						<div className="profile-row">
 							<span className="profile-row__label">Active Availability Alerts</span>
 							<span className="profile-row__value">{stats.activeAlerts}</span>
-						</div>
-						<div className="profile-row">
-							<span className="profile-row__label">Preferred Space</span>
-							<span className="profile-row__value">{learningCommons?.name ?? 'Learning Commons'}</span>
 						</div>
 						<div className="profile-row">
 							<span className="profile-row__label">Operating Hours</span>

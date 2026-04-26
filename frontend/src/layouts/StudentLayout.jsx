@@ -1,10 +1,15 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from '../shared/components/Navbar';
 import Topbar from '../shared/components/Topbar';
+import Card from '../shared/components/Card';
 import ReserveButton from '../features/reservations/components/ReserveButton';
 import '../shared/styles/LayoutShell.css';
 
 export default function StudentLayout() {
+    const location = useLocation();
+    const shouldDisableOuterScroll =
+        location.pathname === '/dashboard/reservations' || location.pathname === '/dashboard/schedule';
+
     return (
         <div className="app-shell">
             <Navbar role="student" />
@@ -14,9 +19,11 @@ export default function StudentLayout() {
                         title="Dashboard"
                         subtitle="Reserve slots, track usage, and review your learning commons activity."
                     />
-                    <div className="app-main__content">
-                        <Outlet />
-                    </div>
+                    <Card as="div" className="app-main__content-card" padding="md">
+                        <div className={shouldDisableOuterScroll ? 'app-main__content-no-scroll' : 'app-main__content-scroll'}>
+                            <Outlet />
+                        </div>
+                    </Card>
                 </div>
             </main>
             <ReserveButton role="student" />

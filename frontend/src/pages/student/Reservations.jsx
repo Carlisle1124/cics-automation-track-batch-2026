@@ -28,6 +28,7 @@ export default function Reservations() {
 	return (
 		<section className="dashboard-page">
 			<PageHeader
+				className="page-header--student-sticky"
 				title="My Reservations"
 				subtitle={user ? `Review upcoming and past bookings for ${user.full_name}.` : 'Review upcoming and past bookings here.'}
 			/>

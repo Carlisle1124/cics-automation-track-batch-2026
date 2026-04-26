@@ -18,3 +18,28 @@
 	line-height: 1.5;
 	color: var(--text-secondary);
 }
+
+.page-header--student-sticky {
+	position: sticky;
+	top: 0;
+	z-index: 12;
+	background: var(--bg-card);
+	isolation: isolate;
+	padding-block: var(--space-1);
+	margin-bottom: var(--space-4);
+}
+
+.page-header--student-sticky::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: calc(100% - 0.15rem);
+	height: 1.5rem;
+	pointer-events: none;
+	background: linear-gradient(
+		to bottom,
+		color-mix(in oklab, var(--bg-card) 88%, transparent),
+		transparent
+	);
+}
