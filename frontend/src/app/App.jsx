@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 //layouts
@@ -28,33 +29,44 @@ import VerifyEmail from '../pages/auth/VerifyEmail';
 
 import ProtectedRoute from '../shared/components/ProtectedRoute';
 
+const DevPanel = import.meta.env.DEV
+	? lazy(() => import('../shared/components/DevPanel'))
+	: null;
+
 export default function App() {
     return (
-        <Routes>
-            <Route path="/dashboard" element={<ProtectedRoute requiredRole="student"><StudentLayout /></ProtectedRoute>}>
-                <Route index element={<StudentOverview />} />
-                <Route path="reservations" element={<StudentReservations />} />
-                <Route path="schedule" element={<StudentSchedule />} />
-                <Route path="profile" element={<StudentProfile />} />
-            </Route>
+        <>
+            <Routes>
+                <Route path="/dashboard" element={<ProtectedRoute requiredRole="student"><StudentLayout /></ProtectedRoute>}>
+                    <Route index element={<StudentOverview />} />
+                    <Route path="reservations" element={<StudentReservations />} />
+                    <Route path="schedule" element={<StudentSchedule />} />
+                    <Route path="profile" element={<StudentProfile />} />
+                </Route>
 
-            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>}>
-                <Route index element={<AdminOverview />} />
-                <Route path="reservations" element={<ManageReservations />} />
-                <Route path="analytics" element={<Analytics />} />
-                <Route path="users" element={<Users />} />
-            </Route>
+                <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>}>
+                    <Route index element={<AdminOverview />} />
+                    <Route path="reservations" element={<ManageReservations />} />
+                    <Route path="analytics" element={<Analytics />} />
+                    <Route path="users" element={<Users />} />
+                </Route>
 
-            <Route path="/staff" element={<ProtectedRoute requiredRole="staff"><StaffLayout /></ProtectedRoute>}>
-                <Route index element={<PendingRequests />} />
-                <Route path="schedule-for-students" element={<ScheduleForStudents />} />
-            </Route>
+                <Route path="/staff" element={<ProtectedRoute requiredRole="staff"><StaffLayout /></ProtectedRoute>}>
+                    <Route index element={<PendingRequests />} />
+                    <Route path="schedule-for-students" element={<ScheduleForStudents />} />
+                </Route>
 
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/auth/register" element={<Register />} />
-            <Route path="/auth/verify" element={<VerifyEmail />} />
+                <Route path="/auth/login" element={<Login />} />
+                <Route path="/auth/register" element={<Register />} />
+                <Route path="/auth/verify" element={<VerifyEmail />} />
 
-            <Route path="*" element={<Navigate to="/auth/login" replace />} />
-        </Routes>
+                <Route path="*" element={<Navigate to="/auth/login" replace />} />
+            </Routes>
+            {DevPanel && (
+                <Suspense fallback={null}>
+                    <DevPanel />
+                </Suspense>
+            )}
+        </>
     );
 }

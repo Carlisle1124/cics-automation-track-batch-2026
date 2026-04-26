@@ -1,0 +1,199 @@
+.qa-panel {
+  position: fixed;
+  left: 1rem;
+  bottom: 4.5rem; /* sits above the DevPanel toggle */
+  z-index: 9998;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 0.8rem;
+}
+
+.qa-panel__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #2d1b4e;
+  color: #e2d9f3;
+  border: 1px solid #6d3a9c;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 12px rgba(109, 58, 156, 0.35);
+  transition: background 0.15s ease;
+}
+
+.qa-panel__toggle:hover {
+  background: #3d2560;
+}
+
+.qa-panel__toggle-icon {
+  font-size: 0.8rem;
+}
+
+.qa-panel__drawer {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  width: 23rem;
+  background: #1a0f2e;
+  border: 1px solid #6d3a9c;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(109, 58, 156, 0.4);
+  overflow: hidden;
+}
+
+.qa-panel__header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #3d2560;
+  background: #120a20;
+}
+
+.qa-panel__title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #c084fc;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.qa-panel__subtitle {
+  font-size: 0.68rem;
+  color: #7c5fa0;
+}
+
+.qa-panel__section {
+  padding: 0.6rem 0.75rem 0.25rem;
+}
+
+.qa-panel__section-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7c5fa0;
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+.qa-panel__buttons {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0 0.75rem 0.6rem;
+}
+
+.qa-panel__btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #3d2560;
+  background: #2d1b4e;
+  color: #e2d9f3;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: left;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.qa-panel__btn:hover:not(:disabled) {
+  background: #3d2560;
+  border-color: #9333ea;
+}
+
+.qa-panel__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.qa-panel__btn--danger {
+  border-color: #7f1d1d;
+  background: #2d0f0f;
+  color: #fca5a5;
+}
+
+.qa-panel__btn--danger:hover:not(:disabled) {
+  background: #3d1515;
+  border-color: #ef4444;
+}
+
+.qa-panel__btn--danger.qa-panel__btn--armed {
+  border-color: #ef4444;
+  background: #450a0a;
+  color: #f87171;
+  animation: qa-pulse 0.8s ease infinite alternate;
+}
+
+@keyframes qa-pulse {
+  from { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  to   { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3); }
+}
+
+.qa-panel__badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  margin-left: 0.5rem;
+  white-space: nowrap;
+}
+
+.qa-panel__badge--ok {
+  background: rgba(167, 243, 208, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(110, 231, 183, 0.3);
+}
+
+.qa-panel__badge--err {
+  background: rgba(252, 165, 165, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(252, 165, 165, 0.3);
+}
+
+.qa-panel__badge--running {
+  background: rgba(253, 224, 71, 0.15);
+  color: #fde047;
+  border: 1px solid rgba(253, 224, 71, 0.3);
+}
+
+.qa-panel__divider {
+  border: none;
+  border-top: 1px solid #3d2560;
+  margin: 0.25rem 0.75rem;
+}
+
+.qa-panel__log {
+  margin: 0 0.75rem 0.75rem;
+  background: #0d0818;
+  border: 1px solid #2d1b4e;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  max-height: 7rem;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 0.68rem;
+  color: #7c5fa0;
+}
+
+.qa-panel__log-entry {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.1rem 0;
+  line-height: 1.4;
+}
+
+.qa-panel__log-time {
+  color: #3d2560;
+  flex-shrink: 0;
+}
+
+.qa-panel__log-msg--ok   { color: #6ee7b7; }
+.qa-panel__log-msg--err  { color: #fca5a5; }
+.qa-panel__log-msg--info { color: #93c5fd; }
+.qa-panel__log-msg--warn { color: #fde047; }

@@ -1,0 +1,195 @@
+.dev-panel {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 9999;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 0.8rem;
+}
+
+.dev-panel__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border: 1px solid #45475a;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: background 0.15s ease;
+}
+
+.dev-panel__toggle:hover {
+  background: #313244;
+}
+
+.dev-panel__toggle-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #a6e3a1;
+  flex-shrink: 0;
+}
+
+.dev-panel__toggle-dot--offline {
+  background: #f38ba8;
+}
+
+.dev-panel__drawer {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  width: 22rem;
+  background: #1e1e2e;
+  border: 1px solid #45475a;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.dev-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #45475a;
+  background: #181825;
+}
+
+.dev-panel__title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #cba6f7;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dev-panel__status {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  color: #6c7086;
+}
+
+.dev-panel__status-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: #a6e3a1;
+}
+
+.dev-panel__status-dot--offline {
+  background: #f38ba8;
+}
+
+.dev-panel__jobs {
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dev-panel__job-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  background: #313244;
+  border: 1px solid #45475a;
+  border-radius: 8px;
+  color: #cdd6f4;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: left;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.dev-panel__job-btn:hover:not(:disabled) {
+  background: #3d3f55;
+  border-color: #7c7f93;
+}
+
+.dev-panel__job-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dev-panel__job-label {
+  flex: 1;
+}
+
+.dev-panel__job-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  margin-left: 0.5rem;
+  white-space: nowrap;
+}
+
+.dev-panel__job-badge--ok {
+  background: rgba(166, 227, 161, 0.15);
+  color: #a6e3a1;
+  border: 1px solid rgba(166, 227, 161, 0.3);
+}
+
+.dev-panel__job-badge--err {
+  background: rgba(243, 139, 168, 0.15);
+  color: #f38ba8;
+  border: 1px solid rgba(243, 139, 168, 0.3);
+}
+
+.dev-panel__job-badge--running {
+  background: rgba(250, 179, 135, 0.15);
+  color: #fab387;
+  border: 1px solid rgba(250, 179, 135, 0.3);
+}
+
+.dev-panel__log {
+  margin: 0 0.75rem 0.75rem;
+  background: #11111b;
+  border: 1px solid #313244;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  max-height: 8rem;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 0.7rem;
+  color: #6c7086;
+}
+
+.dev-panel__log-entry {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+  border-bottom: 1px solid #1e1e2e;
+  line-height: 1.4;
+}
+
+.dev-panel__log-entry:last-child {
+  border-bottom: none;
+}
+
+.dev-panel__log-time {
+  color: #45475a;
+  flex-shrink: 0;
+}
+
+.dev-panel__log-msg--ok {
+  color: #a6e3a1;
+}
+
+.dev-panel__log-msg--err {
+  color: #f38ba8;
+}
+
+.dev-panel__log-msg--info {
+  color: #89b4fa;
+}

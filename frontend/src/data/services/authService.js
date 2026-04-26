@@ -35,6 +35,9 @@ export async function logout() {
 }
 
 export async function registerUser(email, password, fullName, studentId) {
+	if (!fullName?.trim()) throw new Error('Full name is required.');
+	if (!email?.trim()) throw new Error('Email is required.');
+
 	const { data, error } = await supabase.auth.signUp({
 		email,
 		password,

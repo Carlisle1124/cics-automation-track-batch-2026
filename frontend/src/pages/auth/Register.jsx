@@ -160,6 +160,17 @@ export default function Register() {
 	}
 
 	async function handleResend() {
+		const errors = {
+			fullName: validateFullName(formValues.fullName),
+			email: validateUstEmail(formValues.email),
+			studentId: validateStudentNumber(formValues.studentId),
+			password: validatePassword(formValues.password),
+			confirmPassword: validateConfirmPassword(formValues.confirmPassword, formValues.password),
+		};
+		if (Object.values(errors).some(Boolean)) {
+			setHasSubmitted(true);
+			return;
+		}
 		await submitRegistration();
 	}
 

@@ -1,3 +1,4 @@
+import { supabase } from '../supabaseClient';
 import { handleRequest } from './baseService';
 import { RESERVATIONS, ROOMS, USERS } from '../mock/mockData';
 
@@ -75,4 +76,50 @@ export function cancelReservation(reservationId) {
 			body: JSON.stringify({ status: 'cancelled' }),
 		}
 	);
+}
+
+export async function holdSlot({ userId, reservationDate, startTime, durationHours }) {
+	const { error: rpcError } = await supabase.rpc('hold_reservation_slot', {
+		p_user_id: userId,
+		p_reservation_date: reservationDate,
+		p_start_time: startTime,
+		p_duration_hours: durationHours,
+	});
+	if (rpcError) throw new Error(rpcError.message);
+
+	// Fetch the actual held row rather than relying on whatever the RPC returned
+	const { data, error } = await supabase
+		.from('reservations')
+		.select('id, expires_at')
+		.eq('user_id', userId)
+		.eq('reservation_date', reservationDate)
+		.eq('start_time', startTime)
+		.eq('status', 'held')
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
+export async function confirmSlot(reservationId, userId) {
+	const { data, error } = await supabase
+		.from('reservations')
+		.update({ status: 'pending', expires_at: null })
+		.eq('id', reservationId)
+		.eq('user_id', userId)
+		.eq('status', 'held')
+		.select()
+		.single();
+	if (error) throw new Error(error.message);
+	return data;
+}
+
+export async function releaseSlot(reservationId, userId) {
+	const { error } = await supabase
+		.from('reservations')
+		.delete()
+		.eq('id', reservationId)
+		.eq('user_id', userId)
+		.eq('status', 'held');
+	if (error) throw new Error(error.message);
 }

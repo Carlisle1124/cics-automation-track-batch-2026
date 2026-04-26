@@ -24,7 +24,10 @@ export default function Overview() {
             setAvailability(todayAvailability);
         }
 
-        loadOverview();
+        loadOverview().catch((err) => {
+            console.error('[Overview] Failed to load:', err);
+            if (active) setAvailability({ date: '', slots: [], isClosed: false, room: {} });
+        });
 
         return () => {
             active = false;
