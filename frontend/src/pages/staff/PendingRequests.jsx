@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getAllReservations } from '../../data/services/reservationService';
 import PageHeader from '../../shared/components/PageHeader';
+import cicsLogo from '../../assets/CICS-Logo.webp';
 import '../../features/reservations/components/ReservationsTable.css';
 import './PendingRequests.css';
 
@@ -8,24 +9,38 @@ export default function PendingRequests() {
 	const tableHeaders = ['Request ID', 'Student', 'Date', 'Time Slot(s)', 'Actions'];
 	const [pendingReservations, setPendingReservations] = useState([]);
 	const [statusMessage, setStatusMessage] = useState('');
+	const [isPageLoading, setIsPageLoading] = useState(true);
 
 	useEffect(() => {
+		const previousTitle = document.title;
+		document.title = 'Pending Requests - UST CICS Learning Common Room';
+
 		let active = true;
 
 		async function loadPendingReservations() {
-			const reservations = await getAllReservations();
+			try {
+				const [reservations] = await Promise.all([
+					getAllReservations(),
+					new Promise((resolve) => setTimeout(resolve, 700)),
+				]);
 
-			if (!active) return;
+				if (!active) return;
 
-			setPendingReservations(
-				reservations.filter((reservation) => reservation.status === 'pending')
-			);
+				setPendingReservations(
+					reservations.filter((reservation) => reservation.status === 'pending')
+				);
+			} finally {
+				if (active) {
+					setIsPageLoading(false);
+				}
+			}
 		}
 
 		loadPendingReservations();
 
 		return () => {
 			active = false;
+			document.title = previousTitle;
 		};
 	}, []);
 
@@ -36,23 +51,30 @@ export default function PendingRequests() {
 	}
 
 	return (
-		<section className="dashboard-page">
+		<section
+			className={`dashboard-page pending-requests-page ${
+				isPageLoading
+					? 'pending-requests-page--content-hidden'
+					: 'pending-requests-page--content-visible'
+			}`}
+		>
 			<PageHeader
+				className="pending-requests-page__header"
 				title="Pending Requests"
 				subtitle="Approve or decline requests submitted by students."
 			/>
-			<div className="reservations-table">
+			<div className="reservations-table pending-requests-page__table-shell">
 				<div className="reservations-table__header">
-					<div>
-						<div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+					<div className="pending-requests-page__queue-copy">
+						<div className="pending-requests-page__queue-label">
 							Pending Queue
 						</div>
-						<div style={{ marginTop: '0.35rem', fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
+						<div className="pending-requests-page__queue-description">
 							{statusMessage || 'Review, approve, or decline requests submitted by students.'}
 						</div>
 					</div>
 					<div className="reservations-table__controls">
-						<div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+						<div className="pending-requests-page__count">
 							{pendingReservations.length} request{pendingReservations.length === 1 ? '' : 's'} pending
 						</div>
 					</div>
@@ -111,12 +133,46 @@ export default function PendingRequests() {
 					<div className="pagination-info">
 						Displaying {pendingReservations.length} pending request{pendingReservations.length === 1 ? '' : 's'}
 					</div>
-					<div className="pagination-controls" aria-hidden="true">
-						<span className="pagination-btn" style={{ opacity: 0.35 }}>‹</span>
-						<span className="pagination-btn">›</span>
+					<div className="pagination-controls">
+						<button
+							type="button"
+							className="pagination-btn"
+							disabled
+							aria-label="Previous page"
+						>
+							‹
+						</button>
+						<button
+							type="button"
+							className="pagination-btn"
+							disabled
+							aria-label="Next page"
+						>
+							›
+						</button>
 					</div>
 				</div>
 			</div>
+
+			{isPageLoading ? (
+				<div
+					className="pending-requests-page-transition"
+					role="status"
+					aria-live="polite"
+					aria-label="Loading pending requests page"
+				>
+					<div className="pending-requests-page-transition__card">
+						<img
+							src={cicsLogo}
+							alt="UST CICS logo"
+							className="pending-requests-page-transition__logo"
+						/>
+						<div className="pending-requests-page-transition__loader" aria-hidden="true">
+							<span></span>
+						</div>
+					</div>
+				</div>
+			) : null}
 		</section>
 	);
 }

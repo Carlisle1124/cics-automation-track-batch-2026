@@ -1,35 +1,712 @@
-.pending-requests__actions {
+.pending-requests-page {
+	position: relative;
 	display: flex;
-	flex-wrap: wrap;
+	flex-direction: column;
+	flex: 0 0 auto;
+	width: 100%;
+	max-width: 100%;
+	height: auto;
+	min-height: auto;
+	box-sizing: border-box;
+	padding: clamp(0.75rem, 1.2vw, 1rem);
+	padding-bottom: calc(clamp(0.75rem, 1.2vw, 1rem) + env(safe-area-inset-bottom));
+	gap: clamp(0.55rem, 0.9vw, 0.8rem);
+	border-radius: var(--radius-xl);
+	overflow: visible;
+}
+
+.pending-requests-page::selection,
+.pending-requests-page *::selection {
+	background: rgba(229, 194, 122, 0.42);
+	color: #3a1119;
+}
+
+.pending-requests-page::-moz-selection,
+.pending-requests-page *::-moz-selection {
+	background: rgba(229, 194, 122, 0.42);
+	color: #3a1119;
+}
+
+.pending-requests-page--content-hidden .page-header,
+.pending-requests-page--content-hidden .pending-requests-page__table-shell {
+	opacity: 0;
+	transform: translateY(1.25rem);
+	pointer-events: none;
+}
+
+.pending-requests-page--content-visible .page-header,
+.pending-requests-page--content-visible .pending-requests-page__table-shell {
+	opacity: 1;
+	transform: translateY(0);
+	transition:
+		opacity 420ms var(--ease-standard),
+		transform 560ms var(--ease-standard);
+}
+
+.pending-requests-page--content-visible .page-header {
+	transition-delay: 40ms;
+}
+
+.pending-requests-page--content-visible .pending-requests-page__table-shell {
+	transition-delay: 100ms;
+}
+
+.pending-requests-page__header {
+	padding: clamp(0.2rem, 0.6vw, 0.4rem);
+	margin-bottom: 0;
+}
+
+.pending-requests-page__header .page-header__title {
+	font-size: clamp(1rem, 2.5vw, 1.2rem);
+	line-height: 1.2;
+}
+
+.pending-requests-page__header .page-header__subtitle {
+	font-size: 14px;
+	line-height: 1.45;
+}
+
+.pending-requests-page__table-shell {
+	display: flex;
+	flex-direction: column;
+	flex: 0 0 auto;
+	align-self: stretch;
+	min-height: 0;
+	height: auto;
+	width: 100%;
+	max-width: 100%;
+	margin-top: clamp(0.5rem, 0.9vw, 0.85rem);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-xl);
+	background: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--bg-card) 96%, white 4%),
+		var(--bg-card)
+	);
+	box-shadow: var(--shadow-sm);
+	overflow: hidden;
+}
+
+.pending-requests-page__table-shell .reservations-table__header,
+.pending-requests-page__table-shell .reservations-table__footer {
+	flex-shrink: 0;
+	background: transparent;
+}
+
+.pending-requests-page__table-shell .reservations-table__header {
+	padding: clamp(0.95rem, 1.4vw, 1.25rem);
+	gap: clamp(0.75rem, 1.2vw, 1rem);
+}
+
+.pending-requests-page__table-shell .reservations-table__wrapper {
+	flex: 0 1 auto;
+	min-height: 0;
+	width: 100%;
+	max-width: 100%;
+	max-height: clamp(11rem, 42vh, 28rem);
+	overflow: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-gutter: stable;
+	scrollbar-width: thin;
+	scrollbar-color: color-mix(in oklab, var(--secondary-8) 55%, transparent 45%) transparent;
+}
+
+.pending-requests-page__table-shell .reservations-table__wrapper::-webkit-scrollbar {
+	width: 0.55rem;
+	height: 0.55rem;
+}
+
+.pending-requests-page__table-shell .reservations-table__wrapper::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.pending-requests-page__table-shell .reservations-table__wrapper::-webkit-scrollbar-thumb {
+	border-radius: var(--radius-pill);
+	background: color-mix(in oklab, var(--secondary-8) 45%, transparent 55%);
+}
+
+.pending-requests-page__table-shell .reservations-table__wrapper::-webkit-scrollbar-thumb:hover {
+	background: color-mix(in oklab, var(--primary-5) 34%, var(--secondary-8) 66%);
+}
+
+.pending-requests-page__table-shell .reservations-table__footer {
+	margin-top: 0;
+	min-height: 4.25rem;
+	padding: clamp(0.85rem, 1.2vw, 1rem);
+	background: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--bg-card) 96%, white 4%),
+		color-mix(in oklab, var(--bg-elevated) 90%, white 10%)
+	);
+}
+
+.pending-requests-page__table-shell .reservations-table__table {
+	width: max-content;
+	min-width: 100%;
+	max-width: none;
+	table-layout: auto;
+}
+
+.pending-requests-page__table-shell .table-header-row {
+	background: color-mix(in oklab, var(--bg-elevated) 92%, white 8%);
+}
+
+.pending-requests-page__table-shell .table-header-cell,
+.pending-requests-page__table-shell .table-cell {
+	width: auto;
+	min-width: max-content;
+	max-width: none;
+	white-space: nowrap;
+	padding: clamp(0.72rem, 1vw, 0.95rem) clamp(0.9rem, 1.4vw, 1.2rem);
+}
+
+.pending-requests-page__table-shell .table-header-cell {
+	font-size: 0.75rem;
+	line-height: 1.3;
+}
+
+.pending-requests-page__table-shell .table-cell {
+	font-size: 14px;
+	line-height: 1.45;
+}
+
+.pending-requests-page__table-shell .user-name,
+.pending-requests-page__table-shell .date,
+.pending-requests-page__table-shell .time {
+	display: block;
+	white-space: nowrap;
+}
+
+.pending-requests-page__queue-copy {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	min-width: 0;
+}
+
+.pending-requests-page__queue-label {
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-secondary);
+	line-height: 1.35;
+}
+
+.pending-requests-page__queue-description {
+	font-size: 14px;
+	color: var(--text-secondary);
+	line-height: 1.45;
+}
+
+.pending-requests-page__count {
+	font-size: 14px;
+	color: var(--text-secondary);
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+.pending-requests__actions {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: nowrap;
 	gap: 0.5rem;
+	min-width: max-content;
 }
 
 .pending-requests__action-btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	padding: 0.55rem 0.85rem;
-	min-height: 2.75rem;
-	border: 1px solid color-mix(in oklab, var(--primary-5) 18%, var(--border-subtle) 82%);
+	min-height: 44px;
+	min-width: 5.35rem;
+	padding: 0.58rem 0.9rem;
+	border: 1px solid color-mix(in oklab, var(--primary-5) 22%, var(--border-subtle) 78%);
 	border-radius: var(--radius-md);
-	background: color-mix(in oklab, var(--primary-5) 7%, var(--bg-elevated) 93%);
+	background: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--bg-card) 96%, white 4%),
+		color-mix(in oklab, var(--primary-5) 6%, var(--bg-elevated) 94%)
+	);
 	color: var(--text-primary);
-	font-size: 0.85rem;
+	font-size: 14px;
 	font-weight: 600;
+	line-height: 1;
+	white-space: nowrap;
 	cursor: pointer;
-	transition: all var(--duration-fast) var(--ease-standard);
+	box-shadow:
+		0 1px 0 rgba(255, 255, 255, 0.6) inset,
+		0 8px 18px rgba(122, 0, 20, 0.04);
+	transition:
+		background-color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 
 .pending-requests__action-btn:hover {
-	border-color: var(--primary-5);
-	background: color-mix(in oklab, var(--primary-5) 12%, var(--bg-elevated) 88%);
+	border-color: color-mix(in oklab, var(--primary-5) 38%, var(--border-subtle) 62%);
+	background: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--primary-5) 5%, var(--bg-card) 95%),
+		color-mix(in oklab, var(--primary-5) 10%, var(--bg-elevated) 90%)
+	);
+	color: var(--text-primary);
+	box-shadow:
+		0 1px 0 rgba(255, 255, 255, 0.6) inset,
+		0 12px 22px rgba(122, 0, 20, 0.08);
 	transform: translateY(-1px);
 }
 
-/* ≥ 640px — slightly smaller padding */
-@media (min-width: 640px) {
+.pending-requests__action-btn:active {
+	transform: translateY(0);
+}
+
+.pending-requests__action-btn:focus-visible {
+	outline: none;
+	border-color: var(--primary-5);
+	box-shadow:
+		0 0 0 3px rgba(190, 21, 46, 0.12),
+		0 12px 24px rgba(122, 0, 20, 0.08);
+}
+
+.pending-requests-page__table-shell .pagination-btn {
+	width: 2.8rem;
+	height: 2.8rem;
+	min-width: 44px;
+	min-height: 44px;
+	border: 1px solid color-mix(in oklab, var(--primary-5) 12%, var(--border-subtle) 88%);
+	border-radius: var(--radius-md);
+	background: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--bg-card) 96%, white 4%),
+		color-mix(in oklab, var(--bg-elevated) 92%, white 8%)
+	);
+	color: var(--text-primary);
+	box-shadow:
+		0 1px 0 rgba(255, 255, 255, 0.58) inset,
+		0 8px 18px rgba(122, 0, 20, 0.04);
+	transition:
+		background-color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard),
+		opacity var(--duration-fast) var(--ease-standard);
+}
+
+.pending-requests-page__table-shell .pagination-btn:hover:not(:disabled) {
+	border-color: color-mix(in oklab, var(--primary-5) 30%, var(--border-subtle) 70%);
+	background: color-mix(in oklab, var(--primary-5) 6%, var(--bg-elevated) 94%);
+	color: var(--text-primary);
+	box-shadow:
+		0 1px 0 rgba(255, 255, 255, 0.58) inset,
+		0 12px 22px rgba(122, 0, 20, 0.08);
+	transform: translateY(-1px);
+}
+
+.pending-requests-page__table-shell .pagination-btn:disabled {
+	opacity: 0.38;
+	cursor: not-allowed;
+	transform: none;
+	box-shadow: none;
+}
+
+.pending-requests-page__table-shell .pagination-controls {
+	flex-shrink: 0;
+}
+
+.pending-requests-page__table-shell .pagination-info {
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+.pending-requests-page-transition {
+	position: fixed;
+	inset: 0;
+	z-index: 9999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(122, 18, 39, 0.14);
+	backdrop-filter: blur(12px) saturate(1.04);
+	-webkit-backdrop-filter: blur(12px) saturate(1.04);
+}
+
+.pending-requests-page-transition__card {
+	width: min(88vw, 228px);
+	padding: 22px 20px;
+	border: 1px solid rgba(123, 0, 20, 0.12);
+	border-radius: 1rem;
+	background: linear-gradient(
+		180deg,
+		rgba(255, 255, 255, 0.94) 0%,
+		rgba(247, 241, 233, 0.98) 100%
+	);
+	box-shadow: 0 22px 44px rgba(90, 0, 16, 0.16);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+}
+
+.pending-requests-page-transition__logo {
+	width: 86px;
+	height: auto;
+	display: block;
+	filter: drop-shadow(0 10px 18px rgba(90, 0, 16, 0.08));
+}
+
+.pending-requests-page-transition__loader {
+	width: 128px;
+	height: 6px;
+	border-radius: 999px;
+	background: rgba(190, 21, 46, 0.1);
+	box-shadow: inset 0 0 0 1px rgba(190, 21, 46, 0.06);
+	overflow: hidden;
+}
+
+.pending-requests-page-transition__loader span {
+	display: block;
+	width: 42%;
+	height: 100%;
+	border-radius: 999px;
+	background: linear-gradient(90deg, #8f001a 0%, #c91c35 65%, #e5c27a 100%);
+	box-shadow: 0 0 12px rgba(201, 28, 53, 0.18);
+	animation: pending-requests-page-transition-move 1.15s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes pending-requests-page-transition-move {
+	0% {
+		transform: translateX(-120%);
+	}
+
+	50% {
+		transform: translateX(120%);
+	}
+
+	100% {
+		transform: translateX(320%);
+	}
+}
+
+@media (max-width: 639px) {
+	.pending-requests-page {
+		padding: 0.6rem;
+		padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+		gap: 0.55rem;
+	}
+
+	.pending-requests-page__header {
+		padding: 0.1rem 0.05rem 0;
+	}
+
+	.pending-requests-page__table-shell {
+		margin-top: 0.4rem;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__header {
+		padding: 0.85rem;
+		align-items: flex-start;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__controls {
+		width: 100%;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__wrapper {
+		max-height: clamp(10.5rem, 40vh, 24rem);
+	}
+
+	.pending-requests-page__count {
+		white-space: normal;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__table {
+		width: max-content;
+		min-width: 100%;
+		max-width: none;
+	}
+
+	.pending-requests-page__table-shell .table-header-cell,
+	.pending-requests-page__table-shell .table-cell {
+		padding: 0.72rem 0.85rem;
+	}
+
+	.pending-requests-page__table-shell .table-header-cell {
+		font-size: 0.68rem;
+	}
+
 	.pending-requests__action-btn {
-		padding: 0.45rem 0.75rem;
-		min-height: 2.5rem;
+		min-width: 5rem;
+		padding: 0.52rem 0.78rem;
+		font-size: 13px;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__footer {
+		align-items: center;
+		gap: 0.75rem;
+		min-height: auto;
+	}
+
+	.pending-requests-page__table-shell .pagination-info {
+		font-size: 13px;
+	}
+}
+
+@media (max-width: 420px) {
+	.pending-requests-page {
+		padding: 0.55rem;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__table {
+		width: max-content;
+		min-width: 100%;
+		max-width: none;
+	}
+
+	.pending-requests-page__table-shell .table-header-cell,
+	.pending-requests-page__table-shell .table-cell {
+		padding-left: 0.7rem;
+		padding-right: 0.7rem;
+	}
+}
+
+@media (max-width: 360px) {
+	.pending-requests-page {
+		padding: 0.45rem;
+	}
+
+	.pending-requests-page__table-shell {
+		border-radius: var(--radius-lg);
+	}
+
+	.pending-requests-page__table-shell .reservations-table__header {
+		padding: 0.75rem;
+	}
+
+	.pending-requests-page__table-shell .table-header-cell,
+	.pending-requests-page__table-shell .table-cell {
+		padding-left: 0.65rem;
+		padding-right: 0.65rem;
+	}
+
+	.pending-requests__action-btn {
+		min-width: 4.75rem;
+	}
+}
+
+@media (max-width: 380px) and (orientation: portrait) {
+	.pending-requests-page__header .page-header__subtitle {
+		font-size: 13px;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__wrapper {
+		max-height: clamp(10rem, 38vh, 22rem);
+	}
+
+	.pending-requests-page__table-shell .pagination-info {
+		max-width: 12rem;
+	}
+}
+
+@media (min-width: 640px) and (max-width: 900px) {
+	.pending-requests-page__table-shell .reservations-table__header {
+		align-items: center;
+		flex-wrap: nowrap;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__controls {
+		width: auto;
+		margin-left: auto;
+	}
+}
+
+@media (min-width: 640px) and (max-width: 720px) {
+	.pending-requests-page__table-shell .reservations-table__header {
+		align-items: flex-start;
+		flex-wrap: wrap;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__controls {
+		width: 100%;
+		margin-left: 0;
+	}
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+	.pending-requests-page {
+		flex: 0 0 auto;
+		min-height: auto;
+		padding: 0.55rem;
+		padding-bottom: calc(0.9rem + env(safe-area-inset-bottom));
+		gap: 0.5rem;
+	}
+
+	.pending-requests-page__header {
+		padding: 0.05rem 0.05rem 0;
+	}
+
+	.pending-requests-page__header .page-header__title {
+		font-size: clamp(0.95rem, 2vw, 1.1rem);
+	}
+
+	.pending-requests-page__header .page-header__subtitle {
+		font-size: 13px;
+		line-height: 1.35;
+	}
+
+	.pending-requests-page__table-shell {
+		margin-top: 0.35rem;
+		border-radius: var(--radius-lg);
+	}
+
+	.pending-requests-page__table-shell .reservations-table__header {
+		padding: 0.7rem 0.85rem;
+		gap: 0.65rem;
+	}
+
+	.pending-requests-page__queue-label {
+		font-size: 0.7rem;
+	}
+
+	.pending-requests-page__queue-description,
+	.pending-requests-page__count {
+		font-size: 13px;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__wrapper {
+		max-height: clamp(7.75rem, 34vh, 12.5rem);
+	}
+
+	.pending-requests-page__table-shell .table-header-cell,
+	.pending-requests-page__table-shell .table-cell {
+		padding-top: 0.56rem;
+		padding-bottom: 0.56rem;
+	}
+
+	.pending-requests__action-btn {
+		min-height: 38px;
+		min-width: 4.9rem;
+		padding: 0.48rem 0.72rem;
+		font-size: 13px;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__footer {
+		padding: 0.6rem 0.8rem;
+	}
+
+	.pending-requests-page__table-shell .pagination-info {
+		font-size: 12.5px;
+	}
+
+	.pending-requests-page__table-shell .pagination-btn {
+		width: 2.45rem;
+		height: 2.45rem;
+		min-width: 40px;
+		min-height: 40px;
+	}
+}
+
+@media (max-height: 380px) and (orientation: landscape) {
+	.pending-requests-page {
+		padding-top: 0.45rem;
+		padding-bottom: calc(0.85rem + env(safe-area-inset-bottom));
+	}
+
+	.pending-requests-page__table-shell .reservations-table__wrapper {
+		max-height: clamp(6.75rem, 30vh, 9.75rem);
+	}
+
+	.pending-requests-page__table-shell .reservations-table__header {
+		padding-block: 0.6rem;
+	}
+
+	.pending-requests-page__table-shell .table-header-cell,
+	.pending-requests-page__table-shell .table-cell {
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__footer {
+		padding-block: 0.52rem;
+	}
+}
+
+@media (max-width: 767px) and (max-height: 390px) and (orientation: landscape) {
+	.pending-requests-page__header .page-header__subtitle {
+		display: none;
+	}
+
+	.pending-requests-page__table-shell .reservations-table__header {
+		padding: 0.6rem 0.75rem;
+	}
+
+	.pending-requests-page__queue-description {
+		line-height: 1.3;
+	}
+
+	.pending-requests-page__table-shell .table-header-cell,
+	.pending-requests-page__table-shell .table-cell {
+		padding-left: 0.75rem;
+		padding-right: 0.75rem;
+	}
+
+	.pending-requests-page__table-shell .pagination-btn {
+		width: 2.35rem;
+		height: 2.35rem;
+		min-width: 38px;
+		min-height: 38px;
+	}
+}
+
+@media (min-width: 901px) {
+	.pending-requests-page__table-shell .reservations-table__wrapper {
+		max-height: clamp(12rem, 46vh, 32rem);
+	}
+}
+
+@media (min-width: 1180px) {
+	.pending-requests-page {
+		padding: clamp(0.85rem, 1.1vw, 1.1rem);
+	}
+
+	.pending-requests-page__table-shell .reservations-table__header {
+		padding-inline: 1.25rem;
+	}
+
+	.pending-requests-page__table-shell .table-header-cell,
+	.pending-requests-page__table-shell .table-cell {
+		padding-inline: 1.25rem;
+	}
+}
+
+@media (max-width: 720px) {
+	.pending-requests-page-transition__card {
+		width: min(88vw, 204px);
+		padding: 18px 16px;
+	}
+
+	.pending-requests-page-transition__logo {
+		width: 74px;
+	}
+
+	.pending-requests-page-transition__loader {
+		width: 108px;
+		height: 5px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.pending-requests-page--content-hidden .page-header,
+	.pending-requests-page--content-hidden .pending-requests-page__table-shell,
+	.pending-requests-page--content-visible .page-header,
+	.pending-requests-page--content-visible .pending-requests-page__table-shell,
+	.pending-requests-page-transition__loader span {
+		animation: none !important;
+		transition: none !important;
+		transform: none !important;
 	}
 }
