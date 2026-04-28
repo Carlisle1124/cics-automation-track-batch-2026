@@ -385,6 +385,7 @@
   gap: 0.5rem;
 }
 
+
 /* ── Modal: view ─────────────────────────────────────── */
 .users-modal__view {
   display: flex;
@@ -476,6 +477,58 @@
   padding-top: 0.25rem;
 }
 
+/* ── Modal: confirm / success ────────────────────────── */
+.users-modal__confirm,
+.users-modal__success {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.users-modal__confirm-message,
+.users-modal__success-message {
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.65;
+  font-size: 0.95rem;
+}
+
+.users-modal__confirm-summary {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.users-modal__confirm-row {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--bg-card) 82%, var(--primary-1) 18%);
+  border: 1px solid color-mix(in srgb, var(--border-color) 70%, var(--primary-3) 30%);
+}
+
+.users-modal__confirm-row dt {
+  margin: 0;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.users-modal__confirm-row dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  word-break: break-word;
+}
+
+.users-modal__success-message {
+  font-weight: 500;
+}
+
 /* ── Modal: delete ───────────────────────────────────── */
 .users-modal__delete {
   display: flex;
@@ -561,4 +614,9 @@
     width: 2.75rem;
     height: 2.75rem;
   }
+}
+
+.admin-users__action-btn:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
 }

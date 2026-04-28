@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
 	Eye,
 	PencilSimple,
@@ -259,7 +259,7 @@ function EditModal({ user, onClose, onSave }) {
 	);
 }
 
-function DeleteModal({ user, onClose, onConfirm }) {
+function DeleteModal({ user, onClose, onConfirm, isProcessing }) {
 	if (!user) return null;
 
 	return (
@@ -270,7 +270,7 @@ function DeleteModal({ user, onClose, onConfirm }) {
 					<strong>{user.full_name}</strong>? This action cannot be undone.
 				</p>
 				<div className="users-modal__actions">
-					<Button type="button" variant="secondary" onClick={onClose}>
+					<Button type="button" variant="secondary" onClick={onClose} disabled={isProcessing}>
 						Cancel
 					</Button>
 					<Button
@@ -278,8 +278,74 @@ function DeleteModal({ user, onClose, onConfirm }) {
 						variant="primary"
 						className="users-modal__delete-confirm-btn"
 						onClick={() => onConfirm(user)}
+						disabled={isProcessing}
 					>
-						Delete Account
+						{isProcessing ? 'Deleting…' : 'Delete Account'}
+					</Button>
+				</div>
+			</div>
+		</Modal>
+	);
+}
+
+function ConfirmEditModal({ user, onClose, onConfirm, isProcessing }) {
+	if (!user) return null;
+
+	return (
+		<Modal isOpen={Boolean(user)} title="Confirm Changes" onClose={onClose} className="ui-modal--flexible">
+			<div className="users-modal__confirm">
+				<p className="users-modal__confirm-message">
+					Save the updated details for <strong>{user.full_name}</strong>?
+				</p>
+
+				<dl className="users-modal__confirm-summary">
+					<div className="users-modal__confirm-row">
+						<dt>Email</dt>
+						<dd>{user.email}</dd>
+					</div>
+					<div className="users-modal__confirm-row">
+						<dt>Role</dt>
+						<dd>{user.role}</dd>
+					</div>
+					<div className="users-modal__confirm-row">
+						<dt>No-show Count</dt>
+						<dd>{user.no_show_count}</dd>
+					</div>
+					<div className="users-modal__confirm-row">
+						<dt>Status</dt>
+						<dd>{user.is_account_suspended ? 'Suspended' : 'Active'}</dd>
+					</div>
+					{user.suspended_until && (
+						<div className="users-modal__confirm-row">
+							<dt>Suspended Until</dt>
+							<dd>{formatDate(user.suspended_until)}</dd>
+						</div>
+					)}
+				</dl>
+
+				<div className="users-modal__actions">
+					<Button type="button" variant="secondary" onClick={onClose} disabled={isProcessing}>
+						Cancel
+					</Button>
+					<Button type="button" variant="primary" onClick={() => onConfirm(user)} disabled={isProcessing}>
+						{isProcessing ? 'Saving…' : 'Confirm Changes'}
+					</Button>
+				</div>
+			</div>
+		</Modal>
+	);
+}
+
+function FeedbackModal({ feedback, onClose }) {
+	if (!feedback) return null;
+
+	return (
+		<Modal isOpen={Boolean(feedback)} title={feedback.title} onClose={onClose} className="ui-modal--small">
+			<div className="users-modal__success">
+				<p className="users-modal__success-message">{feedback.message}</p>
+				<div className="users-modal__actions">
+					<Button type="button" variant="primary" onClick={onClose}>
+						Okay
 					</Button>
 				</div>
 			</div>
@@ -311,13 +377,13 @@ function AddModal({ isOpen, onClose, onAdd }) {
 		setSubmitting(true);
 		setSubmitError(null);
 		try {
-			const newUser = await createUser(
-				form.email,
-				form.password,
-				form.full_name,
-				form.role,
-				form.student_id || null
-			);
+			const newUser = await createUser({
+				email: form.email,
+				password: form.password,
+				full_name: form.full_name,
+				role: form.role,
+				student_id: form.student_id || null,
+			});
 			onAdd(newUser);
 			setForm(EMPTY_FORM);
 		} catch (err) {
@@ -426,23 +492,47 @@ function AddModal({ isOpen, onClose, onAdd }) {
 	);
 }
 
-function RowActionButtons({ user, onView, onEdit, onDelete }) {
+function RowActionButtons({ user, onView, onEdit, onDelete, roleCounts }) {
+	const isLastAdmin =
+		user.role === 'admin' && roleCounts.admin <= 1;
+
+	const isLastStaff =
+		user.role === 'staff' && roleCounts.staff <= 1;
+
+	const disableDelete = isLastAdmin || isLastStaff;
+
 	return (
 		<div className="admin-users__action-buttons">
-			<button type="button" className="admin-users__action-btn" onClick={() => onView(user)}>
-				<Eye size={15} weight="duotone" aria-hidden="true" />
+			<button
+				type="button"
+				className="admin-users__action-btn"
+				onClick={() => onView(user)}
+			>
+				<Eye size={15} weight="duotone" />
 				View
 			</button>
-			<button type="button" className="admin-users__action-btn" onClick={() => onEdit(user)}>
-				<PencilSimple size={15} weight="duotone" aria-hidden="true" />
+
+			<button
+				type="button"
+				className="admin-users__action-btn"
+				onClick={() => onEdit(user)}
+			>
+				<PencilSimple size={15} weight="duotone" />
 				Edit
 			</button>
+
 			<button
 				type="button"
 				className="admin-users__action-btn admin-users__action-btn--danger"
 				onClick={() => onDelete(user)}
+				disabled={disableDelete}
+				title={
+					disableDelete
+						? 'Cannot delete the last account in this role'
+						: 'Delete account'
+				}
 			>
-				<Trash size={15} weight="duotone" aria-hidden="true" />
+				<Trash size={15} weight="duotone" />
 				Delete
 			</button>
 		</div>
@@ -463,8 +553,20 @@ export default function Users() {
 	// editKey is stable while closing (so animation plays) but changes
 	// when a new user is opened for editing (remounting EditModal with fresh form).
 	const [editKey, setEditKey] = useState('edit');
+	const [pendingEditUser, setPendingEditUser] = useState(null);
 	const [deleteModalUser, setDeleteModalUser] = useState(null);
+	const [feedbackModal, setFeedbackModal] = useState(null);
+	const [isProcessingAction, setIsProcessingAction] = useState(false);
 	const [isAddOpen, setIsAddOpen] = useState(false);
+	const roleCounts = useMemo(() => {
+	return users.reduce(
+		(acc, user) => {
+			acc[user.role] = (acc[user.role] || 0) + 1;
+			return acc;
+		},
+		{ admin: 0, staff: 0, student: 0 }
+	);
+}, [users]);
 
 	// Fetch users on component mount
 	useEffect(() => {
@@ -534,32 +636,58 @@ export default function Users() {
 	const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
 	const paginatedUsers = filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-	async function handleSave(updated) {
+	function handleSave(updated) {
+		const clean = {
+			...updated,
+			suspended_until:
+				updated.suspended_until === '' ? null : updated.suspended_until,
+		};
+
+		setPendingEditUser(clean);
+		setEditUser(null);
+	}
+
+	async function confirmEdit(target) {
 		try {
-			await updateUser(updated.id, updated);
-			setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-			setEditUser(null);
+			setIsProcessingAction(true);
+			await updateUser(target.id, target);
+			setUsers((prev) =>
+				prev.map((u) => (u.id === target.id ? target : u))
+			);
+			setPendingEditUser(null);
+			setFeedbackModal({
+				title: 'Update Successful',
+				message: `Changes for ${target.full_name} were saved successfully.`,
+			});
 		} catch (err) {
 			console.error('Failed to save user:', err);
 			alert('Failed to save changes. Please try again.');
+		} finally {
+			setIsProcessingAction(false);
 		}
 	}
 
-	async function handleDelete(target) {
+	async function confirmDelete(target) {
 		try {
+			setIsProcessingAction(true);
 			await deleteUser(target.id);
 			setUsers((prev) => prev.filter((u) => u.id !== target.id));
 			setDeleteModalUser(null);
+			setFeedbackModal({
+				title: 'Delete Successful',
+				message: `The account for ${target.full_name} was deleted successfully.`,
+			});
 		} catch (err) {
 			console.error('Failed to delete user:', err);
 			alert('Failed to delete user. Please try again.');
+		} finally {
+			setIsProcessingAction(false);
 		}
 	}
 
 	async function handleAdd(newUser) {
 		try {
-			const createdUser = await createUser(newUser);
-			setUsers((prev) => [createdUser, ...prev]);
+			setUsers((prev) => [newUser, ...prev]);
 			setIsAddOpen(false);
 		} catch (err) {
 			console.error('Failed to create user:', err);
@@ -701,6 +829,7 @@ export default function Users() {
 												onView={setViewUser}
 												onEdit={openEdit}
 												onDelete={setDeleteModalUser}
+												roleCounts={roleCounts}
 											/>
 										</td>
 									</tr>
@@ -760,8 +889,20 @@ export default function Users() {
 			{/* Modals */}
 			<ViewModal user={viewUser} onClose={() => setViewUser(null)} />
 			<EditModal key={editKey} user={editUser} onClose={() => setEditUser(null)} onSave={handleSave} />
-			<DeleteModal user={deleteModalUser} onClose={() => setDeleteModalUser(null)} onConfirm={handleDelete} />
+			<ConfirmEditModal
+				user={pendingEditUser}
+				onClose={() => setPendingEditUser(null)}
+				onConfirm={confirmEdit}
+				isProcessing={isProcessingAction}
+			/>
+			<DeleteModal
+				user={deleteModalUser}
+				onClose={() => setDeleteModalUser(null)}
+				onConfirm={confirmDelete}
+				isProcessing={isProcessingAction}
+			/>
 			<AddModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onAdd={handleAdd} />
+			<FeedbackModal feedback={feedbackModal} onClose={() => setFeedbackModal(null)} />
 		</section>
 	);
 }

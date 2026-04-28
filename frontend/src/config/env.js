@@ -1,5 +1,1 @@
-// global switch between:
-// mock data (current)
-// real backend
-
-export const USE_MOCK = false;
+// Configuration file for environment variables
