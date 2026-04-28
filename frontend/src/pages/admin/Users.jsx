@@ -7,6 +7,7 @@ import {
 	MagnifyingGlass,
 	X,
 	UserCircle,
+	WarningCircle,
 } from '@phosphor-icons/react';
 import PageHeader from '../../shared/components/PageHeader';
 import Modal from '../../shared/components/Modal';
@@ -14,120 +15,6 @@ import Button from '../../shared/components/Button';
 import Input from '../../shared/components/Input';
 import { getAllUsers, createUser, updateUser, deleteUser } from '../../data/services/userService';
 import './Users.css';
-
-/* ─── Mock data ─────────────────────────────────────────── */
-const MOCK_USERS = [
-	{
-		id: 'a1b2c3d4-0001-0000-0000-000000000001',
-		email: 'juan.delacruz@ust.edu.ph',
-		full_name: 'Juan Dela Cruz',
-		role: 'student',
-		no_show_count: 2,
-		suspended_until: null,
-		is_account_suspended: false,
-		created_at: '2025-08-01T08:00:00Z',
-		student_id: '2021-00001',
-	},
-	{
-		id: 'a1b2c3d4-0002-0000-0000-000000000002',
-		email: 'maria.santos@ust.edu.ph',
-		full_name: 'Maria Santos',
-		role: 'student',
-		no_show_count: 0,
-		suspended_until: null,
-		is_account_suspended: false,
-		created_at: '2025-08-03T09:15:00Z',
-		student_id: '2021-00002',
-	},
-	{
-		id: 'a1b2c3d4-0003-0000-0000-000000000003',
-		email: 'pedro.reyes@ust.edu.ph',
-		full_name: 'Pedro Reyes',
-		role: 'student',
-		no_show_count: 5,
-		suspended_until: '2026-05-15T00:00:00Z',
-		is_account_suspended: true,
-		created_at: '2025-08-05T10:30:00Z',
-		student_id: '2021-00003',
-	},
-	{
-		id: 'a1b2c3d4-0004-0000-0000-000000000004',
-		email: 'ana.garcia@ust.edu.ph',
-		full_name: 'Ana Garcia',
-		role: 'admin',
-		no_show_count: 0,
-		suspended_until: null,
-		is_account_suspended: false,
-		created_at: '2025-07-20T07:00:00Z',
-		student_id: null,
-	},
-	{
-		id: 'a1b2c3d4-0005-0000-0000-000000000005',
-		email: 'carlos.mendoza@ust.edu.ph',
-		full_name: 'Carlos Mendoza',
-		role: 'student',
-		no_show_count: 1,
-		suspended_until: null,
-		is_account_suspended: false,
-		created_at: '2025-08-10T11:00:00Z',
-		student_id: '2022-00005',
-	},
-	{
-		id: 'a1b2c3d4-0006-0000-0000-000000000006',
-		email: 'liza.ramos@ust.edu.ph',
-		full_name: 'Liza Ramos',
-		role: 'student',
-		no_show_count: 3,
-		suspended_until: '2026-06-01T00:00:00Z',
-		is_account_suspended: true,
-		created_at: '2025-08-12T13:45:00Z',
-		student_id: '2022-00006',
-	},
-	{
-		id: 'a1b2c3d4-0007-0000-0000-000000000007',
-		email: 'jose.torres@ust.edu.ph',
-		full_name: 'Jose Torres',
-		role: 'staff',
-		no_show_count: 0,
-		suspended_until: null,
-		is_account_suspended: false,
-		created_at: '2025-07-25T08:30:00Z',
-		student_id: null,
-	},
-	{
-		id: 'a1b2c3d4-0008-0000-0000-000000000008',
-		email: 'rosa.bautista@ust.edu.ph',
-		full_name: 'Rosa Bautista',
-		role: 'student',
-		no_show_count: 0,
-		suspended_until: null,
-		is_account_suspended: false,
-		created_at: '2025-08-15T14:00:00Z',
-		student_id: '2023-00008',
-	},
-	{
-		id: 'a1b2c3d4-0009-0000-0000-000000000009',
-		email: 'miguel.flores@ust.edu.ph',
-		full_name: 'Miguel Flores',
-		role: 'student',
-		no_show_count: 4,
-		suspended_until: null,
-		is_account_suspended: false,
-		created_at: '2025-08-18T09:00:00Z',
-		student_id: '2023-00009',
-	},
-	{
-		id: 'a1b2c3d4-0010-0000-0000-000000000010',
-		email: 'claire.villanueva@ust.edu.ph',
-		full_name: 'Claire Villanueva',
-		role: 'admin',
-		no_show_count: 0,
-		suspended_until: null,
-		is_account_suspended: false,
-		created_at: '2025-07-18T07:30:00Z',
-		student_id: null,
-	},
-];
 
 /* ─── Constants ─────────────────────────────────────────── */
 const FILTER_TABS = [
@@ -145,6 +32,7 @@ const ROLE_OPTIONS = ['student', 'staff', 'admin'];
 const EMPTY_FORM = {
 	full_name: '',
 	email: '',
+	password: '',
 	student_id: '',
 	role: 'student',
 	no_show_count: 0,
@@ -401,9 +289,12 @@ function DeleteModal({ user, onClose, onConfirm }) {
 
 function AddModal({ isOpen, onClose, onAdd }) {
 	const [form, setForm] = useState(EMPTY_FORM);
+	const [submitting, setSubmitting] = useState(false);
+	const [submitError, setSubmitError] = useState(null);
 
 	function handleClose() {
 		setForm(EMPTY_FORM);
+		setSubmitError(null);
 		onClose();
 	}
 
@@ -415,16 +306,25 @@ function AddModal({ isOpen, onClose, onAdd }) {
 		}));
 	}
 
-	function handleSubmit(e) {
+	async function handleSubmit(e) {
 		e.preventDefault();
-		onAdd({
-			...form,
-			id: crypto.randomUUID(),
-			created_at: new Date().toISOString(),
-			no_show_count: Number(form.no_show_count),
-			suspended_until: form.suspended_until ? `${form.suspended_until}T00:00:00Z` : null,
-		});
-		setForm(EMPTY_FORM);
+		setSubmitting(true);
+		setSubmitError(null);
+		try {
+			const newUser = await createUser(
+				form.email,
+				form.password,
+				form.full_name,
+				form.role,
+				form.student_id || null
+			);
+			onAdd(newUser);
+			setForm(EMPTY_FORM);
+		} catch (err) {
+			setSubmitError(err.message);
+		} finally {
+			setSubmitting(false);
+		}
 	}
 
 	return (
@@ -445,6 +345,15 @@ function AddModal({ isOpen, onClose, onAdd }) {
 					value={form.email}
 					onChange={handleChange}
 					placeholder="Email address"
+					required
+				/>
+				<Input
+					label="Password"
+					name="password"
+					type="password"
+					value={form.password}
+					onChange={handleChange}
+					placeholder="Initial password"
 					required
 				/>
 				<Input
@@ -497,12 +406,19 @@ function AddModal({ isOpen, onClose, onAdd }) {
 					/>
 				)}
 
+				{submitError && (
+					<p className="users-modal__error" role="alert">
+						<WarningCircle size={15} weight="fill" aria-hidden="true" />
+						{submitError}
+					</p>
+				)}
+
 				<div className="users-modal__actions">
-					<Button type="button" variant="secondary" onClick={handleClose}>
+					<Button type="button" variant="secondary" onClick={handleClose} disabled={submitting}>
 						Cancel
 					</Button>
-					<Button type="submit" variant="primary">
-						Add Account
+					<Button type="submit" variant="primary" disabled={submitting}>
+						{submitting ? 'Adding…' : 'Add Account'}
 					</Button>
 				</div>
 			</form>
