@@ -36,39 +36,37 @@ export async function getUserById(userId) {
 }
 
 export async function createUser(userData) {
-	console.log("SIGNUP INPUT:", userData);
+  console.log("SIGNUP INPUT:", userData);
 
-	const { data: authData, error: authError } = await supabase.auth.signUp({
-		email: userData.email,
-		password: userData.password,
-		options: {
-			data: {
-				full_name: userData.full_name,
-				student_id: userData.student_id ?? null,
-			},
-		},
-	});
+  const { data: authData, error: authError } =
+    await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password,
+      options: {
+        data: {
+          full_name: userData.full_name,
+          student_id: userData.student_id ?? null,
+        },
+      },
+    });
 
-	if (authError) {
-		throw new Error(`Auth signup failed: ${authError.message}`);
-	}
+  if (authError) throw new Error(authError.message);
+  if (!authData.user) throw new Error("No user returned");
 
-	if (!authData.user) {
-		throw new Error('Signup failed: no user returned');
-	}
+  // ✅ DO NOTHING ELSE HERE
+  // Trigger handles public.users
 
-	// 🔑 IMPORTANT: DO NOT insert into public.users here
-	// The DB trigger handles it
-
-	return {
-		id: authData.user.id,
-		email: userData.email,
-		full_name: userData.full_name,
-		role: userData.role ?? 'student',
-		student_id: userData.student_id ?? null,
-	};
+  return {
+    id: authData.user.id,
+    email: userData.email,
+    full_name: userData.full_name,
+    role: userData.role ?? "student",
+    student_id: userData.student_id ?? null,
+    no_show_count: 0,
+    is_account_suspended: false,
+    suspended_until: null,
+  };
 }
-
 export async function updateUser(userId, updates) {
 	console.log("USERID:", userId, "UPDATE INPUT:", updates);
 
