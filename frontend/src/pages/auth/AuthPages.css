@@ -697,6 +697,41 @@
   color: #27ae60;
 }
 
+.auth-suspension-banner {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1rem 1.05rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(192, 57, 43, 0.22);
+  background: linear-gradient(180deg, rgba(253, 236, 234, 0.96) 0%, rgba(255, 248, 247, 0.96) 100%);
+  box-shadow: 0 10px 24px rgba(192, 57, 43, 0.08);
+}
+
+.auth-suspension-banner__title {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.auth-suspension-banner__text,
+.auth-suspension-banner__timer,
+.auth-suspension-banner__reminder {
+  margin: 0;
+  color: #5b3a36;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.auth-suspension-banner__timer strong {
+  color: #8f1d17;
+}
+
+.auth-suspension-banner__reminder {
+  color: #7c4c44;
+}
+
 .auth-session-message {
   font-size: 0.82rem;
   color: #796f6f;

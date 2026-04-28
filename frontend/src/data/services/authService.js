@@ -15,16 +15,54 @@ export async function getCurrentUser() {
 }
 
 export async function login(email, password) {
-	const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+	const { data, error } = await supabase.auth.signInWithPassword({
+		email,
+		password,
+	});
+
 	if (error) throw new Error(`Auth error: ${error.message}`);
+
+	const userId = data.user.id;
 
 	const { data: userData, error: userError } = await supabase
 		.from('users')
-		.select('id, full_name, role, email')
-		.eq('id', data.user.id)
+		.select('id, full_name, role, email, is_account_suspended, suspended_until')
+		.eq('id', userId)
 		.single();
 
-	if (userError) throw new Error(`Profile fetch error: ${userError.message}`);
+	if (userError || !userData) {
+		await supabase.auth.signOut();
+		throw new Error('Profile fetch error');
+	}
+
+	const now = new Date();
+	const suspendedUntil = userData.suspended_until
+		? new Date(userData.suspended_until)
+		: null;
+
+	const isSuspended =
+		userData.is_account_suspended === true ||
+		(suspendedUntil && suspendedUntil > now);
+
+	if (isSuspended) {
+		await supabase.auth.signOut();
+		const untilLabel = suspendedUntil
+			? suspendedUntil.toLocaleDateString('en-PH', {
+				year: 'numeric',
+				month: 'short',
+				day: 'numeric',
+			})
+			: null;
+		const error = new Error(
+			untilLabel
+				? `Your account is suspended until ${untilLabel}. Please contact an administrator if you think this is a mistake.`
+				: 'Your account is suspended. Please contact an administrator if you think this is a mistake.'
+		);
+		error.code = 'ACCOUNT_SUSPENDED';
+		error.suspendedUntil = userData.suspended_until ?? null;
+		throw error;
+	}
+
 	return { ...userData, name: userData.full_name };
 }
 
