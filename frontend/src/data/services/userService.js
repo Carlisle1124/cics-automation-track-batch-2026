@@ -36,8 +36,6 @@ export async function getUserById(userId) {
 }
 
 export async function createUser(userData) {
-  console.log("SIGNUP INPUT:", userData);
-
   const { data: authData, error: authError } =
     await supabase.auth.signUp({
       email: userData.email,
@@ -68,8 +66,6 @@ export async function createUser(userData) {
   };
 }
 export async function updateUser(userId, updates) {
-	console.log("USERID:", userId, "UPDATE INPUT:", updates);
-
 	// only allow fields that exist in public.users
 	const payload = {
 		full_name: updates.full_name,

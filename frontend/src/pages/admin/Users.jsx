@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
 	Eye,
 	PencilSimple,
-	Trash,
 	Plus,
 	MagnifyingGlass,
 	X,
@@ -13,7 +12,7 @@ import PageHeader from '../../shared/components/PageHeader';
 import Modal from '../../shared/components/Modal';
 import Button from '../../shared/components/Button';
 import Input from '../../shared/components/Input';
-import { getAllUsers, createUser, updateUser, deleteUser } from '../../data/services/userService';
+import { getAllUsers, createUser, updateUser } from '../../data/services/userService';
 import './Users.css';
 
 /* ─── Constants ─────────────────────────────────────────── */
@@ -259,16 +258,38 @@ function EditModal({ user, onClose, onSave }) {
 	);
 }
 
-function DeleteModal({ user, onClose, onConfirm, isProcessing }) {
+function SuspendModal({ user, onClose, onConfirm, isProcessing }) {
 	if (!user) return null;
 
+	const defaultDate = user.suspended_until ? user.suspended_until.slice(0, 10) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+	const [until, setUntil] = useState(defaultDate);
+
+	// reset when user changes
+	useEffect(() => {
+		setUntil(user.suspended_until ? user.suspended_until.slice(0, 10) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
+	}, [user]);
+
 	return (
-		<Modal isOpen={Boolean(user)} title="Delete Account" onClose={onClose} className="ui-modal--flexible">
+		<Modal isOpen={Boolean(user)} title="Suspend Account" onClose={onClose} className="ui-modal--flexible">
 			<div className="users-modal__delete">
 				<p className="users-modal__delete-message">
-					Are you sure you want to delete the account of{' '}
-					<strong>{user.full_name}</strong>? This action cannot be undone.
+					Suspend the account of <strong>{user.full_name}</strong>. Select when the suspension should be lifted.
 				</p>
+
+				<div style={{ margin: '0.5rem 0 1rem' }}>
+					<label htmlFor="suspend-until" style={{ display: 'block', marginBottom: '0.4rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+						Suspend Until
+					</label>
+					<input
+						id="suspend-until"
+						type="date"
+						value={until}
+						onChange={(e) => setUntil(e.target.value)}
+						className="ui-input__control users-modal__select"
+						style={{ maxWidth: '14rem' }}
+					/>
+				</div>
+
 				<div className="users-modal__actions">
 					<Button type="button" variant="secondary" onClick={onClose} disabled={isProcessing}>
 						Cancel
@@ -277,10 +298,10 @@ function DeleteModal({ user, onClose, onConfirm, isProcessing }) {
 						type="button"
 						variant="primary"
 						className="users-modal__delete-confirm-btn"
-						onClick={() => onConfirm(user)}
+						onClick={() => onConfirm({ ...user, suspended_until: until, is_account_suspended: true })}
 						disabled={isProcessing}
 					>
-						{isProcessing ? 'Deleting…' : 'Delete Account'}
+						{isProcessing ? 'Suspending…' : 'Suspend Account'}
 					</Button>
 				</div>
 			</div>
@@ -492,7 +513,7 @@ function AddModal({ isOpen, onClose, onAdd }) {
 	);
 }
 
-function RowActionButtons({ user, onView, onEdit, onDelete, roleCounts }) {
+function RowActionButtons({ user, onView, onEdit, onDelete, onUnsuspend, roleCounts, isProcessing }) {
 	const isLastAdmin =
 		user.role === 'admin' && roleCounts.admin <= 1;
 
@@ -500,6 +521,7 @@ function RowActionButtons({ user, onView, onEdit, onDelete, roleCounts }) {
 		user.role === 'staff' && roleCounts.staff <= 1;
 
 	const disableDelete = isLastAdmin || isLastStaff;
+	const showUnsuspend = user.is_account_suspended;
 
 	return (
 		<div className="admin-users__action-buttons">
@@ -521,20 +543,33 @@ function RowActionButtons({ user, onView, onEdit, onDelete, roleCounts }) {
 				Edit
 			</button>
 
-			<button
-				type="button"
-				className="admin-users__action-btn admin-users__action-btn--danger"
-				onClick={() => onDelete(user)}
-				disabled={disableDelete}
-				title={
-					disableDelete
-						? 'Cannot delete the last account in this role'
-						: 'Delete account'
-				}
-			>
-				<Trash size={15} weight="duotone" />
-				Delete
-			</button>
+			{showUnsuspend ? (
+				<button
+					type="button"
+					className="admin-users__action-btn"
+					onClick={() => onUnsuspend(user)}
+					disabled={isProcessing}
+					title="Unsuspend account"
+				>
+					<X size={15} weight="bold" />
+					Unsuspend
+				</button>
+			) : (
+				<button
+					type="button"
+					className="admin-users__action-btn admin-users__action-btn--danger"
+					onClick={() => onDelete(user)}
+					disabled={disableDelete}
+					title={
+						disableDelete
+							? 'Cannot suspend the last account in this role'
+							: 'Suspend account'
+					}
+				>
+					<WarningCircle size={15} weight="duotone" />
+					Suspend
+				</button>
+			)}
 		</div>
 	);
 }
@@ -670,20 +705,45 @@ export default function Users() {
 	async function confirmDelete(target) {
 		try {
 			setIsProcessingAction(true);
-			await deleteUser(target.id);
-			setUsers((prev) => prev.filter((u) => u.id !== target.id));
+			const updated = await updateUser(target.id, {
+				suspended_until: target.suspended_until,
+				is_account_suspended: target.is_account_suspended,
+			});
+
+			setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
 			setDeleteModalUser(null);
 			setFeedbackModal({
-				title: 'Delete Successful',
-				message: `The account for ${target.full_name} was deleted successfully.`,
+				title: 'Suspend Successful',
+				message: `The account for ${updated.full_name} is suspended until ${formatDate(updated.suspended_until)}.`,
 			});
 		} catch (err) {
-			console.error('Failed to delete user:', err);
-			alert('Failed to delete user. Please try again.');
+			console.error('Failed to suspend user:', err);
+			alert('Failed to suspend user. Please try again.');
 		} finally {
 			setIsProcessingAction(false);
 		}
 	}
+
+		async function handleUnsuspend(target) {
+			try {
+				setIsProcessingAction(true);
+				const updated = await updateUser(target.id, {
+					suspended_until: null,
+					is_account_suspended: false,
+				});
+
+				setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+				setFeedbackModal({
+					title: 'Unsuspend Successful',
+					message: `The account for ${updated.full_name} has been unsuspended.`,
+				});
+			} catch (err) {
+				console.error('Failed to unsuspend user:', err);
+				alert('Failed to unsuspend user. Please try again.');
+			} finally {
+				setIsProcessingAction(false);
+			}
+		}
 
 	async function handleAdd(newUser) {
 		try {
@@ -829,7 +889,9 @@ export default function Users() {
 												onView={setViewUser}
 												onEdit={openEdit}
 												onDelete={setDeleteModalUser}
+												onUnsuspend={handleUnsuspend}
 												roleCounts={roleCounts}
+												isProcessing={isProcessingAction}
 											/>
 										</td>
 									</tr>
@@ -895,7 +957,7 @@ export default function Users() {
 				onConfirm={confirmEdit}
 				isProcessing={isProcessingAction}
 			/>
-			<DeleteModal
+			<SuspendModal
 				user={deleteModalUser}
 				onClose={() => setDeleteModalUser(null)}
 				onConfirm={confirmDelete}
