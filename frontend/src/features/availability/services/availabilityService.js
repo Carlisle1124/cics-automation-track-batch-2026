@@ -12,16 +12,14 @@ import {
 	isSlotAvailable as isSlotAvailableUtil,
 	isWithinGracePeriod as isWithinGracePeriodUtil,
 	summarizePendingEntryQueue,
+	summarizeApprovedReservationsQueue,
 } from '../../../shared/utils/reservation';
 
 export async function getAvailabilityByDate(date, referenceDate = new Date()) {
 	const rawAvailability = await fetchAvailabilityByDate(date);
 	const slots = rawAvailability.slots.map((slot) => enrichAvailabilitySlot(slot, rawAvailability.room.capacity));
-	const pendingEntryQueue = summarizePendingEntryQueue(
-		rawAvailability.reservations ?? [],
-		rawAvailability.availabilityAlerts ?? [],
-		slots,
-		referenceDate
+	const pendingEntryQueue = summarizeApprovedReservationsQueue(
+		rawAvailability.reservations ?? []
 	);
 
 	return buildAvailabilityResponse({

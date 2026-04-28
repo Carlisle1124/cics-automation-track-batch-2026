@@ -100,6 +100,41 @@
   color: var(--text-secondary);
 }
 
+/* Loading states */
+.availability-panel__card-label--loading,
+.availability-panel__card-value--loading,
+.availability-panel__card-description--loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading-shimmer 1.5s infinite;
+  border-radius: 0.25rem;
+}
+
+.availability-panel__card-label--loading {
+  height: 1.2rem;
+  width: 60%;
+}
+
+.availability-panel__card-value--loading {
+  height: 3rem;
+  width: 40%;
+}
+
+.availability-panel__card-description--loading {
+  height: 1rem;
+  width: 80%;
+  margin-top: 0.5rem;
+}
+
+@keyframes loading-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 .availability-panel__progress {
   width: 100%;
   height: 0.6rem;

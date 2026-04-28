@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+import { getAvailabilityByDate } from '../services/availabilityService';
 import Card from '../../../shared/components/Card';
 import './AvailabilityPanel.css';
 
@@ -12,13 +14,61 @@ function getLegendClass(status) {
 }
 
 export default function AvailabilityPanel({
-	availability,
 	showRules = true,
 	selectedSlotId,
 	onSlotSelect,
 }) {
+	const [availability, setAvailability] = useState(null);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		async function loadAvailability() {
+			try {
+				const todayAvailability = await getAvailabilityByDate(new Date());
+				setAvailability(todayAvailability);
+			} catch (error) {
+				console.error('Failed to load availability:', error);
+				setAvailability(null);
+			} finally {
+				setLoading(false);
+			}
+		}
+
+		loadAvailability();
+
+		// Refresh every 30 seconds for real-time updates
+		const interval = setInterval(loadAvailability, 30000);
+		return () => clearInterval(interval);
+	}, []);
+
+	if (loading) {
+		return (
+			<div className="availability-panel">
+				<div className="availability-panel__grid">
+					{Array.from({ length: 4 }, (_, index) => (
+						<Card key={index} className="availability-panel__card" padding="md" elevated>
+							<div className="availability-panel__card-label availability-panel__card-label--loading"></div>
+							<div className="availability-panel__card-value-row">
+								<div className="availability-panel__card-value availability-panel__card-value--loading"></div>
+							</div>
+							<div className="availability-panel__card-description availability-panel__card-description--loading"></div>
+						</Card>
+					))}
+				</div>
+			</div>
+		);
+	}
+
 	if (!availability) {
-		return null;
+		return (
+			<div className="availability-panel">
+				<div className="availability-panel__grid">
+					<Card className="availability-panel__card" padding="md" elevated>
+						<div className="availability-panel__card-description">Unable to load availability data</div>
+					</Card>
+				</div>
+			</div>
+		);
 	}
 
 	return (
@@ -50,7 +100,7 @@ export default function AvailabilityPanel({
 				))}
 			</div>
 
-			
+
 		</div>
 	);
 }

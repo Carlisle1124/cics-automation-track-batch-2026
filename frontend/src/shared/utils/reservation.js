@@ -178,4 +178,25 @@ export function summarizePendingEntryQueue(reservations = [], alerts = [], slotC
 	};
 }
 
+export function summarizeApprovedReservationsQueue(reservations = []) {
+	const userIds = new Set();
+	let count = 0;
+
+	reservations.forEach((reservation) => {
+		if (reservation?.status === 'approved') {
+			count += 1;
+			if (reservation.user_id) {
+				userIds.add(reservation.user_id);
+			}
+		}
+	});
+
+	return {
+		count,
+		reservationCount: count,
+		alertCount: 0,
+		userIds: Array.from(userIds),
+	};
+}
+
 

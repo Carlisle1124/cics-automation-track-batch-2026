@@ -24,18 +24,34 @@ function generateHourSlots(openTime, closeTime) {
 export async function getAvailabilityByDate(date) {
 	const dateStr = formatDateStr(date);
 
-	const [{ data: settings }, { data: override }] = await Promise.all([
-		supabase
+	let settings = null;
+	let override = null;
+
+	try {
+		const { data, error } = await supabase
 			.from('settings')
 			.select('default_occupancy_limit, default_open_time, default_close_time')
 			.eq('id', 1)
-			.single(),
-		supabase
+			.maybeSingle();
+
+		if (error) throw error;
+		settings = data;
+	} catch (err) {
+		console.warn('Could not load settings, using defaults:', err?.message ?? err);
+	}
+
+	try {
+		const { data, error } = await supabase
 			.from('calendar_overrides')
 			.select('is_closed, override_open_time, override_close_time, override_occupancy_limit')
 			.eq('target_date', dateStr)
-			.maybeSingle(),
-	]);
+			.maybeSingle();
+
+		if (error) throw error;
+		override = data;
+	} catch (err) {
+		console.warn('Could not load calendar overrides:', err?.message ?? err);
+	}
 
 	if (override?.is_closed) {
 		return { date: dateStr, slots: [], isClosed: true };
@@ -47,7 +63,7 @@ export async function getAvailabilityByDate(date) {
 
 	const { data: reservations, error } = await supabase
 		.from('reservations')
-		.select('start_time, end_time')
+		.select('id, start_time, end_time, status, user_id')
 		.eq('reservation_date', dateStr)
 		.in('status', ['pending', 'approved', 'checked_in', 'held']);
 
@@ -67,5 +83,6 @@ export async function getAvailabilityByDate(date) {
 		slots,
 		isClosed: false,
 		room: { capacity, openTime, closeTime },
+		reservations,
 	};
 }
