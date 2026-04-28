@@ -4,7 +4,6 @@ import {
 	PencilSimple,
 	Trash,
 	Plus,
-	DotsThreeVertical,
 	MagnifyingGlass,
 	X,
 	UserCircle,
@@ -13,6 +12,7 @@ import PageHeader from '../../shared/components/PageHeader';
 import Modal from '../../shared/components/Modal';
 import Button from '../../shared/components/Button';
 import Input from '../../shared/components/Input';
+import { getAllUsers, createUser, updateUser, deleteUser } from '../../data/services/userService';
 import './Users.css';
 
 /* ─── Mock data ─────────────────────────────────────────── */
@@ -510,85 +510,34 @@ function AddModal({ isOpen, onClose, onAdd }) {
 	);
 }
 
-/* ─── Row action menu ────────────────────────────────────── */
-function RowActionMenu({ user, onView, onEdit, onDelete }) {
-	const [open, setOpen] = useState(false);
-	const menuRef = useRef(null);
-
-	useEffect(() => {
-		if (!open) return;
-
-		function handlePointerDown(e) {
-			if (menuRef.current && !menuRef.current.contains(e.target)) {
-				setOpen(false);
-			}
-		}
-
-		function handleEscape(e) {
-			if (e.key === 'Escape') setOpen(false);
-		}
-
-		document.addEventListener('mousedown', handlePointerDown);
-		document.addEventListener('touchstart', handlePointerDown);
-		document.addEventListener('keydown', handleEscape);
-		return () => {
-			document.removeEventListener('mousedown', handlePointerDown);
-			document.removeEventListener('touchstart', handlePointerDown);
-			document.removeEventListener('keydown', handleEscape);
-		};
-	}, [open]);
-
+function RowActionButtons({ user, onView, onEdit, onDelete }) {
 	return (
-		<div className="action-menu-container" ref={menuRef}>
+		<div className="admin-users__action-buttons">
+			<button type="button" className="admin-users__action-btn" onClick={() => onView(user)}>
+				<Eye size={15} weight="duotone" aria-hidden="true" />
+				View
+			</button>
+			<button type="button" className="admin-users__action-btn" onClick={() => onEdit(user)}>
+				<PencilSimple size={15} weight="duotone" aria-hidden="true" />
+				Edit
+			</button>
 			<button
 				type="button"
-				className="action-menu-btn"
-				aria-label={`Actions for ${user.full_name}`}
-				aria-haspopup="true"
-				aria-expanded={open}
-				onClick={() => setOpen((v) => !v)}
+				className="admin-users__action-btn admin-users__action-btn--danger"
+				onClick={() => onDelete(user)}
 			>
-				<DotsThreeVertical size={20} weight="bold" />
+				<Trash size={15} weight="duotone" aria-hidden="true" />
+				Delete
 			</button>
-
-			{open && (
-				<div className="action-dropdown" role="menu">
-					<button
-						type="button"
-						className="action-dropdown__item"
-						role="menuitem"
-						onClick={() => { setOpen(false); onView(user); }}
-					>
-						<Eye size={15} weight="duotone" aria-hidden="true" />
-						View
-					</button>
-					<button
-						type="button"
-						className="action-dropdown__item"
-						role="menuitem"
-						onClick={() => { setOpen(false); onEdit(user); }}
-					>
-						<PencilSimple size={15} weight="duotone" aria-hidden="true" />
-						Edit
-					</button>
-					<button
-						type="button"
-						className="action-dropdown__item action-dropdown__item--danger"
-						role="menuitem"
-						onClick={() => { setOpen(false); onDelete(user); }}
-					>
-						<Trash size={15} weight="duotone" aria-hidden="true" />
-						Delete
-					</button>
-				</div>
-			)}
 		</div>
 	);
 }
 
 /* ─── Main page ──────────────────────────────────────────── */
 export default function Users() {
-	const [users, setUsers] = useState(MOCK_USERS);
+	const [users, setUsers] = useState([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState(null);
 	const [activeTab, setActiveTab] = useState('all');
 	const [search, setSearch] = useState('');
 	const [currentPage, setCurrentPage] = useState(1);
@@ -598,8 +547,26 @@ export default function Users() {
 	// editKey is stable while closing (so animation plays) but changes
 	// when a new user is opened for editing (remounting EditModal with fresh form).
 	const [editKey, setEditKey] = useState('edit');
-	const [deleteUser, setDeleteUser] = useState(null);
+	const [deleteModalUser, setDeleteModalUser] = useState(null);
 	const [isAddOpen, setIsAddOpen] = useState(false);
+
+	// Fetch users on component mount
+	useEffect(() => {
+		async function loadUsers() {
+			try {
+				setIsLoading(true);
+				setError(null);
+				const data = await getAllUsers();
+				setUsers(data || []);
+			} catch (err) {
+				console.error('Failed to load users:', err);
+				setError(err.message || 'Failed to load users. Please refresh the page.');
+			} finally {
+				setIsLoading(false);
+			}
+		}
+		loadUsers();
+	}, []);
 
 	useEffect(() => {
 		const previousTitle = document.title;
@@ -651,19 +618,37 @@ export default function Users() {
 	const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
 	const paginatedUsers = filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-	function handleSave(updated) {
-		setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-		setEditUser(null);
+	async function handleSave(updated) {
+		try {
+			await updateUser(updated.id, updated);
+			setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+			setEditUser(null);
+		} catch (err) {
+			console.error('Failed to save user:', err);
+			alert('Failed to save changes. Please try again.');
+		}
 	}
 
-	function handleDelete(target) {
-		setUsers((prev) => prev.filter((u) => u.id !== target.id));
-		setDeleteUser(null);
+	async function handleDelete(target) {
+		try {
+			await deleteUser(target.id);
+			setUsers((prev) => prev.filter((u) => u.id !== target.id));
+			setDeleteModalUser(null);
+		} catch (err) {
+			console.error('Failed to delete user:', err);
+			alert('Failed to delete user. Please try again.');
+		}
 	}
 
-	function handleAdd(newUser) {
-		setUsers((prev) => [newUser, ...prev]);
-		setIsAddOpen(false);
+	async function handleAdd(newUser) {
+		try {
+			const createdUser = await createUser(newUser);
+			setUsers((prev) => [createdUser, ...prev]);
+			setIsAddOpen(false);
+		} catch (err) {
+			console.error('Failed to create user:', err);
+			alert('Failed to create user. Please try again.');
+		}
 	}
 
 	function openEdit(user) {
@@ -679,6 +664,26 @@ export default function Users() {
 				subtitle="View, add, edit, and remove user accounts."
 			/>
 
+			{isLoading && (
+				<div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
+					Loading users...
+				</div>
+			)}
+
+			{error && (
+				<div style={{ 
+					padding: '1rem', 
+					margin: '1rem', 
+					backgroundColor: '#fee', 
+					border: '1px solid #fcc', 
+					borderRadius: '4px',
+					color: '#c00'
+				}}>
+					{error}
+				</div>
+			)}
+
+			{!isLoading && !error && (
 			<div className="reservations-table admin-users__table-shell">
 				{/* Header: tabs + search */}
 				<div className="reservations-table__header admin-users__table-header">
@@ -775,11 +780,11 @@ export default function Users() {
 											<span className="date">{formatDate(user.created_at)}</span>
 										</td>
 										<td className="table-cell admin-users__actions-cell">
-											<RowActionMenu
+											<RowActionButtons
 												user={user}
 												onView={setViewUser}
 												onEdit={openEdit}
-												onDelete={setDeleteUser}
+												onDelete={setDeleteModalUser}
 											/>
 										</td>
 									</tr>
@@ -824,6 +829,7 @@ export default function Users() {
 					</div>
 				</div>
 			</div>
+			)}
 
 			{/* Floating Add button */}
 			<button
@@ -838,7 +844,7 @@ export default function Users() {
 			{/* Modals */}
 			<ViewModal user={viewUser} onClose={() => setViewUser(null)} />
 			<EditModal key={editKey} user={editUser} onClose={() => setEditUser(null)} onSave={handleSave} />
-			<DeleteModal user={deleteUser} onClose={() => setDeleteUser(null)} onConfirm={handleDelete} />
+			<DeleteModal user={deleteModalUser} onClose={() => setDeleteModalUser(null)} onConfirm={handleDelete} />
 			<AddModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onAdd={handleAdd} />
 		</section>
 	);

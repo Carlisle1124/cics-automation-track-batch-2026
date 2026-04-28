@@ -231,6 +231,46 @@
   padding-right: 0.5rem;
 }
 
+.admin-users__action-buttons {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.admin-users__action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  padding: 0.38rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.admin-users__action-btn:hover {
+  transform: translateY(-1px);
+  background: color-mix(in oklab, var(--primary-5) 10%, var(--bg-elevated) 90%);
+  border-color: color-mix(in oklab, var(--primary-5) 30%, var(--border-subtle) 70%);
+  color: var(--text-primary);
+}
+
+.admin-users__action-btn--danger:hover {
+  background: color-mix(in oklab, #ef4444 10%, var(--bg-elevated) 90%);
+  border-color: color-mix(in oklab, #ef4444 30%, var(--border-subtle) 70%);
+  color: #b91c1c;
+}
+
 /* ── Empty state ─────────────────────────────────────── */
 .admin-users__empty-state {
   text-align: center;
