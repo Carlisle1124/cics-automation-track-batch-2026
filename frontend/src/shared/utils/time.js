@@ -21,6 +21,21 @@ export function toMinutes(timeValue) {
 		return 0;
 	}
 
+	const amPmMatch = trimmedValue.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
+	if (amPmMatch) {
+		let hours = Number(amPmMatch[1]);
+		const minutes = Number(amPmMatch[2] ?? '0');
+		const period = amPmMatch[3].toUpperCase();
+
+		if (period === 'AM') {
+			hours = hours === 12 ? 0 : hours;
+		} else if (period === 'PM') {
+			hours = hours === 12 ? 12 : hours + 12;
+		}
+
+		return normalizeMinutes(hours * 60 + minutes);
+	}
+
 	if (trimmedValue.includes(':')) {
 		const [hoursPart = '0', minutesPart = '0'] = trimmedValue.split(':');
 		const hours = Number(hoursPart);

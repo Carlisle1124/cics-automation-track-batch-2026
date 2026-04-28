@@ -68,6 +68,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 10rem;
+  text-transform: uppercase;
 }
 
 .app-topbar__logout {

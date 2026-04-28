@@ -5,6 +5,7 @@ import { getCurrentUser } from '../../../data/services/authService';
 import { holdSlot, confirmSlot, releaseSlot } from '../../../data/services/reservationService';
 import { validateReservation } from '../../../data/services/reservationLogic';
 import './ReserveButton.css';
+import SlotsBreakdown from '../../features/availability/components/SlotsBreakdown';
 
 // Generate 08:00 – 16:00 start times (latest start that allows at least 1 hr before close)
 const HOUR_OPTIONS = Array.from({ length: 9 }, (_, i) => {

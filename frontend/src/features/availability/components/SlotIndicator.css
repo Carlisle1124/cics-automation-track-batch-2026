@@ -13,7 +13,6 @@
 
 .slot-indicator--vacant {
 	background-color: #e5e5e5;
-	border: 2px solid transparent;
 }
 
 .slot-indicator--vacant:hover {
@@ -23,7 +22,6 @@
 
 .slot-indicator--occupied {
 	background-color: #ae192a;
-	border: 2px solid transparent;
 }
 
 .slot-indicator--occupied:hover {
@@ -39,7 +37,6 @@
 		#e8c76d 10px,
 		#e8c76d 20px
 	);
-	border: 2px solid transparent;
 	position: relative;
 }
 

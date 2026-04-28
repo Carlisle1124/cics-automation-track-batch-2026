@@ -54,14 +54,3 @@ export default function AvailabilityPanel({
 		</div>
 	);
 }
-// ============================================================
-// Card component to show availability statuses for the day, with a progress BAR and color gradient for availability status
-// e.g.: 
-// 13 slots occupied = ~25% full
-// 25 slots occupied = ~50% full
-// 38 slots occupied = ~75% full
-// 50 slots occupied = 100% full
-// gradient from yellow (available) to red (full)
-// 4 cards: _ SLOTS AVAIABLE NOW, _ SLOTS AVAIABLE IN 1 HOUR, _ SLOTS RESERVED NOW, the progress bar should reflect the % of slots reserved for that time period
-// ============================================================
-

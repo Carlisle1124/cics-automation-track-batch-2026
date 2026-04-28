@@ -8,6 +8,7 @@ import {
 	ROOMS,
 } from '../../data/mock/mockData';
 import PageHeader from '../../shared/components/PageHeader';
+import { formatTimeRange } from '../../shared/utils/datetime';
 import './Profile.css';
 
 function formatDate(dateValue) {
@@ -170,10 +171,6 @@ export default function Profile() {
 							<span className="profile-row__value">{user.studentId ?? 'Not assigned'}</span>
 						</div>
 						<div className="profile-row">
-							<span className="profile-row__label">Email Verification</span>
-							<span className="profile-row__value">{user.emailVerified ? 'Verified' : 'Pending'}</span>
-						</div>
-						<div className="profile-row">
 							<span className="profile-row__label">Remember Me</span>
 							<span className="profile-row__value">{user.rememberMe ? 'Enabled' : 'Disabled'}</span>
 						</div>
@@ -197,7 +194,9 @@ export default function Profile() {
 						</div>
 						<div className="profile-row">
 							<span className="profile-row__label">Operating Hours</span>
-							<span className="profile-row__value">{learningCommons?.openTime ?? '08:00'} - {learningCommons?.closeTime ?? '17:00'}</span>
+							<span className="profile-row__value">
+								{formatTimeRange(learningCommons?.openTime ?? '8:00 AM', learningCommons?.closeTime ?? '5:00 PM')}
+							</span>
 						</div>
 					</div>
 				</article>

@@ -108,8 +108,8 @@ export function isWithinOperatingHours(referenceDate = new Date(), rules = AVAIL
 	return minutes >= rules.operatingStartMinutes && minutes < rules.operatingEndMinutes;
 }
 
-export function buildAvailabilityCards({ currentSlot, nextSlot, summary, occupancy, pendingEntryQueue }) {
-	const occupancyCapacity = occupancy?.capacity ?? summary.totalCapacity ?? 0;
+export function buildAvailabilityCards({ currentSlot, nextSlot, summary, occupancy, pendingEntryQueue, room }) {
+	const occupancyCapacity = occupancy?.capacity ?? room?.capacity ?? summary.totalCapacity ?? 0;
 	const activeOccupancyCount = occupancy?.activeCount ?? 0;
 	const occupiedPercent = occupancy?.occupiedPercent ?? 0;
 	const occupancyLabel = formatOccupancyLabel(activeOccupancyCount, occupancyCapacity);
@@ -200,7 +200,7 @@ export function buildAvailabilityResponse({ date, room, slots, occupancy, pendin
 			current: currentSlot,
 			next: nextSlot,
 		},
-		cards: buildAvailabilityCards({ currentSlot, nextSlot, summary, occupancy, pendingEntryQueue }),
+		cards: buildAvailabilityCards({ currentSlot, nextSlot, summary, occupancy, pendingEntryQueue, room }),
 		legend: getAvailabilityLegend(),
 		rules: getAvailabilityRules(room, rules),
 	};

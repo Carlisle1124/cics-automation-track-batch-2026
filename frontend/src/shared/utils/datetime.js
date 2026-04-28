@@ -7,6 +7,15 @@ import {
     toMinutes,
 } from './time';
 
+function formatClockValue(timeValue, options = {}) {
+    if (timeValue == null || timeValue === '') {
+        return 'N/A';
+    }
+
+    const minutes = toMinutes(timeValue);
+    return formatMinutesToClock(minutes, options);
+}
+
 export function formatTime(date, formatString) {
     const normalizedDate = new Date(date);
 
@@ -34,6 +43,21 @@ export function getCurrentDate() {
 
 export function getCurrentTime() {
     return getCurrentTimeLabel();
+}
+
+export function formatTimeOfDay(timeValue, options = {}) {
+    return formatClockValue(timeValue, options);
+}
+
+export function formatTimeRange(startTime, endTime, options = {}) {
+    const startLabel = formatClockValue(startTime, options);
+    const endLabel = formatClockValue(endTime, options);
+
+    if (startLabel === 'N/A' && endLabel === 'N/A') {
+        return 'N/A';
+    }
+
+    return `${startLabel} - ${endLabel}`;
 }
 
 export { compareSlots, checkOverlap };
