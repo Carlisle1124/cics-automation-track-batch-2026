@@ -6,12 +6,13 @@ import '../shared/styles/LayoutShell.css';
 export default function StaffLayout() {
 	const location = useLocation();
 	const isStaffPendingRequests = location.pathname === '/staff';
+	const isStaffScheduleForStudents = location.pathname === '/staff/schedule-for-students';
 
 	return (
 		<div
 			className={`app-shell${
 				isStaffPendingRequests ? ' app-shell--staff-pending-entry' : ''
-			}`}
+			}${isStaffScheduleForStudents ? ' app-shell--staff-schedule-entry' : ''}`}
 		>
 			<Navbar role="staff" />
 			<main className="app-main">
