@@ -15,6 +15,39 @@ const QUICK_LOGIN_ACCOUNTS = {
 	staff: { email: 'staff.cics@ust.edu.ph', password: 'password123' },
 };
 
+function formatCountdown(targetDate) {
+	if (!targetDate) return '';
+
+	const diffMs = Math.max(0, targetDate.getTime() - Date.now());
+	const totalSeconds = Math.floor(diffMs / 1000);
+	const days = Math.floor(totalSeconds / 86400);
+	const hours = Math.floor((totalSeconds % 86400) / 3600);
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds % 60;
+
+	return [
+		days > 0 ? `${days}d` : null,
+		`${String(hours).padStart(2, '0')}h`,
+		`${String(minutes).padStart(2, '0')}m`,
+		`${String(seconds).padStart(2, '0')}s`,
+	]
+		.filter(Boolean)
+		.join(' ');
+}
+
+function formatSuspensionDate(value) {
+	if (!value) return '';
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) return '';
+	return date.toLocaleDateString('en-PH', {
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric',
+		hour: 'numeric',
+		minute: '2-digit',
+	});
+}
+
 function validateEmail(value) {
 	const trimmed = value.trim().toLowerCase();
 
@@ -51,6 +84,7 @@ export default function Login() {
 	const [statusType, setStatusType] = useState('info');
 	const [errorModalOpen, setErrorModalOpen] = useState(false);
 	const [errorModalMessage, setErrorModalMessage] = useState('');
+	const [suspensionInfo, setSuspensionInfo] = useState(null);
 
 	// Field-level validation
 	const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -73,6 +107,19 @@ export default function Login() {
 	const forgotEmailError = forgotEmailSubmitted ? validateEmail(forgotEmail) : '';
 	const forgotOtpValidationError = forgotOtpSubmitted ? validateOtp(forgotOtp) : '';
 	const forgotOtpDisplayError = forgotOtpValidationError || forgotError;
+	const suspensionUntilDate = suspensionInfo?.suspendedUntil ? new Date(suspensionInfo.suspendedUntil) : null;
+	const suspensionCountdown = suspensionUntilDate ? formatCountdown(suspensionUntilDate) : '';
+	const suspensionUntilLabel = suspensionInfo?.suspendedUntil ? formatSuspensionDate(suspensionInfo.suspendedUntil) : '';
+
+	useEffect(() => {
+		if (!suspensionInfo?.suspendedUntil) return undefined;
+
+		const timerId = window.setInterval(() => {
+			setSuspensionInfo((current) => (current ? { ...current } : current));
+		}, 1000);
+
+		return () => window.clearInterval(timerId);
+	}, [suspensionInfo?.suspendedUntil]);
 
 	useEffect(() => {
 		let active = true;
@@ -138,6 +185,17 @@ const setStatus = useCallback((message, type = 'info') => {
 		setErrorModalOpen(true);
 	}
 
+	function showSuspensionInfo(err) {
+		const suspendedUntil = err?.suspendedUntil ? new Date(err.suspendedUntil) : null;
+		setSuspensionInfo({
+			message: err?.message || 'Your account is suspended. Please contact an administrator if you think this is a mistake.',
+			suspendedUntil: err?.suspendedUntil ?? null,
+		});
+		setStatus(err?.message || 'Your account is suspended.', 'error');
+		setErrorModalMessage(err?.message || 'Your account is suspended. Please contact an administrator if you think this is a mistake.');
+		setErrorModalOpen(true);
+	}
+
 	async function handleQuickLogin(role) {
 		const account = QUICK_LOGIN_ACCOUNTS[role];
 		setEmail(account.email);
@@ -153,6 +211,10 @@ const setStatus = useCallback((message, type = 'info') => {
 			navigate(getRoleRoute(user.role));
 		} catch (err) {
 			setStatus('Sign in failed.', 'error');
+			if (err?.code === 'ACCOUNT_SUSPENDED' || String(err?.message || '').toLowerCase().includes('suspended')) {
+				showSuspensionInfo(err);
+				return;
+			}
 			showErrorModal(err.message || 'Invalid email or password. Please try again.');
 		} finally {
 			setIsSubmitting(false);
@@ -181,6 +243,10 @@ const setStatus = useCallback((message, type = 'info') => {
 			navigate(getRoleRoute(user.role));
 		} catch (err) {
 			setStatus('Sign in failed.', 'error');
+			if (err?.code === 'ACCOUNT_SUSPENDED' || String(err?.message || '').toLowerCase().includes('suspended')) {
+				showSuspensionInfo(err);
+				return;
+			}
 			showErrorModal(err.message || 'Invalid email or password. Please try again.');
 		} finally {
 			setIsSubmitting(false);
@@ -374,6 +440,22 @@ const setStatus = useCallback((message, type = 'info') => {
 				</div>
 
 				<p className={`auth-status-message auth-status-message--${statusType}`}>{statusMessage}</p>
+				{suspensionInfo ? (
+					<div className="auth-suspension-banner" role="status" aria-live="polite">
+						<h3 className="auth-suspension-banner__title">Account suspended</h3>
+						<p className="auth-suspension-banner__text">
+							Your account is suspended until <strong>{suspensionUntilLabel || 'further notice'}</strong>.
+						</p>
+						{suspensionCountdown ? (
+							<p className="auth-suspension-banner__timer">
+								Time remaining: <strong>{suspensionCountdown}</strong>
+							</p>
+						) : null}
+						<p className="auth-suspension-banner__reminder">
+							If you think this was a mistake, please contact the administrator.
+						</p>
+					</div>
+				) : null}
 				<p className="auth-session-message">
 					{currentUser ? `Active session: ${currentUser.full_name}` : 'No active session yet.'}
 				</p>

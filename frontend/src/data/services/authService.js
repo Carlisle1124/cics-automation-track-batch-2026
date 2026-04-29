@@ -1,5 +1,4 @@
 import { supabase } from '../supabaseClient';
-import { USERS } from '../mock/mockData';
 
 export async function getCurrentUser() {
 	const { data: { session } } = await supabase.auth.getSession();
@@ -16,16 +15,54 @@ export async function getCurrentUser() {
 }
 
 export async function login(email, password) {
-	const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+	const { data, error } = await supabase.auth.signInWithPassword({
+		email,
+		password,
+	});
+
 	if (error) throw new Error(`Auth error: ${error.message}`);
+
+	const userId = data.user.id;
 
 	const { data: userData, error: userError } = await supabase
 		.from('users')
-		.select('id, full_name, role, email')
-		.eq('id', data.user.id)
+		.select('id, full_name, role, email, is_account_suspended, suspended_until')
+		.eq('id', userId)
 		.single();
 
-	if (userError) throw new Error(`Profile fetch error: ${userError.message}`);
+	if (userError || !userData) {
+		await supabase.auth.signOut();
+		throw new Error('Profile fetch error');
+	}
+
+	const now = new Date();
+	const suspendedUntil = userData.suspended_until
+		? new Date(userData.suspended_until)
+		: null;
+
+	const isSuspended =
+		userData.is_account_suspended === true ||
+		(suspendedUntil && suspendedUntil > now);
+
+	if (isSuspended) {
+		await supabase.auth.signOut();
+		const untilLabel = suspendedUntil
+			? suspendedUntil.toLocaleDateString('en-PH', {
+				year: 'numeric',
+				month: 'short',
+				day: 'numeric',
+			})
+			: null;
+		const error = new Error(
+			untilLabel
+				? `Your account is suspended until ${untilLabel}. Please contact an administrator if you think this is a mistake.`
+				: 'Your account is suspended. Please contact an administrator if you think this is a mistake.'
+		);
+		error.code = 'ACCOUNT_SUSPENDED';
+		error.suspendedUntil = userData.suspended_until ?? null;
+		throw error;
+	}
+
 	return { ...userData, name: userData.full_name };
 }
 
@@ -94,7 +131,69 @@ export async function verifyEmailFromUrl() {
 	return { user: session.user, role: userData?.role ?? 'student' };
 }
 
-// Still mock — backend integration for user listing is out of scope for this step
-export function getUsers() {
-	return Promise.resolve(USERS);
+// ─── User management (Supabase) ───────────────────────────
+
+export async function getUsers() {
+	const { data, error } = await supabase
+		.from('users')
+		.select('id, email, full_name, role, no_show_count, suspended_until, is_account_suspended, created_at, student_id')
+		.order('created_at', { ascending: false });
+
+	if (error) throw new Error(error.message);
+	return data ?? [];
+}
+
+export async function updateUser(id, fields) {
+	const allowed = ['full_name', 'email', 'student_id', 'role', 'no_show_count', 'is_account_suspended', 'suspended_until'];
+	const payload = Object.fromEntries(
+		Object.entries(fields).filter(([key]) => allowed.includes(key))
+	);
+
+	const { data, error } = await supabase
+		.from('users')
+		.update(payload)
+		.eq('id', id)
+		.select('id, email, full_name, role, no_show_count, suspended_until, is_account_suspended, created_at, student_id')
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
+export async function deleteUser(id) {
+	const { error } = await supabase
+		.from('users')
+		.delete()
+		.eq('id', id);
+
+	if (error) throw new Error(error.message);
+}
+
+export async function createUser(email, password, fullName, role, studentId) {
+	const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+		email,
+		password,
+		email_confirm: true,
+		user_metadata: { full_name: fullName, student_id: studentId ?? null },
+	});
+
+	if (authError) throw new Error(authError.message);
+
+	const userId = authData.user.id;
+
+	// The DB trigger should insert the profile row; if not, upsert to be safe.
+	const { data, error } = await supabase
+		.from('users')
+		.upsert({
+			id: userId,
+			email,
+			full_name: fullName,
+			role: role ?? 'student',
+			student_id: studentId ?? null,
+		})
+		.select('id, email, full_name, role, no_show_count, suspended_until, is_account_suspended, created_at, student_id')
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
 }
