@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getAvailabilityByDate } from '../services/availabilityService';
+import { supabase } from '../../../data/supabaseClient';
 import Card from '../../../shared/components/Card';
 import './AvailabilityPanel.css';
 
@@ -21,25 +22,43 @@ export default function AvailabilityPanel({
 	const [availability, setAvailability] = useState(null);
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		async function loadAvailability() {
-			try {
-				const todayAvailability = await getAvailabilityByDate(new Date());
-				setAvailability(todayAvailability);
-			} catch (error) {
-				console.error('Failed to load availability:', error);
-				setAvailability(null);
-			} finally {
-				setLoading(false);
-			}
+	const loadAvailability = useCallback(async () => {
+		try {
+			const todayAvailability = await getAvailabilityByDate(new Date());
+			setAvailability(todayAvailability);
+		} catch (error) {
+			console.error('Failed to load availability:', error);
+			setAvailability(null);
+		} finally {
+			setLoading(false);
 		}
-
-		loadAvailability();
-
-		// Refresh every 30 seconds for real-time updates
-		const interval = setInterval(loadAvailability, 30000);
-		return () => clearInterval(interval);
 	}, []);
+
+	useEffect(() => {
+		loadAvailability();
+	}, [loadAvailability]);
+
+	// Real-time subscription to reservations changes
+	useEffect(() => {
+		const today = new Date().toISOString().slice(0, 10);
+		const channel = supabase
+			.channel(`availability-${today}`)
+			.on(
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'reservations',
+					filter: `reservation_date=eq.${today}`,
+				},
+				loadAvailability
+			)
+			.subscribe();
+
+		return () => {
+			supabase.removeChannel(channel);
+		};
+	}, [loadAvailability]);
 
 	if (loading) {
 		return (

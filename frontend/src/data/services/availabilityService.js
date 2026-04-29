@@ -21,7 +21,7 @@ function generateHourSlots(openTime, closeTime) {
 	return slots;
 }
 
-export async function getAvailabilityByDate(date) {
+export async function getAvailabilityByDate(date, referenceDate = new Date()) {
 	const dateStr = formatDateStr(date);
 
 	let settings = null;
@@ -78,11 +78,59 @@ export async function getAvailabilityByDate(date) {
 		return { ...slot, reservedCount, capacity, available, status };
 	});
 
+	// Calculate occupancy based on checked_in reservations
+	const checkedInCount = (reservations ?? []).filter((r) => r.status === 'checked_in').length;
+	const occupancyPercent = capacity > 0 ? Math.round((checkedInCount / capacity) * 100) : 0;
+	const occupancy = {
+		activeCount: checkedInCount,
+		capacity,
+		occupiedPercent: occupancyPercent,
+		status: checkedInCount === 0 ? 'empty' : occupancyPercent >= 100 ? 'full' : occupancyPercent >= 80 ? 'partial' : 'available',
+	};
+
+	// Calculate available slots for the day (capacity - approved - checked_in)
+	const approvedCount = (reservations ?? []).filter((r) => r.status === 'approved').length;
+	const dailyAvailableSlots = Math.max(capacity - approvedCount - checkedInCount, 0);
+	const dailyAvailabilityPercent = capacity > 0 ? Math.round((dailyAvailableSlots / capacity) * 100) : 0;
+
+	// Calculate available slots for next hour
+	// Get current time and next hour boundary
+	const currentHours = String(referenceDate.getHours()).padStart(2, '0');
+	const currentMinutes = String(referenceDate.getMinutes()).padStart(2, '0');
+	const currentSeconds = String(referenceDate.getSeconds()).padStart(2, '0');
+	const currentTimeStr = `${currentHours}:${currentMinutes}:${currentSeconds}`;
+	
+	const nextHour = (referenceDate.getHours() + 1) % 24;
+	const nextHourStr = String(nextHour).padStart(2, '0') + ':00:00';
+	
+	// Count approved and checked_in reservations that overlap from current time to next hour boundary
+	const nextHourOverlapCount = (reservations ?? []).filter((r) => {
+		const isApprovedOrCheckedIn = r.status === 'approved' || r.status === 'checked_in';
+		const overlapsWindow = r.start_time <= nextHourStr && r.end_time > currentTimeStr;
+		return isApprovedOrCheckedIn && overlapsWindow;
+	}).length;
+	
+	const nextHourAvailableSlots = Math.max(capacity - nextHourOverlapCount, 0);
+	const nextHourAvailabilityPercent = capacity > 0 ? Math.round((nextHourAvailableSlots / capacity) * 100) : 0;
+
 	return {
 		date: dateStr,
 		slots,
 		isClosed: false,
 		room: { capacity, openTime, closeTime },
 		reservations,
+		occupancy,
+		dailyAvailability: {
+			availableSlots: dailyAvailableSlots,
+			capacity,
+			availabilityPercent: dailyAvailabilityPercent,
+			status: dailyAvailableSlots === 0 ? 'full' : dailyAvailabilityPercent <= 20 ? 'nearly full' : 'available',
+		},
+		nextHourAvailability: {
+			availableSlots: nextHourAvailableSlots,
+			capacity,
+			availabilityPercent: nextHourAvailabilityPercent,
+			status: nextHourAvailableSlots === 0 ? 'full' : nextHourAvailabilityPercent <= 20 ? 'nearly full' : 'available',
+		},
 	};
 }

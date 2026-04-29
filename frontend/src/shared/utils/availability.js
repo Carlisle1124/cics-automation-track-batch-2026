@@ -108,16 +108,34 @@ export function isWithinOperatingHours(referenceDate = new Date(), rules = AVAIL
 	return minutes >= rules.operatingStartMinutes && minutes < rules.operatingEndMinutes;
 }
 
-export function buildAvailabilityCards({ currentSlot, nextSlot, summary, occupancy, pendingEntryQueue, room }) {
+export function buildAvailabilityCards({ currentSlot, nextSlot, summary, occupancy, pendingEntryQueue, room, dailyAvailability, nextHourAvailability }) {
 	const occupancyCapacity = occupancy?.capacity ?? room?.capacity ?? summary.totalCapacity ?? 0;
 	const activeOccupancyCount = occupancy?.activeCount ?? 0;
 	const occupiedPercent = occupancy?.occupiedPercent ?? 0;
 	const occupancyLabel = formatOccupancyLabel(activeOccupancyCount, occupancyCapacity);
 	const queueCount = pendingEntryQueue?.count ?? 0;
+	const availableSlots = dailyAvailability?.availableSlots ?? 0;
+	const availabilityPercent = dailyAvailability?.availabilityPercent ?? 0;
+	const nextHourAvailableSlots = nextHourAvailability?.availableSlots ?? 0;
+	const nextHourAvailabilityPercent = nextHourAvailability?.availabilityPercent ?? 0;
 
 	return [
-		buildWindowCard(currentSlot, 'Slots Available Now'),
-		buildWindowCard(nextSlot, 'Slots Available In 1 Hour'),
+		{
+			label: 'Slots Available',
+			value: availableSlots,
+			progress: 100 - availabilityPercent,
+			status: dailyAvailability?.status ?? 'available',
+			unit: 'slots',
+			description: `${availableSlots} of ${dailyAvailability?.capacity ?? 0} available`,
+		},
+		{
+			label: 'Slots Available In 1 Hour',
+			value: nextHourAvailableSlots,
+			progress: 100 - nextHourAvailabilityPercent,
+			status: nextHourAvailability?.status ?? 'available',
+			unit: 'slots',
+			description: `${nextHourAvailableSlots} of ${nextHourAvailability?.capacity ?? 0} available`,
+		},
 		{
 			label: 'Pending Entry Queue',
 			value: queueCount,
@@ -182,7 +200,7 @@ export function getCurrentWindowLabel(referenceDate = new Date(), rules = AVAILA
 		: 'Outside operating hours';
 }
 
-export function buildAvailabilityResponse({ date, room, slots, occupancy, pendingEntryQueue, referenceDate = new Date(), rules = AVAILABILITY_RULES }) {
+export function buildAvailabilityResponse({ date, room, slots, occupancy, pendingEntryQueue, dailyAvailability, nextHourAvailability, referenceDate = new Date(), rules = AVAILABILITY_RULES }) {
 	const summary = finalizeAvailabilitySummary(summarizeAvailabilitySlots(slots));
 	const isToday = isSameDate(date, getCurrentDateKey(referenceDate));
 	const { currentSlot, nextSlot } = isToday ? getCurrentTimeWindow(slots, referenceDate) : { currentSlot: null, nextSlot: null };
@@ -193,6 +211,8 @@ export function buildAvailabilityResponse({ date, room, slots, occupancy, pendin
 		slots,
 		occupancy,
 		pendingEntryQueue,
+		dailyAvailability,
+		nextHourAvailability,
 		summary,
 		isToday,
 		isWithinOperatingHours: isToday ? isWithinOperatingHours(referenceDate, rules) : true,
@@ -200,7 +220,7 @@ export function buildAvailabilityResponse({ date, room, slots, occupancy, pendin
 			current: currentSlot,
 			next: nextSlot,
 		},
-		cards: buildAvailabilityCards({ currentSlot, nextSlot, summary, occupancy, pendingEntryQueue, room }),
+		cards: buildAvailabilityCards({ currentSlot, nextSlot, summary, occupancy, pendingEntryQueue, room, dailyAvailability, nextHourAvailability }),
 		legend: getAvailabilityLegend(),
 		rules: getAvailabilityRules(room, rules),
 	};

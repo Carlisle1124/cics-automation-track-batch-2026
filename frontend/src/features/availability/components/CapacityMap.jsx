@@ -1,51 +1,102 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../../data/supabaseClient';
 import SlotIndicator from './SlotIndicator';
 import './CapacityMap.css';
 
 const ROOM_CAPACITY = 50;
+const OPERATING_START_HOUR = 8; // 08:00
+const OPERATING_END_HOUR = 17; // 17:00
 
 export default function CapacityMap() {
 	const [occupiedCount, setOccupiedCount] = useState(0);
 	const [reservedCount, setReservedCount] = useState(0);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [mapTitle, setMapTitle] = useState('Live Capacity Map');
+	const [targetDate, setTargetDate] = useState('');
 
+	const loadCapacity = useCallback(async (dateStr) => {
+		setIsLoading(true);
+		setError(null);
+
+		try {
+			const { data: reservations, error: fetchError } = await supabase
+				.from('reservations')
+				.select('id, start_time, end_time, status')
+				.eq('reservation_date', dateStr)
+				.in('status', ['approved', 'checked_in']);
+
+			if (fetchError) throw fetchError;
+
+			// Filter by operating hours (08:00:00 to 17:00:00)
+			const filteredReservations = (reservations ?? []).filter((r) => {
+				const startTime = r.start_time || '00:00:00';
+				const endTime = r.end_time || '00:00:00';
+				// Include if reservation overlaps with operating hours
+				return startTime < '17:00:00' && endTime > '08:00:00';
+			});
+
+			const approvedCount = filteredReservations.filter((r) => r.status === 'approved').length;
+			const checkedInCount = filteredReservations.filter((r) => r.status === 'checked_in').length;
+
+			setReservedCount(approvedCount);
+			setOccupiedCount(checkedInCount);
+		} catch (err) {
+			setError(err?.message ?? 'Failed to load capacity data');
+		} finally {
+			setIsLoading(false);
+		}
+	}, []);
+
+	// Determine which date to display based on current time
 	useEffect(() => {
-		async function loadCapacity() {
-			setIsLoading(true);
-			setError(null);
+		const now = new Date();
+		const currentHour = now.getHours();
+		const isWithinOperatingHours = currentHour >= OPERATING_START_HOUR && currentHour < OPERATING_END_HOUR;
 
-			try {
-				const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD format
+		let dateToUse;
+		let title;
 
-				const { count: approvedCount, error: approvedError } = await supabase
-					.from('reservations')
-					.select('*', { count: 'exact', head: true })
-					.eq('status', 'approved')
-					.eq('reservation_date', today);
-
-				if (approvedError) throw approvedError;
-
-				const { count: checkedInCount, error: checkedInError } = await supabase
-					.from('reservations')
-					.select('*', { count: 'exact', head: true })
-					.eq('status', 'checked_in')
-					.eq('reservation_date', today);
-
-				if (checkedInError) throw checkedInError;
-
-				setReservedCount(Number(approvedCount ?? 0));
-				setOccupiedCount(Number(checkedInCount ?? 0));
-			} catch (err) {
-				setError(err?.message ?? 'Failed to load capacity data');
-			} finally {
-				setIsLoading(false);
-			}
+		if (isWithinOperatingHours) {
+			// Within operating hours, show today
+			dateToUse = now.toISOString().slice(0, 10);
+			title = 'Live Capacity Map';
+		} else {
+			// Outside operating hours, show tomorrow
+			const tomorrow = new Date(now);
+			tomorrow.setDate(tomorrow.getDate() + 1);
+			dateToUse = tomorrow.toISOString().slice(0, 10);
+			const formattedDate = tomorrow.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+			title = `Capacity Map for ${formattedDate}`;
 		}
 
-		loadCapacity();
-	}, []);
+		setTargetDate(dateToUse);
+		setMapTitle(title);
+		loadCapacity(dateToUse);
+	}, [loadCapacity]);
+
+	// Real-time subscription to reservations changes
+	useEffect(() => {
+		if (!targetDate) return;
+
+		const channel = supabase
+			.channel(`capacity-${targetDate}`)
+			.on(
+				'postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'reservations',
+					filter: `reservation_date=eq.${targetDate}`,
+				},
+				() => loadCapacity(targetDate)
+			)
+			.subscribe();
+
+		return () => {
+			supabase.removeChannel(channel);
+		};
+	}, [targetDate, loadCapacity]);
 
 	const vacantCount = Math.max(ROOM_CAPACITY - occupiedCount - reservedCount, 0);
 
@@ -67,7 +118,7 @@ export default function CapacityMap() {
 	return (
 		<div className="capacity-map">
 			<div className="capacity-map__header">
-				<h3 className="capacity-map__title">Live Capacity Map</h3>
+				<h3 className="capacity-map__title">{mapTitle}</h3>
 
 				<div className="capacity-map__legend">
 					<div className="capacity-map__legend-item">

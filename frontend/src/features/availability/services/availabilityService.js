@@ -16,7 +16,7 @@ import {
 } from '../../../shared/utils/reservation';
 
 export async function getAvailabilityByDate(date, referenceDate = new Date()) {
-	const rawAvailability = await fetchAvailabilityByDate(date);
+	const rawAvailability = await fetchAvailabilityByDate(date, referenceDate);
 	const slots = rawAvailability.slots.map((slot) => enrichAvailabilitySlot(slot, rawAvailability.room.capacity));
 	const pendingEntryQueue = summarizeApprovedReservationsQueue(
 		rawAvailability.reservations ?? []
@@ -27,6 +27,8 @@ export async function getAvailabilityByDate(date, referenceDate = new Date()) {
 		room: rawAvailability.room,
 		slots,
 		occupancy: rawAvailability.occupancy,
+		dailyAvailability: rawAvailability.dailyAvailability,
+		nextHourAvailability: rawAvailability.nextHourAvailability,
 		pendingEntryQueue,
 		referenceDate,
 		rules: {
