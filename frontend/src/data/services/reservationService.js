@@ -28,11 +28,107 @@ export function getReservationsByUser(userId) {
 	);
 }
 
-export function getAllReservations() {
-	return handleRequest(
-		() => RESERVATIONS.map(enrichReservation),
-		'/api/reservations'
-	);
+export async function getAllReservations() {
+	try {
+		const { data, error } = await supabase
+			.from('reservations')
+			.select(`
+				id,
+				user_id,
+				reservation_date,
+				start_time,
+				end_time,
+				status,
+				created_at,
+				users:user_id (id, full_name, email, role)
+			`)
+			.order('created_at', { ascending: false });
+
+		if (error) throw error;
+
+		// Transform the data to match expected format
+		const reservations = (data || []).map((reservation) => ({
+			id: reservation.id,
+			userId: reservation.user_id,
+			user_name: reservation.users?.full_name || 'Unknown User',
+			user_email: reservation.users?.email,
+			user_role: reservation.users?.role,
+			reservation_date: reservation.reservation_date,
+			start_time: reservation.start_time,
+			end_time: reservation.end_time,
+			status: reservation.status,
+			created_at: reservation.created_at,
+		}));
+
+		return [reservations, null];
+	} catch (error) {
+		console.error('Error fetching reservations:', error);
+		return [[], error];
+	}
+}
+
+export function subscribeToReservationChanges(onUpdate) {
+	const subscription = supabase
+		.channel('reservations-changes')
+		.on(
+			'postgres_changes',
+			{
+				event: '*',
+				schema: 'public',
+				table: 'reservations',
+			},
+			async (payload) => {
+				// Fetch the updated reservation with user data
+				try {
+					const { data, error } = await supabase
+						.from('reservations')
+						.select(`
+							id,
+							user_id,
+							reservation_date,
+							start_time,
+							end_time,
+							status,
+							created_at,
+							users:user_id (id, full_name, email, role)
+						`)
+						.eq('id', payload.new?.id || payload.old?.id)
+						.single();
+
+					if (error) throw error;
+
+					if (data) {
+						const transformed = {
+							id: data.id,
+							userId: data.user_id,
+							user_name: data.users?.full_name || 'Unknown User',
+							user_email: data.users?.email,
+							user_role: data.users?.role,
+							reservation_date: data.reservation_date,
+							start_time: data.start_time,
+							end_time: data.end_time,
+							status: data.status,
+							created_at: data.created_at,
+						};
+
+						onUpdate({
+							type: payload.eventType,
+							data: transformed,
+						});
+					} else if (payload.eventType === 'DELETE') {
+						onUpdate({
+							type: 'DELETE',
+							data: { id: payload.old?.id },
+						});
+					}
+				} catch (error) {
+					console.error('Error processing real-time update:', error);
+				}
+			}
+		)
+		.subscribe();
+
+	return subscription;
 }
 
 export function createReservation(reservationInput) {

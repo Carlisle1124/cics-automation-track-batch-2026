@@ -18,7 +18,7 @@ export default function Overview() {
 
 		async function loadMetrics() {
 			try {
-				const [users, reservations] = await Promise.all([
+				const [users, [reservations, reservationError]] = await Promise.all([
 					getUsers(),
 					getAllReservations(),
 					new Promise((resolve) => setTimeout(resolve, 700)),
@@ -26,10 +26,14 @@ export default function Overview() {
 
 				if (!active) return;
 
+				if (reservationError) {
+					console.error('Error fetching reservations:', reservationError);
+				}
+
 				const totalUsers = users.length;
 				const totalReservations = reservations.length;
 				const activeCheckIns = reservations.filter((reservation) => reservation.status === 'checked_in').length;
-				const confirmedReservations = reservations.filter((reservation) => reservation.status === 'confirmed').length;
+				const confirmedReservations = reservations.filter((reservation) => reservation.status === 'approved').length;
 				const confirmationProgress = totalReservations > 0
 					? Math.round((confirmedReservations / totalReservations) * 100)
 					: 0;

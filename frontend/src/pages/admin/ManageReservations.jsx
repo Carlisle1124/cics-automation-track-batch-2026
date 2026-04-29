@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getAllReservations } from '../../data/services/reservationService';
+import { getAllReservations, subscribeToReservationChanges } from '../../data/services/reservationService';
 import PageHeader from '../../shared/components/PageHeader';
 import cicsLogo from '../../assets/CICS-Logo.webp';
 import '../../features/reservations/components/ReservationsTable.css';
@@ -8,7 +8,7 @@ import './ManageReservations.css';
 const FILTER_TABS = [
 	{ id: 'all', label: 'All Entries' },
 	{ id: 'pending', label: 'Pending' },
-	{ id: 'confirmed', label: 'Confirmed' },
+	{ id: 'approved', label: 'Confirmed' },
 	{ id: 'completed', label: 'Completed' },
 ];
 
@@ -30,22 +30,28 @@ export default function ManageReservations() {
 
 		let active = true;
 
-		async function loadReservations() {
-			try {
-				const [items] = await Promise.all([
-					getAllReservations(),
-					new Promise((resolve) => setTimeout(resolve, 700)),
-				]);
+	async function loadReservations() {
+	try {
+		const [[data, error]] = await Promise.all([
+			getAllReservations(),
+			new Promise((resolve) => setTimeout(resolve, 700)),
+		]);
 
-				if (!active) return;
+		if (!active) return;
 
-				setReservations(items);
-			} finally {
-				if (active) {
-					setIsPageLoading(false);
-				}
-			}
+		if (error) {
+			console.error(error);
+			setReservations([]);
+			return;
 		}
+
+		setReservations(data);
+	} finally {
+		if (active) {
+			setIsPageLoading(false);
+		}
+	}
+}
 
 		loadReservations();
 
@@ -60,6 +66,31 @@ export default function ManageReservations() {
 		setIsSortMenuOpen(false);
 	}, [activeTab, sortBy]);
 
+	// Set up real-time subscription for reservation changes
+	useEffect(() => {
+		const subscription = subscribeToReservationChanges(({ type, data }) => {
+			setReservations((prevReservations) => {
+				if (type === 'INSERT') {
+					// Add new reservation at the beginning (latest first)
+					return [data, ...prevReservations];
+				} else if (type === 'UPDATE') {
+					// Update existing reservation
+					return prevReservations.map((res) =>
+						res.id === data.id ? data : res
+					);
+				} else if (type === 'DELETE') {
+					// Remove deleted reservation
+					return prevReservations.filter((res) => res.id !== data.id);
+				}
+				return prevReservations;
+			});
+		});
+
+		return () => {
+			subscription.unsubscribe();
+		};
+	}, []);
+
 	const filteredReservations = useMemo(() => {
 		const scopedReservations = reservations.filter((reservation) => {
 			if (activeTab === 'all') return true;
@@ -70,13 +101,13 @@ export default function ManageReservations() {
 
 		if (sortBy === 'Latest First') {
 			sortedReservations.sort(
-				(a, b) => new Date(b.createdAt ?? b.date).getTime() - new Date(a.createdAt ?? a.date).getTime()
+				(a, b) => new Date(b.created_at ?? b.date).getTime() - new Date(a.created_at ?? a.date).getTime()
 			);
 		}
 
 		if (sortBy === 'Earliest First') {
 			sortedReservations.sort(
-				(a, b) => new Date(a.createdAt ?? a.date).getTime() - new Date(b.createdAt ?? b.date).getTime()
+				(a, b) => new Date(a.created_at ?? a.date).getTime() - new Date(b.created_at ?? b.date).getTime()
 			);
 		}
 
@@ -209,9 +240,10 @@ export default function ManageReservations() {
 					<table className="reservations-table__table admin-manage-reservations__table">
 						<thead>
 							<tr className="table-header-row">
-								<th className="table-header-cell">User</th>
-								<th className="table-header-cell">Date</th>
-								<th className="table-header-cell">Time</th>
+								<th className="table-header-cell">User Name</th>
+								<th className="table-header-cell">Reservation Date</th>
+								<th className="table-header-cell">Start Time</th>
+								<th className="table-header-cell">End Time</th>
 								<th className="table-header-cell">Status</th>
 							</tr>
 						</thead>
@@ -220,30 +252,31 @@ export default function ManageReservations() {
 								paginatedReservations.map((reservation) => (
 									<tr key={reservation.id} className="table-body-row">
 										<td className="table-cell">
-											<div className="user-name">{reservation.user ?? reservation.userName ?? '—'}</div>
+											<div className="user-name">{reservation.user_name || '—'}</div>
 										</td>
 										<td className="table-cell">
-											<div className="date">{reservation.date ?? '—'}</div>
+											<div className="date">{reservation.reservation_date || '—'}</div>
 										</td>
 										<td className="table-cell">
-											<div className="time">
-												{Array.isArray(reservation.slotIds) ? reservation.slotIds.join(', ') : '—'}
-											</div>
+											<div className="time">{reservation.start_time || '—'}</div>
+										</td>
+										<td className="table-cell">
+											<div className="time">{reservation.end_time || '—'}</div>
 										</td>
 										<td className="table-cell">
 											<span
 												className={`admin-manage-reservations__status-badge admin-manage-reservations__status-badge--${String(
-													reservation.status ?? 'pending'
+													reservation.status || 'pending'
 												).replace(/_/g, '-')}`}
 											>
-												{reservation.status ?? 'pending'}
+												{reservation.status || 'pending'}
 											</span>
 										</td>
 									</tr>
 								))
 							) : (
 								<tr className="table-body-row">
-									<td className="table-cell admin-manage-reservations__empty-state" colSpan={4}>
+									<td className="table-cell admin-manage-reservations__empty-state" colSpan={5}>
 										No reservations found for the selected filter.
 									</td>
 								</tr>
