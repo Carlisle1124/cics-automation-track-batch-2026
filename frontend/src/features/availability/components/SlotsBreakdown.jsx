@@ -7,6 +7,11 @@ import { getCurrentUser } from '../../../data/services/authService';
 import { supabase } from '../../../data/supabaseClient';
 import './SlotsBreakdown.css';
 
+import DatePicker from '../../reservations/components/DatePicker';
+import TimelinePanel from '../../reservations/components/TimelinePanel';
+import DurationPicker from '../../reservations/components/DurationPicker';
+import OccupancyStats from '../../reservations/components/OccupancyStats';
+
 const CAPACITY = 50;
 
 function formatHour(time24) {
@@ -21,6 +26,24 @@ function formatCountdown(secs) {
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function parseDateValue(dateValue) {
+  if (!dateValue) return null;
+
+  if (dateValue instanceof Date) {
+    return Number.isNaN(dateValue.getTime()) ? null : new Date(dateValue);
+  }
+
+  if (typeof dateValue === 'string') {
+    const [year, month, day] = dateValue.split('-').map(Number);
+    if (!year || !month || !day) return null;
+
+    return new Date(year, month - 1, day);
+  }
+
+  const parsedDate = new Date(dateValue);
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
 }
 
 export default function SlotsBreakdown({ onSlotSelect = null }) {
@@ -40,6 +63,7 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
 
   const activeHoldRef = useRef(null);
   const currentUserRef = useRef(null);
+  const dateInputRef = useRef(null);
 
   useEffect(() => {
     activeHoldRef.current = activeHold;
@@ -241,8 +265,8 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
   };
 
   const handleDateChange = (event) => {
-    const nextDate = new Date(event.target.value);
-    if (!Number.isNaN(nextDate.getTime())) {
+    const nextDate = parseDateValue(event.target.value);
+    if (nextDate) {
       if (activeHold) {
         releaseSlot(activeHold.id, currentUser?.id).catch(() => {});
         setActiveHold(null);
@@ -267,6 +291,29 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
     setSelectedDate(new Date());
   };
 
+  // Handler for DatePicker component (receives date string YYYY-MM-DD)
+  const handleDateChangeFromPicker = (dateString) => {
+    const nextDate = parseDateValue(dateString);
+    if (nextDate) {
+      if (activeHold) {
+        releaseSlot(activeHold.id, currentUser?.id).catch(() => {});
+        setActiveHold(null);
+        setHoldCountdown(null);
+      }
+      setSelectedSlotId(null);
+      setHoldError('');
+      setReservationSuccess(false);
+      setSelectedDate(nextDate);
+    }
+  };
+
+  // Opens the hidden native date picker
+  const openDatePicker = () => {
+    if (dateInputRef.current) {
+      dateInputRef.current.click();
+    }
+  };
+
   const getStatusInfo = (status) => {
     const statusMap = {
       available: { label: 'Available', className: 'slot-card__status--available', icon: '✓' },
@@ -285,83 +332,32 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
 
   return (
     <div className="slots-breakdown">
+
       {/* Timeline */}
       <Card as="div" className="slots-breakdown__timeline-card">
-        <div className="slots-breakdown__timeline-scroll">
-          <div className="slots-breakdown__timeline">
-            <div className="timeline__container">
-              {isSelectedDateToday && (
-                <div className="timeline__current-time" style={{ top: currentTimeTop }}>
-                  <div className="current-time__line" />
-                  <div className="current-time__dot" />
-                  <div className="current-time__label">
-                    {now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                </div>
-              )}
-
-              {loading && slots.length === 0 && (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                  Loading availability...
-                </div>
-              )}
-
-              {slots.map((slot) => {
-                const statusInfo = getStatusInfo(slot.status);
-                const capacityPercent = getCapacityPercent(slot.reserved, slot.capacity);
-                const isSelected = selectedSlotId === slot.id;
-                const isHovered = hoveredSlotId === slot.id;
-                const slotHour = parseInt(slot.start.split(':')[0], 10);
-                const isPast =
-                  isSelectedDateInPast ||
-                  (isSelectedDateToday &&
-                    (slotHour < currentHour ||
-                      (slotHour === currentHour && now.getMinutes() > 0)));
-
-                return (
-                  <div
-                    key={slot.id}
-                    className={`timeline__slot ${isSelected ? 'timeline__slot--selected' : ''} ${isHovered ? 'timeline__slot--hovered' : ''} ${isPast ? 'timeline__slot--past' : ''}`}
-                    onMouseEnter={() => setHoveredSlotId(slot.id)}
-                    onMouseLeave={() => setHoveredSlotId(null)}
-                    onClick={() => !isPast && handleSlotClick(slot.id)}
-                    role="button"
-                    tabIndex={isPast ? -1 : 0}
-                    onKeyDown={(e) => {
-                      if (!isPast && (e.key === 'Enter' || e.key === ' '))
-                        handleSlotClick(slot.id);
-                    }}
-                  >
-                    <div className="timeline__slot-time">
-                      {slot.hour}
-                      {isSelectedDateInPast && ' ✕'}
-                    </div>
-                    <div className="timeline__slot-content">
-                      <div className="timeline__slot-header">
-                        <div className={`slot-card__status ${statusInfo.className}`}>
-                          <span className="slot-card__status-icon">{statusInfo.icon}</span>
-                          <span className="slot-card__status-label">{statusInfo.label}</span>
-                        </div>
-                        <span className="timeline__availability">{slot.available} seats</span>
-                      </div>
-                      <div className="timeline__capacity-bar">
-                        <div
-                          className={`capacity-bar__fill capacity-bar__fill--${slot.status}`}
-                          style={{ width: `${capacityPercent}%` }}
-                        />
-                      </div>
-                      <div
-                        className={`timeline__slot-checkmark ${isSelected ? 'timeline__slot-checkmark--visible' : ''}`}
-                      >
-                        ✓
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        <OccupancyStats 
+          slots={slots}
+          availableSlots={availableSlots}
+          selectedDate={selectedDate}
+        />
+        <TimelinePanel
+          slots={slots}
+          selectedSlotId={selectedSlotId}
+          hoveredSlotId={hoveredSlotId}
+          loading={loading}
+          isSelectedDateToday={isSelectedDateToday}
+          isSelectedDateInPast={isSelectedDateInPast}
+          currentTimeTop={currentTimeTop}
+          currentHour={currentHour}
+          activeHold={activeHold}
+          holdDuration={holdDuration}
+          onSlotClick={handleSlotClick}
+          onHoveredSlotChange={setHoveredSlotId}
+          onDurationChange={setHoldDuration}
+          getStatusInfo={getStatusInfo}
+          getCapacityPercent={getCapacityPercent}
+          now={now}
+        />
       </Card>
 
       {/* Sidebar */}
@@ -369,33 +365,44 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
         <Card as="aside" className="slots-breakdown__sidebar-card">
           <div className="slots-breakdown__sidebar-scroll">
             <div className="slots-breakdown__sidebar">
-              <div className="timeline__header">
-                <div>
-                  <div className="timeline__date">{dayOfWeek}</div>
-                  <p className="timeline__subtitle">Select an available time slot for your reservation</p>
-                </div>
-              </div>
 
               <div className="sidebar__content-wrapper">
-                {/* Date picker */}
-                <div className="sidebar__calendar">
-                  <label className="calendar__label" htmlFor="slots-date-picker">
-                    Pick reservation date
-                  </label>
-                  <input
-                    id="slots-date-picker"
-                    className="calendar__input"
-                    type="date"
-                    value={selectedDateValue}
-                    onChange={handleDateChange}
-                  />
-                  <button className="calendar__today-btn" onClick={handleToday}>
-                    Today
-                  </button>
+                <div className="sidebar__msg">
+                  <ul className="sidebar__msg-list">
+                    <li className="sidebar__msg-item">First select date and duration before selecting a timeslot.</li>
+                    <li className="sidebar__msg-item">Reservations will still be confirmed by staff after submission.</li>
+                  </ul>
                 </div>
+                {/* Date picker */}
+                <DatePicker
+                  selectedDate={selectedDate}
+                  onDateChange={handleDateChangeFromPicker}
+                  onToday={handleToday}
+                  onOpenPicker={openDatePicker}
+                  inputRef={dateInputRef}
+                />
+
+                <DurationPicker
+                  slots={slots}
+                  selectedSlotId={selectedSlotId}
+                  hoveredSlotId={hoveredSlotId}
+                  loading={loading}
+                  isSelectedDateToday={isSelectedDateToday}
+                  isSelectedDateInPast={isSelectedDateInPast}
+                  currentTimeTop={currentTimeTop}
+                  currentHour={currentHour}
+                  activeHold={activeHold}
+                  holdDuration={holdDuration}
+                  onSlotClick={handleSlotClick}
+                  onHoveredSlotChange={setHoveredSlotId}
+                  onDurationChange={setHoldDuration}
+                  getStatusInfo={getStatusInfo}
+                  getCapacityPercent={getCapacityPercent}
+                  now={now}
+                />
 
                 {/* Duration selector */}
-                <div className="sidebar__duration-picker">
+                {/* <div className="sidebar__duration-picker">
                   <span className="duration-picker__label">Duration</span>
                   <div className="duration-picker__options">
                     {[1, 2, 3].map((h) => (
@@ -410,34 +417,10 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
                     ))}
                   </div>
                   <p className="duration-picker__hint">Select before clicking a slot</p>
-                </div>
+                </div> */}
 
                 {/* Stats */}
                 <div className="sidebar__stats">
-                  <h4 className="stats__title">Availability Stats</h4>
-                  <div className="stats__card">
-                    <div className="stat-row">
-                      <span className="stat-label">Total Slots</span>
-                      <span className="stat-value">{slots.length}</span>
-                    </div>
-                    <div className="stat-row">
-                      <span className="stat-label">Available</span>
-                      <span className="stat-value stat-value--available">{availableSlots}</span>
-                    </div>
-                    <div className="stat-row">
-                      <span className="stat-label">Limited</span>
-                      <span className="stat-value stat-value--busy">
-                        {slots.filter((s) => s.status === 'busy').length}
-                      </span>
-                    </div>
-                    <div className="stat-row">
-                      <span className="stat-label">Full</span>
-                      <span className="stat-value stat-value--full">
-                        {slots.filter((s) => s.status === 'full').length}
-                      </span>
-                    </div>
-                  </div>
-
                   {/* Success */}
                   {reservationSuccess && (
                     <div className="sidebar__selection-info">

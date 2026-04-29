@@ -41,6 +41,17 @@ export function getCurrentDate() {
     return getCurrentDateKey();
 }
 
+// example: Thu, April 30
+export function formatDate(date, options = {}) {
+    const normalizedDate = new Date(date);
+    const formatOptions = {
+        weekday: 'short',
+        month: 'long',
+        day: 'numeric',
+        ...options,    };
+    return new Intl.DateTimeFormat('en-US', formatOptions).format(normalizedDate);
+}
+
 export function getCurrentTime() {
     return getCurrentTimeLabel();
 }

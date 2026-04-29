@@ -1,0 +1,100 @@
+.occupancy-stats-wrapper {
+    padding: 0.75rem;
+
+    display: flex;
+    gap: 1.5rem;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 1rem;
+}
+
+.current-date-display {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+
+    width: 100%;
+}
+
+.current-date-display__icon {
+    height: 100%;
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.current-date-display__value {
+    height: 100%;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--primary-2);
+}
+
+.occupancy-stats {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    height: 100%;
+    width: 100%;
+}
+
+.occupancy-stats__item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    width: fit-content;
+    
+    padding: 0.25rem 0.75rem;
+}
+
+.occupancy-stats .slot-indicator {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.occupancy-stats__label {
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    text-transform: capitalize;
+}
+
+.occupancy-stats__value {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.occupancy-stats__legend-dot {
+	width: 1rem;
+	height: 1rem;
+	border-radius: 999rem;
+	flex-shrink: 0;
+    margin-right: 0.35rem;
+}
+
+.occupancy-stats__legend-dot--vacant {
+	background-color:#10b981;
+}
+
+.occupancy-stats__legend-dot--reserved {
+	background: #f59e0b;
+}
+
+.occupancy-stats__legend-dot--occupied {
+	background-color: #ef4444;
+}
+
+.occupancy-stats__item-slots {
+    display: flex;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    text-transform: lowercase;
+    width: fit-content;
+    padding: 0.25rem 0.75rem;
+    color: var(--text-secondary);
+    
+    border-right: 1px solid var(--border-subtle);
+}

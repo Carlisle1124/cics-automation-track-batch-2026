@@ -3,7 +3,6 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from '../shared/components/Navbar';
 import Topbar from '../shared/components/Topbar';
 import Card from '../shared/components/Card';
-import ReserveButton from '../features/reservations/components/ReserveButton';
 import '../shared/styles/LayoutShell.css';
 
 const QADebugPanel = import.meta.env.DEV
@@ -31,7 +30,6 @@ export default function StudentLayout() {
                     </Card>
                 </div>
             </main>
-            <ReserveButton role="student" />
             {QADebugPanel && (
                 <Suspense fallback={null}>
                     <QADebugPanel />

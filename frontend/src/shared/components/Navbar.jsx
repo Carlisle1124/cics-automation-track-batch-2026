@@ -121,10 +121,17 @@ export default function Navbar({ role }) {
                             }
                             aria-label={item.label}
                         >
-                            <span className="app-sidebar__glyph" aria-hidden="true">
-                                <item.icon weight="duotone" />
-                            </span>
-                            <span className="app-sidebar__label" aria-hidden="true">{item.label}</span>
+                            {({ isActive }) => (
+                                <>
+                                    <span className="app-sidebar__glyph" aria-hidden="true">
+                                        <item.icon 
+                                            weight="duotone" 
+                                            color={isActive ? "var(--tertiary-9)" : "var(--text-inverse)"} 
+                                        />
+                                    </span>
+                                    <span className="app-sidebar__label" aria-hidden="true">{item.label}</span>
+                                </>
+                            )}
                         </NavLink>
                     ))}
                 </nav>

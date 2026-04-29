@@ -1,0 +1,346 @@
+/* ============================================================
+   TimelinePanel — Timeline scroll
+   ============================================================ */
+
+.slots-breakdown__timeline-panel {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Timeline scroll */
+.slots-breakdown__timeline-scroll {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(64, 45, 0, 0.24) transparent;
+  margin-bottom: 0.75rem;
+
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.slots-breakdown__timeline-scroll::-webkit-scrollbar {
+  width: 0.6rem;
+}
+
+.slots-breakdown__timeline-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.slots-breakdown__timeline-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(64, 45, 0, 0.22);
+  border-radius: 999px;
+  border: 0.16rem solid transparent;
+  background-clip: content-box;
+}
+
+.slots-breakdown__timeline-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(64, 45, 0, 0.34);
+}
+
+.slots-breakdown__timeline {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding-top: 0.25rem;
+  padding-bottom: 0.5rem;
+}
+
+/* Timeline container */
+.timeline__container {
+  position: relative;
+  padding: 0 0.65rem;
+  display: grid;
+  grid-template-rows: repeat(9, minmax(0, 1fr));
+}
+
+/* Current time indicator */
+.timeline__current-time {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 50;
+  transform: translateY(-50%);
+}
+
+.current-time__line {
+  flex: 1;
+  height: 2px;
+  background: var(--primary-5);
+}
+
+.current-time__dot {
+  width: 10px;
+  height: 10px;
+  background: var(--primary-5);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.current-time__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--primary-5);
+  white-space: nowrap;
+  margin-right: 0.5rem;
+}
+
+/* Slot row */
+.timeline-slot__wrapper {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.timeline__slot {
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-base) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
+  min-height: 3rem;
+  position: relative;
+  margin: 0;
+  border-radius: var(--radius-md);
+}
+
+.timeline__slot--available {
+  border-left: 6.5px solid #10b981;
+}
+.timeline__slot--busy {
+  border-left: 6.5px solid #f59e0b;
+}
+.timeline__slot--full {
+  border-left: 6.5px solid #ef4444;
+}
+
+.timeline__slot:hover:not(.timeline__slot--past) {
+  background: var(--neutral-12);
+}
+.timeline__slot.timeline__slot--available:hover:not(.timeline__slot--past) {
+  border: 1.8px solid #10b98150;
+}
+.timeline__slot.timeline__slot--busy:hover:not(.timeline__slot--past) {
+  border: 1.8px solid #f59e0b50;
+}
+.timeline__slot.timeline__slot--full:hover:not(.timeline__slot--past) {
+  border: 1.8px solid #ef444450;
+}
+
+
+.timeline__slot--selected {
+  background: var(--neutral-12);
+}
+.timeline__slot--selected.timeline__slot--available {
+  border: 1.8px solid #10b98150;
+  box-shadow: 0 0 0 4px #10b98120;
+}
+.timeline__slot--selected.timeline__slot--busy {
+  border: 1.8px solid #f59e0b50;
+  box-shadow: 0 0 0 4px #f59e0b20;
+}
+.timeline__slot--selected.timeline__slot--full {
+  border: 1.8px solid #ef444450;
+  box-shadow: 0 0 0 4px #ef444420;
+}
+
+.timeline__slot--hovered {
+  box-shadow: 0 3px 10px rgba(64, 45, 0, 0.08);
+}
+
+.timeline__slot--past {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Slot time label */
+.timeline__slot-time {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 0.5rem;
+  border-right: 2px solid var(--border-subtle);
+}
+
+.timeline__slot--selected .timeline__slot-time {
+  color: var(--text-secondary);
+  font-weight: 820;
+}
+
+/* Slot content */
+.timeline__slot-content {
+  display: flex;
+  justify-content: center; /* keep capacity bar vertically centered when header is hidden */
+  gap: 0.5rem;
+  padding-right: 0;
+  transition: padding-right var(--duration-base) var(--ease-standard);
+  position: relative; /* allow header to be absolutely positioned over the capacity bar */
+}
+
+.timeline__slot--selected .timeline__slot-content {
+  padding-right: 3.25rem;
+}
+
+.timeline__slot-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 0.25rem;
+  pointer-events: none;
+  width: 100%;
+  justify-content: center;
+}
+
+.slot-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: fit-content;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  
+  position: absolute; /* remove from document flow so capacity bar stays centered */
+  transform: translateY(-45%); /* start slightly above center */
+  transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
+  opacity: 0;
+}
+
+.timeline__slot:hover .slot-card__status {
+  opacity: 1;
+  transform: translateY(-35%); /* center vertically */
+  pointer-events: auto;
+}
+
+.timeline__slot--selected .slot-card__status {
+  opacity: 1;
+  transform: translateY(-35%);
+}
+
+.slot-card__status-icon {
+  display: inline-block;
+  width: 0.875rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+.slot-card__status--available {
+  background: color-mix(in oklab, #10b981 15%, transparent 85%);
+  color: #10b981;
+}
+
+.slot-card__status--busy {
+  background: color-mix(in oklab, #f59e0b 15%, transparent 85%);
+  color: #f59e0b;
+}
+
+.slot-card__status--full {
+  background: color-mix(in oklab, #ef4444 15%, transparent 85%);
+  color: #ef4444;
+}
+
+.timeline__availability {
+  display: flex;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  align-self: center;
+  width: fit-content;
+}
+
+/* Capacity bar */
+.timeline__capacity-bar {
+  width: 100%;
+  height: 0.65rem;
+  background: var(--bg-card);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  align-self: center;
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.timeline__slot:hover .timeline__capacity-bar {
+  transform: translateY(150%);
+  pointer-events: auto; 
+}
+
+.timeline__slot--selected .timeline__capacity-bar {
+  transform: translateY(150%);
+  pointer-events: auto;
+}
+
+.capacity-bar__fill {
+  height: 100%;
+  transition: width var(--duration-base) var(--ease-standard);
+}
+
+.capacity-bar__fill--available {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.capacity-bar__fill--busy {
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+}
+
+.capacity-bar__fill--full {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Slot checkmark */
+.timeline__slot-checkmark {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%) scale(0.75);
+  width: 24px;
+  height: 24px;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
+  border: 0;
+}
+
+.timeline__slot-checkmark--visible.timeline__slot--available {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+  background-color: #10b981;
+}
+.timeline__slot-checkmark--visible.timeline__slot--busy {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+  background-color: #f59e0b;
+}
+.timeline__slot-checkmark--visible.timeline__slot--full {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+  background-color: #ef4444;
+}
