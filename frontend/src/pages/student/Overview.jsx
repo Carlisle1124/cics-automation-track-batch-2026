@@ -48,19 +48,18 @@ export default function Overview() {
                     lineHeight: 1.1,
                     color: 'var(--text-primary)',
                 }}>
-                    Welcome,
+                    Welcome, {user.name}
                 </h1>
-                {user && (
+                {/*{user && (
                     <p style={{
                         margin: 0,
                         fontSize: 'clamp(1rem, 2vw, 1.375rem)',
-                        fontWeight: 500,
                         color: 'var(--text-secondary)',
                         lineHeight: 1.3,
                     }}>
-                        {user.name}
+                        
                     </p>
-                )}
+                )}*/}
             </div>
 
             <AvailabilityPanel
