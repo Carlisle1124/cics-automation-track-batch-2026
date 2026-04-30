@@ -61,15 +61,16 @@ section.availability-panel__card {
 }
 
 .availability-panel__card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .availability-panel__card-label {
-  font-size: 1.05rem;
+  font-size: 14px;
   color: color-mix(in oklab, var(--text-primary) 68%, white 32%);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  line-height: 1.4;
 }
 
 .availability-panel__card-value-row {
@@ -88,16 +89,18 @@ section.availability-panel__card {
 }
 
 .availability-panel__card-unit {
-  font-size: var(--text-lg);
+  font-size: 14px;
   color: var(--text-secondary);
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding-bottom: 0.3rem;
 }
 
 .availability-panel__card-description {
-  font-size: var(--text-sm);
+  font-size: 14px;
   color: var(--text-secondary);
+  line-height: 1.55;
 }
 
 /* Loading states */

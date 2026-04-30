@@ -3,72 +3,92 @@ import { getCurrentUser } from '../../data/services/authService';
 import { getAvailabilityByDate } from '../../features/availability/services/availabilityService';
 import AvailabilityPanel from '../../features/availability/components/AvailabilityPanel';
 import CapacityMap from '../../features/availability/components/CapacityMap';
-import Card from '../../shared/components/Card';
+import PageHeader from '../../shared/components/PageHeader';
+import cicsLogo from '../../assets/CICS-Logo.webp';
+import './Overview.css';
 
 export default function Overview() {
     const [user, setUser] = useState(null);
     const [availability, setAvailability] = useState(null);
+    const [isPageLoading, setIsPageLoading] = useState(true);
 
     useEffect(() => {
+        const previousTitle = document.title;
+        document.title = 'Overview - UST CICS Learning Common Room';
+
         let active = true;
 
         async function loadOverview() {
-            const [currentUser, todayAvailability] = await Promise.all([
-                getCurrentUser(),
-                getAvailabilityByDate(new Date()),
-            ]);
+            try {
+                const [currentUser, todayAvailability] = await Promise.all([
+                    getCurrentUser(),
+                    getAvailabilityByDate(new Date()),
+                    new Promise((resolve) => setTimeout(resolve, 700)),
+                ]);
 
-            if (!active) return;
+                if (!active) return;
 
-            setUser(currentUser);
-            setAvailability(todayAvailability);
+                setUser(currentUser);
+                setAvailability(todayAvailability);
+            } catch (err) {
+                console.error('[Overview] Failed to load:', err);
+
+                if (active) {
+                    setAvailability(null);
+                }
+            } finally {
+                if (active) {
+                    setIsPageLoading(false);
+                }
+            }
         }
 
-        loadOverview().catch((err) => {
-            console.error('[Overview] Failed to load:', err);
-            if (active) setAvailability({ date: '', slots: [], isClosed: false, room: {} });
-        });
+        loadOverview();
 
         return () => {
             active = false;
+            document.title = previousTitle;
         };
     }, []);
 
-    if (!availability) {
-        return <section className="dashboard-page">Loading overview...</section>;
-    }
-
     return (
-        <section className="dashboard-page">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                <h1 style={{
-                    margin: 0,
-                    fontSize: 'clamp(2rem, 4vw, 3rem)',
-                    fontWeight: 700,
-                    lineHeight: 1.1,
-                    color: 'var(--text-primary)',
-                }}>
-                    Welcome, {user.name}
-                </h1>
-                {/*{user && (
-                    <p style={{
-                        margin: 0,
-                        fontSize: 'clamp(1rem, 2vw, 1.375rem)',
-                        color: 'var(--text-secondary)',
-                        lineHeight: 1.3,
-                    }}>
-                        
-                    </p>
-                )}*/}
-            </div>
-
-            <AvailabilityPanel
-                availability={availability}
+        <section
+            className={`dashboard-page student-overview ${
+                isPageLoading
+                    ? 'student-overview--content-hidden'
+                    : 'student-overview--content-visible'
+            }`}
+        >
+            <PageHeader
+                className="student-overview__header"
+                title={`Welcome, ${user?.name ?? 'Student'}`}
             />
 
-            <div>
+            <AvailabilityPanel availability={availability} />
+
+            <div className="student-overview__capacity">
                 <CapacityMap />
             </div>
+
+            {isPageLoading ? (
+                <div
+                    className="student-overview-transition"
+                    role="status"
+                    aria-live="polite"
+                    aria-label="Loading student overview page"
+                >
+                    <div className="student-overview-transition__card">
+                        <img
+                            src={cicsLogo}
+                            alt="UST CICS logo"
+                            className="student-overview-transition__logo"
+                        />
+                        <div className="student-overview-transition__loader" aria-hidden="true">
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </section>
     );
 }

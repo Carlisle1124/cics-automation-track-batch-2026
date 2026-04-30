@@ -15,12 +15,20 @@ function getLegendClass(status) {
 }
 
 export default function AvailabilityPanel({
+	availability: providedAvailability = null,
 	showRules = true,
 	selectedSlotId,
 	onSlotSelect,
 }) {
-	const [availability, setAvailability] = useState(null);
-	const [loading, setLoading] = useState(true);
+	const [availability, setAvailability] = useState(providedAvailability);
+	const [loading, setLoading] = useState(!providedAvailability);
+
+	useEffect(() => {
+		if (!providedAvailability) return;
+
+		setAvailability(providedAvailability);
+		setLoading(false);
+	}, [providedAvailability]);
 
 	const loadAvailability = useCallback(async () => {
 		try {
