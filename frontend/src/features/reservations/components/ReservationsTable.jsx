@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { cancelReservation } from '../../../data/services/reservationService';
 import './ReservationsTable.css';
 
@@ -108,7 +109,11 @@ export default function ReservationsTable({ userRole = 'student', userId = null 
   const [reservations, setReservations] = useState(RESERVATIONS_DATA);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
+  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
+  const [actionMenuPosition, setActionMenuPosition] = useState(null);
   const menuRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const sortMenuRef = useRef(null);
   const itemsPerPage = 12;
 
   // Close dropdown when clicking outside
@@ -116,18 +121,78 @@ export default function ReservationsTable({ userRole = 'student', userId = null 
     if (!openMenuId) return;
 
     function handleOutsideClick(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      const clickedInsideButton = menuRef.current?.contains(event.target);
+      const clickedInsideDropdown = dropdownRef.current?.contains(event.target);
+
+      if (!clickedInsideButton && !clickedInsideDropdown) {
         setOpenMenuId(null);
+        setActionMenuPosition(null);
+      }
+    }
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        setOpenMenuId(null);
+        setActionMenuPosition(null);
       }
     }
 
     document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, [openMenuId]);
+
+  useEffect(() => {
+    if (!openMenuId) return;
+
+    function handleViewportChange() {
+      setOpenMenuId(null);
+      setActionMenuPosition(null);
+    }
+
+    window.addEventListener('resize', handleViewportChange);
+    window.addEventListener('scroll', handleViewportChange, true);
+
+    return () => {
+      window.removeEventListener('resize', handleViewportChange);
+      window.removeEventListener('scroll', handleViewportChange, true);
+    };
+  }, [openMenuId]);
+
+  useEffect(() => {
+    if (!isSortMenuOpen) return;
+
+    function handlePointerDown(event) {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
+        setIsSortMenuOpen(false);
+      }
+    }
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        setIsSortMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isSortMenuOpen]);
 
   const handleCancelReservation = useCallback(async (reservationId) => {
     setCancellingId(reservationId);
     setOpenMenuId(null);
+    setActionMenuPosition(null);
     try {
       await cancelReservation(reservationId);
       setReservations((prev) =>
@@ -139,6 +204,57 @@ export default function ReservationsTable({ userRole = 'student', userId = null 
       setCancellingId(null);
     }
   }, []);
+
+  function handleSortSelect(option) {
+    setSortBy(option);
+    setIsSortMenuOpen(false);
+  }
+
+  function handleActionMenuToggle(event, reservationId) {
+    const isAlreadyOpen = openMenuId === reservationId;
+
+    if (isAlreadyOpen) {
+      setOpenMenuId(null);
+      setActionMenuPosition(null);
+      return;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const dropdownWidth = 192;
+    const dropdownHeight = 56;
+    const viewportPadding = 12;
+    const dropdownGap = 8;
+
+    const maxLeft = Math.max(
+      viewportPadding,
+      window.innerWidth - dropdownWidth - viewportPadding
+    );
+
+    const left = Math.min(
+      Math.max(viewportPadding, rect.right - dropdownWidth),
+      maxLeft
+    );
+
+    const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
+    const spaceAbove = rect.top - viewportPadding;
+    const placement = spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove ? 'bottom' : 'top';
+
+    const top =
+      placement === 'top'
+        ? Math.max(viewportPadding, rect.top - dropdownHeight - dropdownGap)
+        : Math.min(
+            rect.bottom + dropdownGap,
+            window.innerHeight - dropdownHeight - viewportPadding
+          );
+
+    setActionMenuPosition({
+      top,
+      left,
+      placement,
+    });
+
+    setOpenMenuId(reservationId);
+  }
 
   function getRowActions(reservation) {
     const { status } = reservation;
@@ -238,7 +354,7 @@ export default function ReservationsTable({ userRole = 'student', userId = null 
   };
 
   return (
-    <div className="reservations-table">
+    <div className={`reservations-table ${userRole === 'student' ? 'reservations-table--student' : ''}`}>
       {/* Header with tabs and sort */}
       <div className="reservations-table__header">
         <div className="reservations-table__tabs">
@@ -249,6 +365,7 @@ export default function ReservationsTable({ userRole = 'student', userId = null 
               onClick={() => {
                 setActiveTab(tab.id);
                 setCurrentPage(1);
+                setIsSortMenuOpen(false);
               }}
             >
               {tab.label}
@@ -257,17 +374,49 @@ export default function ReservationsTable({ userRole = 'student', userId = null 
         </div>
 
         <div className="reservations-table__controls">
-          <select
-            className="sort-dropdown"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            {SORT_OPTIONS.map(option => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+          <div className="student-reservations-sort" ref={sortMenuRef}>
+            <button
+              type="button"
+              id="student-reservations-sort-button"
+              className={`student-reservations-sort__trigger ${
+                isSortMenuOpen ? 'student-reservations-sort__trigger--open' : ''
+              }`}
+              aria-haspopup="listbox"
+              aria-expanded={isSortMenuOpen}
+              aria-controls="student-reservations-sort-menu"
+              onClick={() => setIsSortMenuOpen((open) => !open)}
+            >
+              <span className="student-reservations-sort__trigger-label">{sortBy}</span>
+              <span className="student-reservations-sort__trigger-icon" aria-hidden="true" />
+            </button>
+
+            {isSortMenuOpen ? (
+              <div
+                id="student-reservations-sort-menu"
+                className="student-reservations-sort__menu"
+                role="listbox"
+                aria-labelledby="student-reservations-sort-button"
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    role="option"
+                    aria-selected={sortBy === option}
+                    className={`student-reservations-sort__option ${
+                      sortBy === option ? 'is-active' : ''
+                    }`}
+                    onClick={() => handleSortSelect(option)}
+                  >
+                    <span>{option}</span>
+                    <span className="student-reservations-sort__option-indicator" aria-hidden="true">
+                      {sortBy === option ? '✓' : ''}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -323,28 +472,43 @@ export default function ReservationsTable({ userRole = 'student', userId = null 
                           ref={isOpen ? menuRef : null}
                         >
                           <button
+                            type="button"
                             className={`action-menu-btn ${isCancelling ? 'action-menu-btn--loading' : ''}`}
                             aria-label="More actions"
                             aria-expanded={isOpen}
                             disabled={isCancelling}
-                            onClick={() => setOpenMenuId(isOpen ? null : reservation.id)}
+                            onClick={(event) => handleActionMenuToggle(event, reservation.id)}
                           >
                             {isCancelling ? '…' : '⋮'}
                           </button>
-                          {isOpen && (
-                            <div className="action-dropdown" role="menu">
-                              {actions.map((item) => (
-                                <button
-                                  key={item.label}
-                                  className={`action-dropdown__item ${item.danger ? 'action-dropdown__item--danger' : ''}`}
-                                  role="menuitem"
-                                  onClick={item.action}
+                          {isOpen && actionMenuPosition && typeof document !== 'undefined'
+                            ? createPortal(
+                                <div
+                                  ref={dropdownRef}
+                                  className={`action-dropdown action-dropdown--floating student-action-dropdown student-action-dropdown--${
+                                    actionMenuPosition.placement
+                                  }`}
+                                  role="menu"
+                                  style={{
+                                    top: `${actionMenuPosition.top}px`,
+                                    left: `${actionMenuPosition.left}px`,
+                                  }}
                                 >
-                                  {item.label}
-                                </button>
-                              ))}
-                            </div>
-                          )}
+                                  {actions.map((item) => (
+                                    <button
+                                      key={item.label}
+                                      type="button"
+                                      className={`action-dropdown__item ${item.danger ? 'action-dropdown__item--danger' : ''}`}
+                                      role="menuitem"
+                                      onClick={item.action}
+                                    >
+                                      {item.label}
+                                    </button>
+                                  ))}
+                                </div>,
+                                document.body
+                              )
+                            : null}
                         </div>
                       );
                     })()}

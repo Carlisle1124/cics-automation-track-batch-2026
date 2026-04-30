@@ -12,16 +12,21 @@ const QADebugPanel = import.meta.env.DEV
 export default function StudentLayout() {
     const location = useLocation();
     const isStudentOverview = location.pathname === '/dashboard';
-    const shouldDisableOuterScroll =
-        location.pathname === '/dashboard/reservations' || location.pathname === '/dashboard/schedule';
+    const isStudentReservations = location.pathname === '/dashboard/reservations';
+    const shouldDisableOuterScroll = location.pathname === '/dashboard/schedule';
 
     const contentClassName = [
         shouldDisableOuterScroll ? 'app-main__content-no-scroll' : 'app-main__content-scroll',
         isStudentOverview ? 'app-main__content-scroll--student-overview' : '',
+        isStudentReservations ? 'app-main__content-scroll--student-reservations' : '',
     ].filter(Boolean).join(' ');
 
     return (
-        <div className={`app-shell${isStudentOverview ? ' app-shell--student-overview-entry' : ''}`}>
+        <div
+            className={`app-shell${
+                isStudentOverview ? ' app-shell--student-overview-entry' : ''
+            }${isStudentReservations ? ' app-shell--student-reservations-entry' : ''}`}
+        >
             <Navbar role="student" />
             <main className="app-main">
                 <div className="app-main__surface">
