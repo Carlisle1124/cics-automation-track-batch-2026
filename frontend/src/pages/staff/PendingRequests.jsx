@@ -1,152 +1,288 @@
+import { createPortal } from 'react-dom';
 import { useEffect, useState } from 'react';
-import { getAllReservations } from '../../data/services/reservationService';
+import { Check, MagnifyingGlass, X } from '@phosphor-icons/react';
+import { supabase } from '../../data/supabaseClient';
 import PageHeader from '../../shared/components/PageHeader';
 import cicsLogo from '../../assets/CICS-Logo.webp';
 import '../../features/reservations/components/ReservationsTable.css';
 import './PendingRequests.css';
 
-// Mock reservations for development / demo purposes
-const MOCK_PENDING_RESERVATIONS = [
-	{
-		id: 'REQ-1001',
-		userName: 'Ana Lopez',
-		date: '2026-05-04',
-		slotIds: ['09:00AM-10:00AM'],
-		status: 'pending',
-	},
-	{
-		id: 'REQ-1002',
-		userName: 'Mark Reyes',
-		date: '2026-05-06',
-		slotIds: ['1:00PM-2:00PM'],
-		status: 'pending',
-	},
-	{
-		id: 'REQ-1003',
-		userName: 'Sofia Cruz',
-		date: '2026-05-08',
-		slotIds: ['3:00PM-5:00PM'],
-		status: 'pending',
-	},
-];
+const PAGE_SIZE = 10;
+const RESOLVED_PAGE_SIZE = 10;
 
-const CARD_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
-	weekday: 'short',
-	month: 'short',
-	day: 'numeric',
-});
+const CARD_DATE_FMT = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+const FULL_DATE_FMT = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function formatTime12(timeStr) {
+	if (!timeStr) return '';
+	const [h, m] = timeStr.split(':').map(Number);
+	const period = h >= 12 ? 'PM' : 'AM';
+	const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+	return `${hour}:${pad(m)} ${period}`;
+}
+
+function parseDate(dateValue) {
+	if (!dateValue) return null;
+	const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue));
+	if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+	const d = new Date(dateValue);
+	if (Number.isNaN(d.getTime())) return null;
+	return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function formatDate(dateValue) {
+	const d = parseDate(dateValue);
+	return d ? CARD_DATE_FMT.format(d) : String(dateValue ?? '');
+}
+
+function formatFullDate(dateValue) {
+	const d = parseDate(dateValue);
+	return d ? FULL_DATE_FMT.format(d) : String(dateValue ?? '');
+}
+
+function getRelativeMeta(dateValue) {
+	const d = parseDate(dateValue);
+	if (!d) return { label: 'Date unavailable', tone: 'neutral' };
+	const todayStart = new Date();
+	todayStart.setHours(0, 0, 0, 0);
+	const diff = Math.round((d - todayStart) / 86400000);
+	if (diff === 0) return { label: 'Today', tone: 'today' };
+	if (diff === 1) return { label: 'Tomorrow', tone: 'tomorrow' };
+	if (diff > 1) return { label: `In ${diff} days`, tone: 'future' };
+	if (diff === -1) return { label: 'Yesterday', tone: 'past' };
+	return { label: `${Math.abs(diff)} days ago`, tone: 'past' };
+}
+
+function getTodayStr() {
+	return new Date().toISOString().slice(0, 10);
+}
+
+function getWeekBounds() {
+	const today = new Date();
+	const dow = today.getDay();
+	const daysFromMonday = dow === 0 ? 6 : dow - 1;
+	const monday = new Date(today);
+	monday.setDate(monday.getDate() - daysFromMonday);
+	monday.setHours(0, 0, 0, 0);
+	const sunday = new Date(monday);
+	sunday.setDate(sunday.getDate() + 6);
+	return {
+		mondayStr: monday.toISOString().slice(0, 10),
+		sundayStr: sunday.toISOString().slice(0, 10),
+	};
+}
+
+function enrichRow(r, usersMap) {
+	const user = usersMap[r.user_id];
+	return {
+		id: r.id,
+		userId: r.user_id,
+		user_name: user?.full_name || 'Unknown',
+		user_email: user?.email || '',
+		reservation_date: r.reservation_date,
+		start_time: r.start_time,
+		end_time: r.end_time,
+		status: r.status,
+		created_at: r.created_at,
+	};
+}
+
+const STATUS_LABELS = {
+	approved: 'Approved',
+	denied: 'Denied',
+	no_show: 'No Show',
+	auto_cancelled: 'Auto Cancelled',
+	completed: 'Completed',
+	checked_in: 'Checked In',
+	cancelled_by_user: 'Cancelled',
+	pending: 'Pending',
+	held: 'Held',
+};
+
+function formatStatus(status) {
+	return STATUS_LABELS[status] ?? status.replace(/_/g, ' ');
+}
+
+const RESOLVED_HEADERS = ['Request ID', 'Student', 'Date', 'Time Slot', 'Status'];
 
 export default function PendingRequests() {
-	const resolvedTableHeaders = ['Request ID', 'Student', 'Date', 'Time Slot(s)', 'Status'];
-	const mockRecentlyResolved = [
-		{
-			id: 'RES-2001',
-			userName: 'Diane Santos',
-			date: '2026-04-30',
-			slotIds: ['9:00AM-10:00AM'],
-			status: 'approved',
-		},
-		{
-			id: 'RES-2002',
-			userName: 'James Cruz',
-			date: '2026-04-29',
-			slotIds: ['2:00PM-3:00PM'],
-			status: 'declined',
-		},
-	];
-	const [pendingReservations, setPendingReservations] = useState([]);
-	const [statusMessage, setStatusMessage] = useState('');
+	const [allPending, setAllPending] = useState([]);
+	const [recentlyResolved, setRecentlyResolved] = useState([]);
 	const [isPageLoading, setIsPageLoading] = useState(true);
 
-	useEffect(() => {
-		const previousTitle = document.title;
-		document.title = 'Pending Requests - UST CICS Learning Common Room';
+	const [searchQuery, setSearchQuery] = useState('');
+	const [filterTab, setFilterTab] = useState('all');
+	const [currentPage, setCurrentPage] = useState(1);
+	const [resolvedPage, setResolvedPage] = useState(1);
 
+	const [acceptedIds, setAcceptedIds] = useState(new Set());
+	const [dismissingIds, setDismissingIds] = useState(new Set());
+
+	const [denyModal, setDenyModal] = useState(null);
+	const [denyReason, setDenyReason] = useState('');
+	const [denySubmitting, setDenySubmitting] = useState(false);
+	const [denyError, setDenyError] = useState('');
+
+	useEffect(() => {
+		const prevTitle = document.title;
+		document.title = 'Pending Requests - UST CICS Learning Common Room';
 		let active = true;
 
-		async function loadPendingReservations() {
+		async function loadData() {
 			try {
-				const [reservations] = await Promise.all([
-					getAllReservations(),
+				const [pendingResult, resolvedResult] = await Promise.all([
+					supabase
+						.from('reservations')
+						.select('id, user_id, reservation_date, start_time, end_time, status, created_at')
+						.eq('status', 'pending')
+						.order('created_at', { ascending: false }),
+					supabase
+						.from('reservations')
+						.select('id, user_id, reservation_date, start_time, end_time, status, created_at')
+						.in('status', ['approved', 'denied', 'auto_cancelled', 'no_show', 'completed'])
+						.order('created_at', { ascending: false })
+						.limit(100),
 					new Promise((resolve) => setTimeout(resolve, 700)),
 				]);
 
 				if (!active) return;
 
-				setPendingReservations(
-					reservations.filter((reservation) => reservation.status === 'pending')
-				);
-			} finally {
-				if (active) {
-					setIsPageLoading(false);
+				const allRows = [
+					...(pendingResult.data ?? []),
+					...(resolvedResult.data ?? []),
+				];
+
+				// Collect unique user IDs, then fetch their profiles in one query
+				const userIds = [...new Set(allRows.map((r) => r.user_id).filter(Boolean))];
+				const usersMap = {};
+				if (userIds.length > 0) {
+					const { data: usersData, error: usersError } = await supabase
+						.from('users')
+						.select('id, full_name, email')
+						.in('id', userIds);
+					if (usersError) console.error('[PendingRequests] users fetch:', usersError.message);
+					(usersData ?? []).forEach((u) => { usersMap[u.id] = u; });
 				}
+
+				if (pendingResult.data) setAllPending(pendingResult.data.map((r) => enrichRow(r, usersMap)));
+				if (resolvedResult.data) setRecentlyResolved(resolvedResult.data.map((r) => enrichRow(r, usersMap)));
+			} finally {
+				if (active) setIsPageLoading(false);
 			}
 		}
 
-		loadPendingReservations();
-
+		loadData();
 		return () => {
 			active = false;
-			document.title = previousTitle;
+			document.title = prevTitle;
 		};
 	}, []);
 
-	function handleAction(action, reservationId) {
-		setStatusMessage(`${action} queued for ${reservationId}.`);
-		// TODO(backend): Replace this local message with a PATCH call
-		// to /api/reservations/:id to approve/decline/reschedule pending requests.
-	}
+	useEffect(() => {
+		setCurrentPage(1);
+	}, [searchQuery, filterTab]);
 
-	function parseReservationDate(dateValue) {
-		if (!dateValue) return null;
+	useEffect(() => {
+		if (!denyModal) return;
+		const handler = (e) => { if (e.key === 'Escape') setDenyModal(null); };
+		document.addEventListener('keydown', handler);
+		return () => document.removeEventListener('keydown', handler);
+	}, [denyModal]);
 
-		const isoDateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue));
-		if (isoDateOnlyMatch) {
-			const [, year, month, day] = isoDateOnlyMatch;
-			return new Date(Number(year), Number(month) - 1, Number(day));
+	const todayStr = getTodayStr();
+	const { mondayStr, sundayStr } = getWeekBounds();
+
+	const countAll = allPending.length;
+	const countToday = allPending.filter((r) => r.reservation_date === todayStr).length;
+	const countThisWeek = allPending.filter(
+		(r) => r.reservation_date >= mondayStr && r.reservation_date <= sundayStr
+	).length;
+
+	const searchLower = searchQuery.trim().toLowerCase();
+	const filteredPending = allPending.filter((r) => {
+		if (filterTab === 'today' && r.reservation_date !== todayStr) return false;
+		if (filterTab === 'this_week' && (r.reservation_date < mondayStr || r.reservation_date > sundayStr)) return false;
+		if (searchLower && !r.user_name.toLowerCase().includes(searchLower)) return false;
+		return true;
+	});
+
+	const totalPages = Math.max(1, Math.ceil(filteredPending.length / PAGE_SIZE));
+	const safePage = Math.min(currentPage, totalPages);
+	const pageItems = filteredPending.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+	const resolvedTotalPages = Math.max(1, Math.ceil(recentlyResolved.length / RESOLVED_PAGE_SIZE));
+	const safeResolvedPage = Math.min(resolvedPage, resolvedTotalPages);
+	const resolvedItems = recentlyResolved.slice(
+		(safeResolvedPage - 1) * RESOLVED_PAGE_SIZE,
+		safeResolvedPage * RESOLVED_PAGE_SIZE
+	);
+
+	async function handleApprove(reservation) {
+		setAcceptedIds((prev) => new Set([...prev, reservation.id]));
+
+		const { error } = await supabase
+			.from('reservations')
+			.update({ status: 'approved' })
+			.eq('id', reservation.id)
+			.eq('status', 'pending');
+
+		if (error) {
+			setAcceptedIds((prev) => { const n = new Set(prev); n.delete(reservation.id); return n; });
+			console.error('[PendingRequests] Approve failed:', error.message);
+			return;
 		}
 
-		const parsedDate = new Date(dateValue);
-		if (Number.isNaN(parsedDate.getTime())) return null;
-
-		return new Date(
-			parsedDate.getFullYear(),
-			parsedDate.getMonth(),
-			parsedDate.getDate()
-		);
+		setTimeout(() => {
+			setDismissingIds((prev) => new Set([...prev, reservation.id]));
+			setTimeout(() => {
+				setAllPending((prev) => prev.filter((r) => r.id !== reservation.id));
+				setAcceptedIds((prev) => { const n = new Set(prev); n.delete(reservation.id); return n; });
+				setDismissingIds((prev) => { const n = new Set(prev); n.delete(reservation.id); return n; });
+				setRecentlyResolved((prev) => [{ ...reservation, status: 'approved' }, ...prev]);
+			}, 420);
+		}, 1500);
 	}
 
-	function formatReservationDate(dateValue) {
-		const parsedDate = parseReservationDate(dateValue);
-		if (!parsedDate) return String(dateValue ?? '');
-		return CARD_DATE_FORMATTER.format(parsedDate);
-	}
-
-	function getRelativeDayMeta(dateValue) {
-		const parsedDate = parseReservationDate(dateValue);
-		if (!parsedDate) {
-			return { label: 'Date unavailable', tone: 'neutral' };
+	async function handleDenySubmit() {
+		if (!denyReason.trim()) {
+			setDenyError('Please provide a reason for declining.');
+			return;
 		}
+		setDenySubmitting(true);
+		setDenyError('');
 
-		const today = new Date();
-		const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-		const millisecondsPerDay = 24 * 60 * 60 * 1000;
-		const dayDifference = Math.round((parsedDate - todayStart) / millisecondsPerDay);
+		const reservation = denyModal;
+		const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-		if (dayDifference === 0) return { label: 'Today', tone: 'today' };
-		if (dayDifference === 1) return { label: 'Tomorrow', tone: 'tomorrow' };
-		if (dayDifference > 1) return { label: `In ${dayDifference} days`, tone: 'future' };
-		if (dayDifference === -1) return { label: 'Yesterday', tone: 'past' };
+		try {
+			const response = await fetch(`${backendUrl}/api/reservations/${reservation.id}/decline`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ reason: denyReason.trim() }),
+			});
 
-		return { label: `${Math.abs(dayDifference)} days ago`, tone: 'past' };
+			if (!response.ok) {
+				const body = await response.json().catch(() => ({}));
+				throw new Error(body.error || `Server error ${response.status}`);
+			}
+
+			setDenyModal(null);
+			setDenyReason('');
+			setDismissingIds((prev) => new Set([...prev, reservation.id]));
+
+			setTimeout(() => {
+				setAllPending((prev) => prev.filter((r) => r.id !== reservation.id));
+				setDismissingIds((prev) => { const n = new Set(prev); n.delete(reservation.id); return n; });
+				setRecentlyResolved((prev) => [{ ...reservation, status: 'denied' }, ...prev]);
+			}, 420);
+		} catch (err) {
+			setDenyError(err.message);
+		} finally {
+			setDenySubmitting(false);
+		}
 	}
-
-	// Use mock data for preview when actual pendingReservations is empty
-	const useMockWhenEmpty = true;
-	const displayReservations = (pendingReservations.length === 0 && useMockWhenEmpty)
-		? MOCK_PENDING_RESERVATIONS
-		: pendingReservations;
-	const recentlyResolvedReservations = mockRecentlyResolved;
 
 	return (
 		<section
@@ -167,67 +303,168 @@ export default function PendingRequests() {
 					<div className="pending-requests__section-copy">
 						<div className="pending-requests__section-label">Pending Queue</div>
 						<div className="pending-requests__section-description">
-							{statusMessage || 'Review, approve, or decline requests submitted by students.'}
+							Review, approve, or decline requests submitted by students.
 						</div>
 					</div>
 					<div className="pending-requests__section-controls">
 						<div className="pending-requests__section-count">
-							{displayReservations.length} request{displayReservations.length === 1 ? '' : 's'} pending
+							{filteredPending.length} request{filteredPending.length === 1 ? '' : 's'} pending
 						</div>
 					</div>
 				</div>
 
+				<div className="pending-requests__toolbar">
+					<div className="pending-requests__search-wrap">
+						<MagnifyingGlass className="pending-requests__search-icon" size={16} weight="bold" />
+						<input
+							type="search"
+							className="pending-requests__search-input"
+							placeholder="Search by student name…"
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							aria-label="Search pending requests by student name"
+						/>
+						{searchQuery && (
+							<button
+								type="button"
+								className="pending-requests__search-clear"
+								onClick={() => setSearchQuery('')}
+								aria-label="Clear search"
+							>
+								<X size={14} weight="bold" />
+							</button>
+						)}
+					</div>
+
+					<div className="pending-requests__filter-tabs" role="tablist" aria-label="Filter by date">
+						{[
+							{ key: 'all', label: 'All', count: countAll },
+							{ key: 'today', label: 'Today', count: countToday },
+							{ key: 'this_week', label: 'This Week', count: countThisWeek },
+						].map(({ key, label, count }) => (
+							<button
+								key={key}
+								type="button"
+								role="tab"
+								aria-selected={filterTab === key}
+								className={`pending-requests__filter-tab${filterTab === key ? ' pending-requests__filter-tab--active' : ''}`}
+								onClick={() => setFilterTab(key)}
+							>
+								{label}
+								<span className="pending-requests__tab-count">{count}</span>
+							</button>
+						))}
+					</div>
+				</div>
+
 				<div className="pending-requests__card-list">
-					{displayReservations.length === 0 ? (
+					{filteredPending.length === 0 ? (
 						<div className="pending-requests__empty">
-							No pending requests right now.
+							{searchQuery
+								? `No results for "${searchQuery}"`
+								: 'No pending requests right now.'}
 						</div>
 					) : (
-						displayReservations.map((reservation) => {
-							const relativeDay = getRelativeDayMeta(reservation.date);
+						pageItems.map((reservation) => {
+							const relMeta = getRelativeMeta(reservation.reservation_date);
+							const isAccepted = acceptedIds.has(reservation.id);
+							const isDismissing = dismissingIds.has(reservation.id);
 
 							return (
-							<div key={reservation.id} className="pending-requests__card">
-								<div className="pending-requests__card-content">
-									<div className="pending-requests__card-row">
-										<div className="pending-requests__card-label">Request ID</div>
-										<div className="pending-requests__card-value id">{reservation.id}</div>
-									</div>
-									<div className="pending-requests__card-row">
-										<div className="pending-requests__card-label">Student</div>
-										<div className="pending-requests__card-value name">{reservation.userName}</div>
-									</div>
-									<div className="pending-requests__card-row">
-										<div className="pending-requests__card-label">Date</div>
-										<div className="pending-requests__card-date">
-											<div className="pending-requests__card-value date">
-												{formatReservationDate(reservation.date)}
+								<div
+									key={reservation.id}
+									className={`pending-requests__card${isDismissing ? ' pending-requests__card--dismissing' : ''}`}
+								>
+									{isAccepted && (
+										<div className="pending-requests__accepted-overlay" aria-hidden="true">
+											<Check weight="bold" size={20} />
+											Request accepted
+										</div>
+									)}
+
+									<div className="pending-requests__card-content">
+										<div className="pending-requests__card-row">
+											<div className="pending-requests__card-label">Student</div>
+											<div className="pending-requests__card-value name">{reservation.user_name}</div>
+										</div>
+										<div className="pending-requests__card-row">
+											<div className="pending-requests__card-label">Request ID</div>
+											<div className="pending-requests__card-value id">{reservation.id.slice(0, 8)}…</div>
+										</div>
+										<div className="pending-requests__card-row">
+											<div className="pending-requests__card-label">Date</div>
+											<div className="pending-requests__card-date">
+												<div className="pending-requests__card-value date">
+													{formatDate(reservation.reservation_date)}
+												</div>
+												<span className={`pending-requests__date-helper pending-requests__date-helper--${relMeta.tone}`}>
+													{relMeta.label}
+												</span>
 											</div>
-											<span
-												className={`pending-requests__date-helper pending-requests__date-helper--${relativeDay.tone}`}
-											>
-												{relativeDay.label}
-											</span>
+										</div>
+										<div className="pending-requests__card-row">
+											<div className="pending-requests__card-label">Time</div>
+											<div className="pending-requests__card-value">
+												{formatTime12(reservation.start_time)} – {formatTime12(reservation.end_time)}
+											</div>
 										</div>
 									</div>
-									<div className="pending-requests__card-row">
-										<div className="pending-requests__card-label">Time Slots</div>
-										<div className="pending-requests__card-value">{reservation.slotIds.join(', ')}</div>
+
+									<div className="pending-requests__card-actions">
+										<button
+											type="button"
+											className="pending-requests__action-btn pending-requests__action-btn--approve"
+											onClick={() => handleApprove(reservation)}
+											disabled={isAccepted || isDismissing}
+										>
+											Approve
+										</button>
+										<button
+											type="button"
+											className="pending-requests__action-btn pending-requests__action-btn--decline"
+											onClick={() => {
+												setDenyModal(reservation);
+												setDenyReason('');
+												setDenyError('');
+											}}
+											disabled={isAccepted || isDismissing}
+										>
+											Decline
+										</button>
 									</div>
 								</div>
-								<div className="pending-requests__card-actions">
-									<button type="button" className="pending-requests__action-btn pending-requests__action-btn--approve" onClick={() => handleAction('Approve', reservation.id)}>
-										Approve
-									</button>
-									<button type="button" className="pending-requests__action-btn pending-requests__action-btn--decline" onClick={() => handleAction('Decline', reservation.id)}>
-										Decline
-									</button>
-								</div>
-							</div>
 							);
 						})
 					)}
 				</div>
+
+				{totalPages > 1 && (
+					<div className="pending-requests__cards-pagination">
+						<span className="pending-requests__cards-pagination-info">
+							Page {safePage} of {totalPages} · {filteredPending.length} request{filteredPending.length === 1 ? '' : 's'}
+						</span>
+						<div className="pending-requests__cards-pagination-controls">
+							<button
+								type="button"
+								className="pagination-btn"
+								onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+								disabled={safePage === 1}
+								aria-label="Previous page"
+							>
+								‹
+							</button>
+							<button
+								type="button"
+								className="pagination-btn"
+								onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+								disabled={safePage === totalPages}
+								aria-label="Next page"
+							>
+								›
+							</button>
+						</div>
+					</div>
+				)}
 			</div>
 
 			<div className="reservations-table pending-requests-page__table-shell">
@@ -240,7 +477,7 @@ export default function PendingRequests() {
 					</div>
 					<div className="pending-requests__section-controls">
 						<div className="pending-requests__section-count">
-							{recentlyResolvedReservations.length} request{recentlyResolvedReservations.length === 1 ? '' : 's'} resolved
+							{recentlyResolved.length} request{recentlyResolved.length === 1 ? '' : 's'} resolved
 						</div>
 					</div>
 				</div>
@@ -249,32 +486,32 @@ export default function PendingRequests() {
 					<table className="reservations-table__table">
 						<thead>
 							<tr className="table-header-row">
-								{resolvedTableHeaders.map((header) => (
-									<th key={header} className="table-header-cell">
-										{header.toUpperCase()}
-									</th>
+								{RESOLVED_HEADERS.map((h) => (
+									<th key={h} className="table-header-cell">{h.toUpperCase()}</th>
 								))}
 							</tr>
 						</thead>
 						<tbody>
-							{recentlyResolvedReservations.length === 0 ? (
+							{resolvedItems.length === 0 ? (
 								<tr className="table-body-row">
-									<td className="table-cell" colSpan={resolvedTableHeaders.length}>
+									<td className="table-cell" colSpan={RESOLVED_HEADERS.length}>
 										No recently resolved reservations.
 									</td>
 								</tr>
 							) : (
-								recentlyResolvedReservations.map((reservation) => (
-									<tr key={reservation.id} className="table-body-row">
-										<td className="table-cell">{reservation.id}</td>
-										<td className="table-cell">{reservation.userName}</td>
-										<td className="table-cell">{reservation.date}</td>
-										<td className="table-cell">{reservation.slotIds.join(', ')}</td>
+								resolvedItems.map((r) => (
+									<tr key={r.id + r.status} className="table-body-row">
+										<td className="table-cell pending-requests__ref-cell">
+											{r.id.slice(0, 8)}…
+										</td>
+										<td className="table-cell">{r.user_name}</td>
+										<td className="table-cell">{formatDate(r.reservation_date)}</td>
 										<td className="table-cell">
-											<span
-												className={`pending-requests__resolved-status pending-requests__resolved-status--${reservation.status}`}
-											>
-												{reservation.status}
+											{formatTime12(r.start_time)} – {formatTime12(r.end_time)}
+										</td>
+										<td className="table-cell">
+											<span className={`pending-requests__resolved-status pending-requests__resolved-status--${r.status}`}>
+												{formatStatus(r.status)}
 											</span>
 										</td>
 									</tr>
@@ -286,13 +523,14 @@ export default function PendingRequests() {
 
 				<div className="reservations-table__footer">
 					<div className="pagination-info">
-						Displaying {recentlyResolvedReservations.length} resolved request{recentlyResolvedReservations.length === 1 ? '' : 's'}
+						Displaying {resolvedItems.length} of {recentlyResolved.length} resolved
 					</div>
 					<div className="pagination-controls">
 						<button
 							type="button"
 							className="pagination-btn"
-							disabled
+							onClick={() => setResolvedPage((p) => Math.max(1, p - 1))}
+							disabled={safeResolvedPage === 1}
 							aria-label="Previous page"
 						>
 							‹
@@ -300,7 +538,8 @@ export default function PendingRequests() {
 						<button
 							type="button"
 							className="pagination-btn"
-							disabled
+							onClick={() => setResolvedPage((p) => Math.min(resolvedTotalPages, p + 1))}
+							disabled={safeResolvedPage === resolvedTotalPages}
 							aria-label="Next page"
 						>
 							›
@@ -309,7 +548,7 @@ export default function PendingRequests() {
 				</div>
 			</div>
 
-			{isPageLoading ? (
+			{isPageLoading && (
 				<div
 					className="pending-requests-page-transition"
 					role="status"
@@ -327,7 +566,102 @@ export default function PendingRequests() {
 						</div>
 					</div>
 				</div>
-			) : null}
+			)}
+
+			{denyModal &&
+				createPortal(
+					<div
+						className="deny-modal-overlay"
+						onClick={() => setDenyModal(null)}
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="deny-modal-title"
+					>
+						<div className="deny-modal" onClick={(e) => e.stopPropagation()}>
+							<div className="deny-modal__header">
+								<h2 id="deny-modal-title" className="deny-modal__title">
+									Decline Request
+								</h2>
+								<button
+									type="button"
+									className="deny-modal__close"
+									onClick={() => setDenyModal(null)}
+									aria-label="Close"
+								>
+									<X size={18} weight="bold" />
+								</button>
+							</div>
+
+							<div className="deny-modal__booking-info">
+								<p className="deny-modal__info-label">Booking Details</p>
+								<div className="deny-modal__info-row">
+									<span className="deny-modal__info-key">Student</span>
+									<span className="deny-modal__info-val">{denyModal.user_name}</span>
+								</div>
+								<div className="deny-modal__info-row">
+									<span className="deny-modal__info-key">Date</span>
+									<span className="deny-modal__info-val">{formatFullDate(denyModal.reservation_date)}</span>
+								</div>
+								<div className="deny-modal__info-row">
+									<span className="deny-modal__info-key">Time</span>
+									<span className="deny-modal__info-val">
+										{formatTime12(denyModal.start_time)} – {formatTime12(denyModal.end_time)}
+									</span>
+								</div>
+								<div className="deny-modal__info-row">
+									<span className="deny-modal__info-key">Ref</span>
+									<span className="deny-modal__info-val deny-modal__ref">{denyModal.id.slice(0, 8)}…</span>
+								</div>
+							</div>
+
+							<div className="deny-modal__reason-section">
+								<label className="deny-modal__reason-label" htmlFor="deny-reason">
+									Reason for declining <span aria-hidden="true">*</span>
+								</label>
+								<textarea
+									id="deny-reason"
+									className="deny-modal__reason-textarea"
+									placeholder="Explain why this request is being declined. This message will be sent to the student via email."
+									value={denyReason}
+									onChange={(e) => {
+										setDenyReason(e.target.value);
+										if (denyError) setDenyError('');
+									}}
+									rows={4}
+									maxLength={500}
+									disabled={denySubmitting}
+								/>
+								<div className="deny-modal__reason-footer">
+									{denyError
+										? <span className="deny-modal__error">{denyError}</span>
+										: <span />
+									}
+									<span className="deny-modal__char-count">{denyReason.length}/500</span>
+								</div>
+							</div>
+
+							<div className="deny-modal__actions">
+								<button
+									type="button"
+									className="deny-modal__btn deny-modal__btn--cancel"
+									onClick={() => setDenyModal(null)}
+									disabled={denySubmitting}
+								>
+									Cancel
+								</button>
+								<button
+									type="button"
+									className="deny-modal__btn deny-modal__btn--submit"
+									onClick={handleDenySubmit}
+									disabled={denySubmitting}
+								>
+									{denySubmitting ? 'Sending…' : 'Decline & Notify'}
+								</button>
+							</div>
+						</div>
+					</div>,
+					document.body
+				)}
 		</section>
 	);
 }

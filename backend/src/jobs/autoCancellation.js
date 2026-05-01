@@ -6,15 +6,51 @@ const { supabaseAdmin } = require('../lib/supabaseAdmin');
  * 'no_show' and increments no_show_count on the corresponding user.
  */
 async function runAutoCancellation() {
-	const now = new Date().toISOString();
+	const now = new Date();
+	const nowIso = now.toISOString();
 
-	// Cutoff = current time minus 15-minute grace period, formatted as HH:MM:SS
-	// start_time is a Postgres `time` column so it only accepts this format
-	const cutoff = new Date(Date.now() - 15 * 60 * 1000);
+	// Cutoff for no-show check: current time minus 15-minute grace period
+	const cutoff = new Date(now - 15 * 60 * 1000);
 	const cutoffTime = cutoff.toTimeString().slice(0, 8); // "HH:MM:SS"
-	const todayDate = cutoff.toISOString().slice(0, 10);  // "YYYY-MM-DD"
+	const todayDate = now.toISOString().slice(0, 10);     // "YYYY-MM-DD"
+	const currentTime = now.toTimeString().slice(0, 8);   // "HH:MM:SS"
 
-	// Fetch reservations that are past the 15-minute grace window and never checked in
+	// ── 1. Expire stale pending requests ──────────────────────────────────────
+	// A pending reservation is expired if its date has passed, or if it's today
+	// and its end_time is already in the past.
+	const [{ data: pastDatePending }, { data: pastTimePending }] = await Promise.all([
+		supabaseAdmin
+			.from('reservations')
+			.select('id')
+			.eq('status', 'pending')
+			.lt('reservation_date', todayDate),
+		supabaseAdmin
+			.from('reservations')
+			.select('id')
+			.eq('status', 'pending')
+			.eq('reservation_date', todayDate)
+			.lt('end_time', currentTime),
+	]);
+
+	const expiredPendingIds = [
+		...(pastDatePending ?? []),
+		...(pastTimePending ?? []),
+	].map((r) => r.id);
+
+	if (expiredPendingIds.length > 0) {
+		const { error: expireError } = await supabaseAdmin
+			.from('reservations')
+			.update({ status: 'auto_cancelled' })
+			.in('id', expiredPendingIds);
+
+		if (expireError) {
+			console.error('[auto-cancel] Failed to expire stale pending reservations:', expireError.message);
+		} else {
+			console.log(`[auto-cancel] ${nowIso} — expired ${expiredPendingIds.length} stale pending reservation(s).`);
+		}
+	}
+
+	// ── 2. Mark approved reservations as no_show ───────────────────────────────
 	const { data: overdueReservations, error: fetchError } = await supabaseAdmin
 		.from('reservations')
 		.select('id, user_id')
@@ -29,14 +65,15 @@ async function runAutoCancellation() {
 	}
 
 	if (!overdueReservations || overdueReservations.length === 0) {
-		console.log(`[auto-cancel] ${now} — no overdue reservations.`);
+		if (expiredPendingIds.length === 0) {
+			console.log(`[auto-cancel] ${nowIso} — nothing to do.`);
+		}
 		return;
 	}
 
 	const overdueIds = overdueReservations.map((r) => r.id);
-	console.log(`[auto-cancel] ${now} — marking ${overdueIds.length} reservation(s) as no_show:`, overdueIds);
+	console.log(`[auto-cancel] ${nowIso} — marking ${overdueIds.length} reservation(s) as no_show:`, overdueIds);
 
-	// Mark all overdue reservations as no_show
 	const { error: updateError } = await supabaseAdmin
 		.from('reservations')
 		.update({ status: 'no_show' })
@@ -47,7 +84,6 @@ async function runAutoCancellation() {
 		return;
 	}
 
-	// Increment no_show_count for each affected user (null user_id = guest, skip)
 	const userIds = [...new Set(overdueReservations.map((r) => r.user_id).filter(Boolean))];
 
 	for (const userId of userIds) {
@@ -60,7 +96,7 @@ async function runAutoCancellation() {
 		}
 	}
 
-	console.log(`[auto-cancel] Done. Updated ${overdueIds.length} reservation(s), ${userIds.length} user(s).`);
+	console.log(`[auto-cancel] Done. ${overdueIds.length} no_show, ${userIds.length} user(s) incremented.`);
 }
 
 module.exports = { runAutoCancellation };

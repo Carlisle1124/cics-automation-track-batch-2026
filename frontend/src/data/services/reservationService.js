@@ -162,14 +162,14 @@ export function cancelReservation(reservationId) {
 		() => {
 			const index = RESERVATIONS.findIndex((r) => r.id === reservationId);
 			if (index === -1) throw new Error('Reservation not found');
-			RESERVATIONS[index] = { ...RESERVATIONS[index], status: 'cancelled' };
+			RESERVATIONS[index] = { ...RESERVATIONS[index], status: 'cancelled_by_user' };
 			return enrichReservation(RESERVATIONS[index]);
 		},
 		`/api/reservations/${encodeURIComponent(reservationId)}`,
 		{
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ status: 'cancelled' }),
+			body: JSON.stringify({ status: 'cancelled_by_user' }),
 		}
 	);
 }

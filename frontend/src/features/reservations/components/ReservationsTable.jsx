@@ -196,7 +196,7 @@ export default function ReservationsTable({ userRole = 'student', userId = null 
     try {
       await cancelReservation(reservationId);
       setReservations((prev) =>
-        prev.map((r) => (r.id === reservationId ? { ...r, status: 'cancelled' } : r))
+        prev.map((r) => (r.id === reservationId ? { ...r, status: 'cancelled_by_user' } : r))
       );
     } catch {
       // Silently revert — in production show an error toast

@@ -31,6 +31,7 @@ export async function login(email, password) {
 		.single();
 
 	if (userError || !userData) {
+		console.error('[login] users profile fetch failed:', userError?.code, userError?.message);
 		await supabase.auth.signOut();
 		throw new Error('Profile fetch error');
 	}

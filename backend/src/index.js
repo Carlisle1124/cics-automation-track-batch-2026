@@ -5,7 +5,11 @@ const { runAutoCancellation } = require('./jobs/autoCancellation');
 const { runHoldCleanup } = require('./jobs/holdCleanup');
 const { runExtensionNotifier } = require('./jobs/extensionNotifier');
 
+const { startApiServer } = require('./apiServer');
+
 console.log('[server] CICS backend starting...');
+
+startApiServer();
 
 // Marks reservations as no_show when check-in window passes
 cron.schedule('* * * * *', () => {
