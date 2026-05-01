@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Card from '../../../shared/components/Card';
 import { getAvailabilityByDate } from '../../../data/services/availabilityService';
-import { holdSlot, confirmSlot, releaseSlot } from '../../../data/services/reservationService';
+import { holdSlot, confirmSlot, releaseSlot, releaseSlotBeacon } from '../../../data/services/reservationService';
 import { validateReservation } from '../../../data/services/reservationLogic';
 import { getCurrentUser } from '../../../data/services/authService';
 import { supabase } from '../../../data/supabaseClient';
@@ -63,6 +63,7 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
 
   const activeHoldRef = useRef(null);
   const currentUserRef = useRef(null);
+  const accessTokenRef = useRef(null);
   const dateInputRef = useRef(null);
 
   useEffect(() => {
@@ -74,7 +75,13 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
   }, [currentUser]);
 
   useEffect(() => {
-    getCurrentUser().then(setCurrentUser).catch(() => {});
+    async function loadUser() {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+      const { data: { session } } = await supabase.auth.getSession();
+      accessTokenRef.current = session?.access_token ?? null;
+    }
+    loadUser().catch(() => {});
   }, []);
 
   // Release hold on unmount
@@ -84,6 +91,18 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
       const uid = currentUserRef.current?.id;
       if (hold && uid) releaseSlot(hold.id, uid).catch(() => {});
     };
+  }, []);
+
+  // Release hold immediately when the tab/window closes
+  useEffect(() => {
+    function handleBeforeUnload() {
+      const hold = activeHoldRef.current;
+      const uid = currentUserRef.current?.id;
+      const token = accessTokenRef.current;
+      if (hold?.id && uid && token) releaseSlotBeacon(hold.id, uid, token);
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
   const selectedDateValue = [

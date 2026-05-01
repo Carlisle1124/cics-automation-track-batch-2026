@@ -91,6 +91,13 @@ button.day-btn__selected {
     font-weight: bold;
 }
 
+button.day-btn--disabled,
+button.day-btn--disabled.day-btn__selected {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .day-btn__date,
 .day-btn__weekday {
   width: 100%;

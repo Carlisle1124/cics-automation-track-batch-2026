@@ -71,6 +71,20 @@ function isSameDay(date1, date2) {
   );
 }
 
+function getMaxDate(today) {
+  const max = new Date(today);
+  max.setDate(max.getDate() + 30);
+  return max;
+}
+
+function isDateDisabled(date, today, maxDate) {
+  const d = normalizeDate(date);
+  if (d < today) return true;
+  if (d > maxDate) return true;
+  if (date.getDay() === 0) return true; // Sunday
+  return false;
+}
+
 function getAlignedFiveDayBlockStart(date, anchorDate) {
   const dayInMs = 24 * 60 * 60 * 1000;
   const normalizedDate = normalizeDate(date);
@@ -107,10 +121,14 @@ export default function DatePicker({
   const popoverMonthLabel = formatMonthLabel(popoverMonth);
   const monthGridDays = getDaysInMonthGrid(popoverMonth);
   const today = normalizeDate(new Date());
+  const maxDate = getMaxDate(today);
 
   const handlePreviousWeek = () => {
     setGridDirection('prev');
-    setWindowStartDate(prev => addDays(prev, -5));
+    setWindowStartDate(prev => {
+      const next = addDays(prev, -5);
+      return normalizeDate(next) < today ? today : next;
+    });
   };
 
   const handleNextWeek = () => {
@@ -119,7 +137,7 @@ export default function DatePicker({
   };
 
   const handleDayClick = (date) => {
-    // Only select the day, don't change the window
+    if (isDateDisabled(date, today, maxDate)) return;
     onDateChange(formatDateValue(date));
   };
 
@@ -143,6 +161,7 @@ export default function DatePicker({
   };
 
   const handlePopoverDateSelect = (date) => {
+    if (isDateDisabled(date, today, maxDate)) return;
     onDateChange(formatDateValue(date));
     setWindowStartDate(getAlignedFiveDayBlockStart(date, today));
     setPopoverMonth(getStartOfMonth(date));
@@ -226,6 +245,7 @@ export default function DatePicker({
             className="previous-day-btn"
             aria-label="Previous 5 days"
             onClick={handlePreviousWeek}
+            disabled={normalizeDate(windowStartDate) <= today}
           >
             <CaretLeft weight="bold" />
           </button>
@@ -236,18 +256,23 @@ export default function DatePicker({
           >
             {fiveDayWindow.map((date) => {
               const isSelected = isSameDay(date, selectedDate);
+              const disabled = isDateDisabled(date, today, maxDate);
 
               return (
                 <button
                   key={formatDateValue(date)}
                   type="button"
-                  className={isSelected ? 'day-btn__selected' : 'day-btn'}
+                  className={[
+                    isSelected ? 'day-btn__selected' : 'day-btn',
+                    disabled ? 'day-btn--disabled' : '',
+                  ].filter(Boolean).join(' ')}
                   onClick={() => handleDayClick(date)}
+                  disabled={disabled}
                   aria-label={`${date.toLocaleString('default', {
                     weekday: 'long',
                     month: 'short',
                     day: 'numeric',
-                  })}`}
+                  })}${disabled ? ' (unavailable)' : ''}`}
                 >
                   <span className="day-btn__date">{date.getDate()}</span>
                   <span className="day-btn__weekday">{getDayOfWeekName(date)}</span>
@@ -323,6 +348,7 @@ export default function DatePicker({
                     const isCurrentMonth = date.getMonth() === popoverMonth.getMonth();
                     const isSelected = isSameDay(date, selectedDate);
                     const isToday = isSameDay(date, today);
+                    const disabled = isDateDisabled(date, today, maxDate);
                     return (
                       <button
                         key={formatDateValue(date)}
@@ -332,10 +358,13 @@ export default function DatePicker({
                           isCurrentMonth ? '' : 'inline-calendar-expanded__day--outside',
                           isSelected ? 'inline-calendar-expanded__day--selected' : '',
                           isToday ? 'inline-calendar-expanded__day--today' : '',
+                          disabled ? 'inline-calendar-expanded__day--disabled' : '',
                         ]
                           .filter(Boolean)
                           .join(' ')}
                         onClick={() => handlePopoverDateSelect(date)}
+                        disabled={disabled}
+                        aria-disabled={disabled}
                       >
                         {date.getDate()}
                       </button>

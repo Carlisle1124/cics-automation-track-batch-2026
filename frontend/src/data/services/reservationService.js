@@ -219,3 +219,18 @@ export async function releaseSlot(reservationId, userId) {
 		.eq('status', 'held');
 	if (error) throw new Error(error.message);
 }
+
+// Synchronous fire-and-forget release for beforeunload.
+// keepalive: true guarantees the request completes even after the tab closes.
+export function releaseSlotBeacon(reservationId, userId, accessToken) {
+	const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+	const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+	fetch(
+		`${supabaseUrl}/rest/v1/reservations?id=eq.${reservationId}&user_id=eq.${userId}&status=eq.held`,
+		{
+			method: 'DELETE',
+			headers: { apikey: supabaseKey, Authorization: `Bearer ${accessToken}` },
+			keepalive: true,
+		}
+	);
+}

@@ -1,5 +1,19 @@
 import { supabase } from '../supabaseClient';
 
+function getWeekBounds(reservationDate) {
+	const d = new Date(`${reservationDate}T00:00:00`);
+	const dayOfWeek = d.getDay(); // 0=Sun … 6=Sat
+	const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+	const monday = new Date(d);
+	monday.setDate(monday.getDate() - daysFromMonday);
+	const sunday = new Date(monday);
+	sunday.setDate(sunday.getDate() + 6);
+	return {
+		mondayStr: monday.toISOString().slice(0, 10),
+		sundayStr: sunday.toISOString().slice(0, 10),
+	};
+}
+
 export async function validateReservation({ userId, reservationDate, durationHours }) {
 	const [{ data: user }, { data: settings }] = await Promise.all([
 		supabase
@@ -23,15 +37,21 @@ export async function validateReservation({ userId, reservationDate, durationHou
 		throw new Error(`Your account is suspended until ${until}.`);
 	}
 
+	const resDate = new Date(`${reservationDate}T00:00:00`);
+
+	// No Sunday reservations
+	if (resDate.getDay() === 0) {
+		throw new Error('Reservations are not available on Sundays.');
+	}
+
 	const today = new Date();
 	today.setHours(0, 0, 0, 0);
-	const resDate = new Date(`${reservationDate}T00:00:00`);
 
 	if (resDate < today) {
 		throw new Error('Cannot reserve a slot in the past.');
 	}
 
-	const advanceDays = settings?.advance_booking_days ?? 14;
+	const advanceDays = settings?.advance_booking_days ?? 30;
 	const maxDate = new Date(today);
 	maxDate.setDate(maxDate.getDate() + advanceDays);
 
@@ -43,15 +63,30 @@ export async function validateReservation({ userId, reservationDate, durationHou
 		throw new Error('Please select a valid duration (1, 2, or 3 hours).');
 	}
 
-	const { data: existing } = await supabase
+	// Daily limit — max 2 per day
+	const { data: dailyRes } = await supabase
 		.from('reservations')
 		.select('id')
 		.eq('user_id', userId)
 		.eq('reservation_date', reservationDate)
-		.in('status', ['pending', 'approved', 'checked_in'])
-		.limit(1);
+		.in('status', ['pending', 'approved', 'checked_in']);
 
-	if (existing?.length > 0) {
-		throw new Error('You already have an active reservation on this date.');
+	if ((dailyRes?.length ?? 0) >= 2) {
+		throw new Error('You have reached the 2-reservation limit for this day.');
+	}
+
+	// Weekly limit — max 5 per Mon–Sun week
+	const { mondayStr, sundayStr } = getWeekBounds(reservationDate);
+
+	const { data: weeklyRes } = await supabase
+		.from('reservations')
+		.select('id')
+		.eq('user_id', userId)
+		.gte('reservation_date', mondayStr)
+		.lte('reservation_date', sundayStr)
+		.in('status', ['pending', 'approved', 'checked_in']);
+
+	if ((weeklyRes?.length ?? 0) >= 5) {
+		throw new Error('You have reached the 5-reservation limit for this week. Your limit resets next Monday.');
 	}
 }
