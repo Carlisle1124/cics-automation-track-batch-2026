@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../data/supabaseClient';
+import Modal from '../../shared/components/Modal';
+import cicsLogo from '../../assets/CICS-Logo.webp';
 import './AuthPages.css';
 
 const UST_DOMAIN = '@ust.edu.ph';
+const RESEND_COOLDOWN_SECONDS = 180;
 
 function validateEmail(value) {
 	const trimmed = value.trim().toLowerCase();
@@ -29,7 +32,7 @@ function validateConfirmPassword(password, confirmPassword) {
 }
 
 export default function ForgotPassword() {
-	const [step, setStep] = useState('request');
+	const [step, setStep] = useState('request'); // 'request', 'reset', 'success', 'error'
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [email, setEmail] = useState('');
 	const [newPassword, setNewPassword] = useState('');
@@ -38,6 +41,12 @@ export default function ForgotPassword() {
 	const [resetSubmitted, setResetSubmitted] = useState(false);
 	const [statusMessage, setStatusMessage] = useState('Enter your UST email to start resetting your password.');
 	const [statusType, setStatusType] = useState('info');
+	const [emailModalOpen, setEmailModalOpen] = useState(false);
+	const [emailModalState, setEmailModalState] = useState('loading'); // 'loading' | 'success'
+	const [emailSent, setEmailSent] = useState(false);
+	const [resendCountdown, setResendCountdown] = useState(0);
+	const [linkError, setLinkError] = useState('');
+	const countdownRef = useRef(null);
 
 	const emailError = emailSubmitted ? validateEmail(email) : '';
 	const newPasswordError = resetSubmitted ? validateNewPassword(newPassword) : '';
@@ -51,88 +60,149 @@ export default function ForgotPassword() {
 		return 'Password Updated';
 	}, [step]);
 
-    useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-            setStep('reset');
-            setStatusMessage('Enter your new password.');
-            setStatusType('info');
-        }
-        }
-    );
+	useEffect(() => {
+		const previousTitle = document.title;
+		document.title = 'Forgot Password - UST CICS Learning Common Room';
 
-    return () => {
-        listener.subscription.unsubscribe();
-    };
-    }, []);
+		return () => {
+			document.title = previousTitle;
+		};
+	}, []);
 
-async function handleRequestSubmit(event) {
-  event.preventDefault();
-  setEmailSubmitted(true);
+	useEffect(() => {
+		const { data: listener } = supabase.auth.onAuthStateChange(
+			(event, session) => {
+				if (event === 'PASSWORD_RECOVERY') {
+					setStep('reset');
+					setStatusMessage('Enter your new password.');
+					setStatusType('info');
+				} else if (event === 'SIGNED_OUT') {
+					if (step === 'reset') {
+						setStep('error');
+						setLinkError('This password reset link is no longer valid. It may have expired or been already used.');
+						setStatusMessage('Link expired or already used.');
+						setStatusType('error');
+					}
+				}
+			}
+		);
 
-  const err = validateEmail(email);
-  if (err) {
-    setStatusMessage('Please fix the highlighted field before continuing.');
-    setStatusType('error');
-    return;
-  }
+		return () => {
+			listener.subscription.unsubscribe();
+		};
+	}, [step]);
 
-  setIsSubmitting(true);
-  setStatusMessage('Sending reset link...');
-  setStatusType('info');
+	function formatCountdown(seconds) {
+		const m = Math.floor(seconds / 60);
+		const s = seconds % 60;
+		return `${m}:${String(s).padStart(2, '0')}`;
+	}
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/auth/forgot-password`,
-  });
+	function startCountdown() {
+		setResendCountdown(RESEND_COOLDOWN_SECONDS);
+		countdownRef.current = setInterval(() => {
+			setResendCountdown((prev) => {
+				if (prev <= 1) {
+					clearInterval(countdownRef.current);
+					return 0;
+				}
+				return prev - 1;
+			});
+		}, 1000);
+	}
 
-  setIsSubmitting(false);
+	async function handleRequestSubmit(event) {
+		event.preventDefault();
+		setEmailSubmitted(true);
 
-  if (error) {
-            setStatusMessage(error.message);
-            setStatusType('error');
-            return;
-        }
+		const err = validateEmail(email);
+		if (err) {
+			setStatusMessage('Please fix the highlighted field before continuing.');
+			setStatusType('error');
+			return;
+		}
 
-        setStatusMessage('Check your email for the password reset link.');
-        setStatusType('success');
-    }       
+		setIsSubmitting(true);
+		setEmailModalState('loading');
+		setEmailModalOpen(true);
 
-    async function handleResetSubmit(event) {
-    event.preventDefault();
-    setResetSubmitted(true);
+		const { error } = await supabase.auth.resetPasswordForEmail(email, {
+			redirectTo: `${window.location.origin}/auth/forgot-password`,
+		});
 
-    const errors = {
-        newPassword: validateNewPassword(newPassword),
-        confirmPassword: validateConfirmPassword(newPassword, confirmPassword),
-    };
+		setIsSubmitting(false);
 
-    if (Object.values(errors).some(Boolean)) {
-        setStatusMessage('Please complete all required fields.');
-        setStatusType('error');
-        return;
-    }
+		if (error) {
+			setEmailModalOpen(false);
+			setStatusMessage(error.message);
+			setStatusType('error');
+			return;
+		}
 
-    setIsSubmitting(true);
-    setStatusMessage('Updating password...');
-    setStatusType('info');
+		setEmailSent(true);
+		setEmailModalState('success');
+		clearInterval(countdownRef.current);
+		startCountdown();
+	}       
 
-    const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-    });
+	async function handleResend() {
+		if (resendCountdown > 0) return;
+		setIsSubmitting(true);
+		setEmailModalState('loading');
 
-    setIsSubmitting(false);
+		const { error } = await supabase.auth.resetPasswordForEmail(email, {
+			redirectTo: `${window.location.origin}/auth/forgot-password`,
+		});
 
-    if (error) {
-        setStatusMessage(error.message);
-        setStatusType('error');
-        return;
-    }
+		setIsSubmitting(false);
 
-    setStep('success');
-    setStatusMessage('Password successfully updated.');
-    setStatusType('success');
-    }
+		if (error) {
+			setEmailModalOpen(false);
+			setStatusMessage(error.message);
+			setStatusType('error');
+			return;
+		}
+
+		setEmailModalState('success');
+		clearInterval(countdownRef.current);
+		startCountdown();
+	}
+
+	async function handleResetSubmit(event) {
+		event.preventDefault();
+		setResetSubmitted(true);
+
+		const errors = {
+			newPassword: validateNewPassword(newPassword),
+			confirmPassword: validateConfirmPassword(newPassword, confirmPassword),
+		};
+
+		if (Object.values(errors).some(Boolean)) {
+			setStatusMessage('Please complete all required fields.');
+			setStatusType('error');
+			return;
+		}
+
+		setIsSubmitting(true);
+		setStatusMessage('Updating password...');
+		setStatusType('info');
+
+		const { error } = await supabase.auth.updateUser({
+			password: newPassword,
+		});
+
+		setIsSubmitting(false);
+
+		if (error) {
+			setStatusMessage(error.message);
+			setStatusType('error');
+			return;
+		}
+
+		setStep('success');
+		setStatusMessage('Password successfully updated.');
+		setStatusType('success');
+	}
 
 	function getFieldClassName(error) {
 		return error ? 'auth-field auth-field--error' : 'auth-field';
@@ -179,8 +249,10 @@ async function handleRequestSubmit(event) {
 						{step === 'request'
 							? 'We will send reset instructions to your school email.'
 							: step === 'reset'
-								? 'Enter your verification code and set a new password.'
-								: 'Your account is ready to use again.'}
+								? 'Enter your new password.'
+								: step === 'success'
+									? 'Your account is ready to use again.'
+									: 'Request a new reset link'}
 					</p>
 				</div>
 
@@ -228,9 +300,6 @@ async function handleRequestSubmit(event) {
 
 				{step === 'reset' ? (
 					<form className="auth-form" onSubmit={handleResetSubmit} noValidate>
-						<p className="auth-forgot-desc">
-							For now, this screen is frontend-only. You can connect these fields to your reset API later.
-						</p>
 
 						<div className={getFieldClassName(newPasswordError)}>
 							<label htmlFor="forgot-password-new-password">
@@ -292,10 +361,26 @@ async function handleRequestSubmit(event) {
 				{step === 'success' ? (
 					<div className="auth-forgot-success">
 						<div className="auth-forgot-success__icon" aria-hidden="true">✓</div>
-						<h3>All Set</h3>
+						<h3>Password Updated</h3>
 						<p>Your new password is ready. You can now log in using your updated credentials.</p>
 						<Link to="/auth/login" className="auth-primary-btn auth-forgot-link-btn">
 							Back to Sign In
+						</Link>
+					</div>
+				) : null}
+
+				{step === 'error' ? (
+					<div className="auth-forgot-success">
+						<div className="auth-error-modal__icon" aria-hidden="true">
+							<svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+								<circle cx="20" cy="20" r="20" fill="#FDECEA" />
+								<path d="M13 13l14 14M27 13L13 27" stroke="#D32F2F" strokeWidth="2.5" strokeLinecap="round"/>
+							</svg>
+						</div>
+						<h3>Link Expired or Invalid</h3>
+						<p>{linkError}</p>
+						<Link to="/auth/forgot-password" className="auth-primary-btn">
+							Request New Link
 						</Link>
 					</div>
 				) : null}
@@ -309,6 +394,60 @@ async function handleRequestSubmit(event) {
 					Need a new account? <Link to="/auth/register">Create one</Link>
 				</p>
 			</div>
+
+			{/* Email Confirmation Modal */}
+			<Modal isOpen={emailModalOpen} title="Check Your Email" onClose={() => setEmailModalOpen(false)}>
+				{emailModalState === 'loading' && (
+					<div className="auth-verify__state">
+						<div className="auth-register-transition__card">
+							<img src={cicsLogo} alt="UST CICS logo" className="auth-register-transition__logo" />
+							<div className="auth-register-transition__loader" aria-hidden="true">
+								<span></span>
+							</div>
+						</div>
+						<p className="auth-verify__label">Sending reset link to {email}...</p>
+					</div>
+				)}
+
+				{emailModalState === 'success' && emailSent && (
+					<form className="auth-forgot-form" onSubmit={(e) => { e.preventDefault(); handleResend(); }}>
+						<div className="auth-verify__state">
+							<div className="auth-verify__icon" aria-hidden="true">
+								<svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+									<circle cx="28" cy="28" r="28" fill="#E8F5E9" />
+									<path d="M16 28l8 8 16-16" stroke="#2E7D32" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+								</svg>
+							</div>
+							<h2 className="auth-verify__title">Link Sent!</h2>
+							<p className="auth-forgot-desc">
+								We've sent a password reset link to <strong>{email}</strong>. Click the link in your email to reset your password.
+							</p>
+							{resendCountdown > 0 ? (
+								<p className="auth-forgot-desc" style={{ color: '#8f7f7f', marginTop: '0.5rem' }}>
+									Resend available in {formatCountdown(resendCountdown)}
+								</p>
+							) : null}
+							<button
+								type="button"
+								className="auth-primary-btn"
+								disabled={resendCountdown > 0 || isSubmitting}
+								onClick={handleResend}
+							>
+								{isSubmitting ? (
+									<span className="auth-btn-loading">
+										<span className="auth-spinner" aria-hidden="true" />
+										Sending...
+									</span>
+								) : resendCountdown > 0 ? (
+									'Resend Link'
+								) : (
+									'Resend Link'
+								)}
+							</button>
+						</div>
+					</form>
+				)}
+			</Modal>
 		</section>
 	);
 }
