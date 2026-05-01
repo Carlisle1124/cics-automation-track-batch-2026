@@ -83,7 +83,7 @@ async function handleRequestSubmit(event) {
   setStatusType('info');
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/auth/ForgotPassword`,
+    redirectTo: `${window.location.origin}/auth/forgot-password`,
   });
 
   setIsSubmitting(false);
