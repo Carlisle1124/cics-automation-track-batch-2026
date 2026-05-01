@@ -15,6 +15,7 @@ function validateFullName(value) {
 	const trimmed = value.trim();
 
 	if (!trimmed) return 'Please enter your full name.';
+	if (trimmed.length > 100) return 'Full name must be 100 characters or fewer.';
 	if (trimmed.length < 5) return 'Full name must be at least 5 characters.';
 	if (!FULL_NAME_REGEX.test(trimmed)) return 'Please enter a valid full name.';
 	return '';
@@ -22,8 +23,9 @@ function validateFullName(value) {
 
 function validateUstEmail(value) {
 	const trimmed = value.trim().toLowerCase();
-
+	
 	if (!trimmed) return 'Please enter your UST email address.';
+	if (trimmed.length > 255) return 'Email address must be 255 characters or fewer.';
 	if (!trimmed.includes('@')) return 'Please enter a valid email address.';
 	if (!trimmed.endsWith(UST_DOMAIN)) return 'Only @ust.edu.ph emails are allowed.';
 	return '';
@@ -37,14 +39,22 @@ function validateStudentNumber(value) {
 	return '';
 }
 
+function formatStudentNumberInput(value) {
+	const digits = value.replace(/\D/g, '').slice(0, 10);
+	if (digits.length <= 4) return digits;
+	return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+}
+
 function validatePassword(value) {
 	if (!value) return 'Please enter your password.';
+	if (value.length > 64) return 'Password must be 64 characters or fewer.';
 	if (value.length < 6) return 'Password must be 6 or more characters.';
 	return '';
 }
 
 function validateConfirmPassword(confirmPassword, password) {
 	if (!confirmPassword) return 'Please confirm your password.';
+	if (confirmPassword.length > 64) return 'Password must be 64 characters or fewer.';
 	if (confirmPassword !== password) return 'Passwords do not match.';
 	return '';
 }
@@ -79,6 +89,20 @@ export default function Register() {
 
 	const getFieldClassName = (error) =>
 		error ? 'auth-field auth-field--error' : 'auth-field';
+
+	function renderFieldError(error, id) {
+		return (
+			<span
+				id={id}
+				className={`auth-field__error-row${error ? '' : ' auth-field__error-row--placeholder'}`}
+				role={error ? 'alert' : undefined}
+				aria-hidden={error ? undefined : 'true'}
+			>
+				<span className="auth-field__error-icon" aria-hidden="true">!</span>
+				<span className="auth-field__error-text">{error || ' '}</span>
+			</span>
+		);
+	}
 
 	useEffect(() => {
 		const previousTitle = document.title;
@@ -253,15 +277,11 @@ export default function Register() {
 								value={formValues.fullName}
 								onChange={(event) => updateField('fullName', event.target.value)}
 								placeholder="Juan A. Dela Cruz"
+								maxLength={100}
 								required
 							/>
 						</div>
-						{registerErrors.fullName ? (
-							<span className="auth-field__error-row" role="alert">
-								<span className="auth-field__error-icon" aria-hidden="true">!</span>
-								<span className="auth-field__error-text">{registerErrors.fullName}</span>
-							</span>
-						) : null}
+						{renderFieldError(registerErrors.fullName, 'register-full-name-error')}
 					</label>
 
 					<label className={getFieldClassName(registerErrors.email)}>
@@ -276,15 +296,11 @@ export default function Register() {
 								value={formValues.email}
 								onChange={(event) => updateField('email', event.target.value)}
 								placeholder="yourname@ust.edu.ph"
+								maxLength={255}
 								required
 							/>
 						</div>
-						{registerErrors.email ? (
-							<span className="auth-field__error-row" role="alert">
-								<span className="auth-field__error-icon" aria-hidden="true">!</span>
-								<span className="auth-field__error-text">{registerErrors.email}</span>
-							</span>
-						) : null}
+						{renderFieldError(registerErrors.email, 'register-email-error')}
 					</label>
 
 					<label className={getFieldClassName(registerErrors.studentId)}>
@@ -298,17 +314,14 @@ export default function Register() {
 							<input
 								type="text"
 								value={formValues.studentId}
-								onChange={(event) => updateField('studentId', event.target.value)}
+								onChange={(event) => updateField('studentId', formatStudentNumberInput(event.target.value))}
 								placeholder="2026-123456"
+								inputMode="numeric"
+								maxLength={11}
 								required
 							/>
 						</div>
-						{registerErrors.studentId ? (
-							<span className="auth-field__error-row" role="alert">
-								<span className="auth-field__error-icon" aria-hidden="true">!</span>
-								<span className="auth-field__error-text">{registerErrors.studentId}</span>
-							</span>
-						) : null}
+						{renderFieldError(registerErrors.studentId, 'register-student-id-error')}
 					</label>
 
 					<div className="auth-form__two-column">
@@ -324,15 +337,11 @@ export default function Register() {
 									value={formValues.password}
 									onChange={(event) => updateField('password', event.target.value)}
 									placeholder="Min. 6 chars"
+									maxLength={64}
 									required
-								/>
+									/>
 							</div>
-							{registerErrors.password ? (
-								<span className="auth-field__error-row" role="alert">
-									<span className="auth-field__error-icon" aria-hidden="true">!</span>
-									<span className="auth-field__error-text">{registerErrors.password}</span>
-								</span>
-							) : null}
+							{renderFieldError(registerErrors.password, 'register-password-error')}
 						</label>
 
 						<label className={getFieldClassName(registerErrors.confirmPassword)}>
@@ -348,15 +357,11 @@ export default function Register() {
 									value={formValues.confirmPassword}
 									onChange={(event) => updateField('confirmPassword', event.target.value)}
 									placeholder="Re-enter your password"
+									maxLength={64}
 									required
 								/>
 							</div>
-							{registerErrors.confirmPassword ? (
-								<span className="auth-field__error-row" role="alert">
-									<span className="auth-field__error-icon" aria-hidden="true">!</span>
-									<span className="auth-field__error-text">{registerErrors.confirmPassword}</span>
-								</span>
-							) : null}
+							{renderFieldError(registerErrors.confirmPassword, 'register-confirm-password-error')}
 						</label>
 					</div>
 
