@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../../data/supabaseClient';
 import Modal from '../../shared/components/Modal';
 import cicsLogo from '../../assets/CICS-Logo.webp';
+import { useLocation } from 'react-router-dom';
 import './AuthPages.css';
 
 const UST_DOMAIN = '@ust.edu.ph';
 const RESEND_COOLDOWN_SECONDS = 180;
+const location = useLocation();
 
 function validateEmail(value) {
 	const trimmed = value.trim().toLowerCase();
@@ -69,6 +71,21 @@ export default function ForgotPassword() {
 		};
 	}, []);
 
+    useEffect(() => {
+    // reset UI when returning to forgot-password route
+    if (location.pathname === '/auth/forgot-password') {
+        setStep('request');
+        setEmail('');
+        setEmailSent(false);
+        setEmailModalOpen(false);
+        setStatusMessage('Enter your UST email to start resetting your password.');
+        setStatusType('info');
+        setLinkError('');
+        setEmailSubmitted(false);
+        setResetSubmitted(false);
+    }
+    }, [location.pathname]);
+
 	useEffect(() => {
 		const { data: listener } = supabase.auth.onAuthStateChange(
 			(event, session) => {
@@ -91,7 +108,7 @@ export default function ForgotPassword() {
 			listener.subscription.unsubscribe();
 		};
 	}, [step]);
-    
+
     useEffect(() => {
     const hash = window.location.hash;
 
