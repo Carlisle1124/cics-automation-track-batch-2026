@@ -94,19 +94,6 @@ export default function Login() {
 		password: hasSubmitted ? validatePassword(password) : '',
 	};
 
-	// Forgot password modal
-	const [forgotOpen, setForgotOpen] = useState(false);
-	const [forgotStep, setForgotStep] = useState(1); // 1=email, 2=OTP, 3=success
-	const [forgotEmail, setForgotEmail] = useState('');
-	const [forgotEmailSubmitted, setForgotEmailSubmitted] = useState(false);
-	const [forgotOtp, setForgotOtp] = useState('');
-	const [forgotLoading, setForgotLoading] = useState(false);
-	const [forgotError, setForgotError] = useState('');
-	const [forgotOtpSubmitted, setForgotOtpSubmitted] = useState(false);
-
-	const forgotEmailError = forgotEmailSubmitted ? validateEmail(forgotEmail) : '';
-	const forgotOtpValidationError = forgotOtpSubmitted ? validateOtp(forgotOtp) : '';
-	const forgotOtpDisplayError = forgotOtpValidationError || forgotError;
 	const suspensionUntilDate = suspensionInfo?.suspendedUntil ? new Date(suspensionInfo.suspendedUntil) : null;
 	const suspensionCountdown = suspensionUntilDate ? formatCountdown(suspensionUntilDate) : '';
 	const suspensionUntilLabel = suspensionInfo?.suspendedUntil ? formatSuspensionDate(suspensionInfo.suspendedUntil) : '';
@@ -253,54 +240,6 @@ const setStatus = useCallback((message, type = 'info') => {
 		}
 	}
 
-	// Forgot password handlers
-	function openForgotModal() {
-		setForgotStep(1);
-		setForgotEmail('');
-		setForgotEmailSubmitted(false);
-		setForgotOtp('');
-		setForgotOtpSubmitted(false);
-		setForgotError('');
-		setForgotLoading(false);
-		setForgotOpen(true);
-	}
-
-	async function handleForgotEmailSubmit(e) {
-		e.preventDefault();
-		setForgotEmailSubmitted(true);
-		setForgotError('');
-
-		const err = validateEmail(forgotEmail);
-		if (err) return;
-
-		setForgotLoading(true);
-		await new Promise((r) => setTimeout(r, 800));
-		setForgotLoading(false);
-		setForgotOtp('');
-		setForgotOtpSubmitted(false);
-		setForgotStep(2);
-	}
-
-	async function handleOtpSubmit(e) {
-		e.preventDefault();
-		setForgotOtpSubmitted(true);
-		setForgotError('');
-
-		const otpValidationError = validateOtp(forgotOtp);
-		if (otpValidationError) return;
-
-		setForgotLoading(true);
-		await new Promise((r) => setTimeout(r, 800));
-
-		if (forgotOtp.trim() === MOCK_OTP) {
-			setForgotLoading(false);
-			setForgotStep(3);
-		} else {
-			setForgotLoading(false);
-			setForgotError('Invalid OTP. Please check the code and try again.');
-		}
-	}
-
 	function getFieldClassName(error) {
 		return error ? 'auth-field auth-field--error' : 'auth-field';
 	}
@@ -417,7 +356,9 @@ const setStatus = useCallback((message, type = 'info') => {
 							/>
 							<span>Remember Me</span>
 						</label>
-						<button type="button" className="auth-link-btn" onClick={openForgotModal}>Forgot Password?</button>
+						<Link to="/auth/forgot-password" className="auth-link-btn">
+						Forgot Password?
+						</Link>					
 					</div>
 
 					<button type="submit" className="auth-primary-btn" disabled={isSubmitting}>
@@ -499,94 +440,6 @@ const setStatus = useCallback((message, type = 'info') => {
 						Try Again
 					</button>
 				</div>
-			</Modal>
-
-			{/* Forgot Password Modal */}
-			<Modal isOpen={forgotOpen} title={forgotStep === 3 ? 'Check Complete' : 'Reset Password'} onClose={() => setForgotOpen(false)}>
-				{forgotStep === 1 && (
-					<form className="auth-forgot-form" onSubmit={handleForgotEmailSubmit} noValidate>
-						<p className="auth-forgot-desc">Enter your UST email and we'll send a one-time code.</p>
-						<div className={getFieldClassName(forgotEmailError)}>
-							<label htmlFor="forgot-email"><span>UST Email Address</span></label>
-							<input
-								id="forgot-email"
-								type="email"
-								value={forgotEmail}
-								placeholder="name@ust.edu.ph"
-								autoComplete="email"
-								aria-describedby={forgotEmailError ? 'forgot-email-error' : undefined}
-								aria-invalid={forgotEmailError ? 'true' : undefined}
-								onChange={(e) => setForgotEmail(e.target.value)}
-								required
-							/>
-							{forgotEmailError ? (
-								<span id="forgot-email-error" className="auth-field__error-row" role="alert">
-									<span className="auth-field__error-icon" aria-hidden="true">!</span>
-									<span className="auth-field__error-text">{forgotEmailError}</span>
-								</span>
-							) : null}
-						</div>
-						<button type="submit" className="auth-primary-btn" disabled={forgotLoading}>
-							{forgotLoading ? <span className="auth-btn-loading"><span className="auth-spinner" aria-hidden="true" />Sending...</span> : 'Send OTP'}
-						</button>
-					</form>
-				)}
-
-				{forgotStep === 2 && (
-					<form className="auth-forgot-form" onSubmit={handleOtpSubmit} noValidate>
-						<p className="auth-forgot-desc">A 6-digit code was sent to <strong>{forgotEmail}</strong>. Enter it below.</p>
-						<div className={getFieldClassName(forgotOtpDisplayError)}>
-							<label htmlFor="forgot-otp"><span>One-Time Code</span></label>
-							<input
-								id="forgot-otp"
-								type="text"
-								inputMode="numeric"
-								maxLength={6}
-								value={forgotOtp}
-								placeholder="000000"
-								autoComplete="one-time-code"
-								onChange={(e) => {
-									setForgotOtp(e.target.value.replace(/\D/g, ''));
-									if (forgotError) setForgotError('');
-								}}
-								required
-							/>
-							{forgotOtpDisplayError ? (
-								<span className="auth-field__error-row" role="alert">
-									<span className="auth-field__error-icon" aria-hidden="true">!</span>
-									<span className="auth-field__error-text">{forgotOtpDisplayError}</span>
-								</span>
-							) : null}
-						</div>
-						<button type="submit" className="auth-primary-btn" disabled={forgotLoading}>
-							{forgotLoading ? <span className="auth-btn-loading"><span className="auth-spinner" aria-hidden="true" />Verifying...</span> : 'Verify Code'}
-						</button>
-						<button
-							type="button"
-							className="auth-link-btn auth-forgot-resend"
-							onClick={() => {
-								setForgotStep(1);
-								setForgotError('');
-								setForgotOtp('');
-								setForgotOtpSubmitted(false);
-								setForgotEmailSubmitted(false);
-							}}
-						>
-							Use a different email
-						</button>
-					</form>
-				)}
-
-				{forgotStep === 3 && (
-					<div className="auth-forgot-success">
-						<div className="auth-forgot-success__icon" aria-hidden="true">✓</div>
-						<h3>Verification Successful</h3>
-						<p>Your identity has been verified. In a real app, you would now set a new password.</p>
-						<button type="button" className="auth-primary-btn" onClick={() => setForgotOpen(false)}>
-							Back to Sign In
-						</button>
-					</div>
-				)}
 			</Modal>
 		</section>
 	);

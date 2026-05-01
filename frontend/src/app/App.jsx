@@ -26,6 +26,7 @@ import ScheduleForStudents from '../pages/staff/ScheduleForStudents';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import VerifyEmail from '../pages/auth/VerifyEmail';
+import ForgotPassword from '../pages/auth/ForgotPassword';
 
 import ProtectedRoute from '../shared/components/ProtectedRoute';
 
@@ -59,6 +60,7 @@ export default function App() {
                 <Route path="/auth/login" element={<Login />} />
                 <Route path="/auth/register" element={<Register />} />
                 <Route path="/auth/verify" element={<VerifyEmail />} />
+                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
                 <Route path="*" element={<Navigate to="/auth/login" replace />} />
             </Routes>
