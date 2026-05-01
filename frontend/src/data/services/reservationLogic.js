@@ -1,6 +1,6 @@
 import { supabase } from '../supabaseClient';
 
-function getWeekBounds(reservationDate) {
+export function getWeekBounds(reservationDate) {
 	const d = new Date(`${reservationDate}T00:00:00`);
 	const dayOfWeek = d.getDay(); // 0=Sun … 6=Sat
 	const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;

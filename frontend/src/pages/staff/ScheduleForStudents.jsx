@@ -1,470 +1,707 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getCurrentUser, getUsers } from '../../data/services/authService';
-import { createReservation } from '../../data/services/reservationService';
-import { ROOMS, TIME_SLOTS } from '../../data/mock/mockData';
+import { createReservationForStudent } from '../../data/services/reservationService';
+import { getAvailabilityByDate } from '../../data/services/availabilityService';
+import { validateReservation } from '../../data/services/reservationLogic';
 import PageHeader from '../../shared/components/PageHeader';
 import cicsLogo from '../../assets/CICS-Logo.webp';
+import { formatTimeOfDay, formatTimeRange } from '../../shared/utils/datetime';
 import './ScheduleForStudents.css';
+
+import { CalendarBlankIcon } from '@phosphor-icons/react';
 
 const WEEKDAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 function toInputDate(date) {
-	const year = date.getFullYear();
-	const month = String(date.getMonth() + 1).padStart(2, '0');
-	const day = String(date.getDate()).padStart(2, '0');
-
-	return `${year}-${month}-${day}`;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
-function formatDateLabel(value) {
-	if (!value) return 'Select date';
+/* =========================
+   SLOT MAPPING (FIXED)
+========================= */
+function normalizeTime(t) {
+  if (!t) return '00:00:00';
+  return t.length === 5 ? `${t}:00` : t;
+}
 
-	const date = new Date(`${value}T00:00:00`);
+function mapAvailabilitySlots(avail, referenceDate, selectedDateStr) {
+  const now = referenceDate || new Date();
+  const todayStr = toInputDate(new Date());
+  const isToday = selectedDateStr === todayStr;
+  const currentTimeStr = now.toTimeString().slice(0, 8);
 
-	if (Number.isNaN(date.getTime())) return 'Select date';
+  return (avail.slots || []).map((slot) => {
+    const reservedCount = slot.reservedCount ?? 0;
+    const capacity = slot.capacity ?? (avail.room?.capacity ?? 50);
 
-	return date.toLocaleDateString('en-US', {
-		month: '2-digit',
-		day: '2-digit',
-		year: 'numeric',
-	});
+    let available =
+      typeof slot.available === 'number'
+        ? slot.available
+        : Math.max(capacity - reservedCount, 0);
+
+    let status =
+      slot.status ||
+      (available === 0 ? 'full' : available <= 10 ? 'nearly full' : 'available');
+
+    // Normalize times first for consistent comparison
+    const endTime = normalizeTime(slot.end);
+    const startTime = normalizeTime(slot.start);
+    const isPast = isToday && endTime && currentTimeStr >= endTime;
+
+    if (isPast) {
+      available = 0;
+      status = 'full';
+    }
+
+    return {
+      ...slot,
+      start: startTime,
+      end: endTime,
+      reservedCount,
+      capacity,
+      available,
+      status,
+      isPast,
+    };
+  });
 }
 
 export default function ScheduleForStudents() {
-	const [staffUser, setStaffUser] = useState(null);
-	const [students, setStudents] = useState([]);
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [statusMessage, setStatusMessage] = useState('');
-	const [formValues, setFormValues] = useState({
-		studentId: '',
-		date: new Date().toISOString().slice(0, 10),
-		timeSlot: TIME_SLOTS[0]?.id ?? '',
-		roomId: ROOMS[0]?.id ?? '',
-		notes: '',
-	});
-	const [isPageLoading, setIsPageLoading] = useState(true);
-	const [openMenu, setOpenMenu] = useState(null);
-	const [visibleMonth, setVisibleMonth] = useState(() => {
-		const today = new Date();
+  const [staffUser, setStaffUser] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-		return new Date(today.getFullYear(), today.getMonth(), 1);
-	});
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [backendReservations, setBackendReservations] = useState([]);
 
-	const studentMenuRef = useRef(null);
-	const dateMenuRef = useRef(null);
-	const timeSlotMenuRef = useRef(null);
+  const [selectedSlotId, setSelectedSlotId] = useState(null);
+  const [duration, setDuration] = useState(1);
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [studentQuery, setStudentQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [openMenu, setOpenMenu] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
 
-	useEffect(() => {
-		const previousTitle = document.title;
-		document.title = 'Schedule for Students - UST CICS Learning Common Room';
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [visibleMonth, setVisibleMonth] = useState(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
 
-		let active = true;
+  const studentMenuRef = useRef(null);
+  const dateMenuRef = useRef(null);
 
-		async function loadData() {
-			try {
-				const [currentUser, allUsers] = await Promise.all([
-					getCurrentUser(),
-					getUsers(),
-					new Promise((resolve) => setTimeout(resolve, 700)),
-				]);
+  const [hoveredSlotIndex, setHoveredSlotIndex] = useState(null);
 
-				if (!active) return;
+  /* =========================
+     LOAD USERS + INITIAL DATA
+  ========================= */
+  useEffect(() => {
+    let active = true;
 
-				setStaffUser(currentUser);
+    async function load() {
+      const [currentUser, allUsers] = await Promise.all([
+        getCurrentUser(),
+        getUsers(),
+      ]);
 
-				const studentUsers = allUsers.filter((user) => user.role === 'student');
-				setStudents(studentUsers);
-				setFormValues((previous) => ({
-					...previous,
-					studentId: previous.studentId || studentUsers[0]?.id || '',
-				}));
-			} finally {
-				if (active) {
-					setIsPageLoading(false);
-				}
-			}
-		}
+      if (!active) return;
 
-		loadData();
+      setStaffUser(currentUser);
 
-		return () => {
-			active = false;
-			document.title = previousTitle;
-		};
-	}, []);
+      const studentUsers = (allUsers || []).filter(
+        (u) => u.role === 'student' || u.role?.toLowerCase?.() === 'student'
+      );
 
-	const selectedStudent = useMemo(
-		() => students.find((student) => student.id === formValues.studentId) ?? null,
-		[formValues.studentId, students]
-	);
+      setStudents(studentUsers);
 
-	const selectedTimeSlot = useMemo(
-		() => TIME_SLOTS.find((slot) => slot.id === formValues.timeSlot) ?? null,
-		[formValues.timeSlot]
-	);
+      // initial availability
+      await fetchAvailability(selectedDate);
+      setIsPageLoading(false);
+    }
 
-	const visibleMonthLabel = useMemo(
-		() =>
-			visibleMonth.toLocaleDateString('en-US', {
-				month: 'long',
-				year: 'numeric',
-			}),
-		[visibleMonth]
-	);
+    load();
 
-	const calendarDays = useMemo(() => {
-		const year = visibleMonth.getFullYear();
-		const month = visibleMonth.getMonth();
-		const firstDayOfMonth = new Date(year, month, 1);
-		const startDate = new Date(year, month, 1 - firstDayOfMonth.getDay());
+    return () => {
+      active = false;
+    };
+  }, []);
 
-		return Array.from({ length: 42 }, (_, index) => {
-			const date = new Date(startDate);
-			date.setDate(startDate.getDate() + index);
+  /* =========================
+     FETCH AVAILABILITY (FIXED)
+  ========================= */
+  async function fetchAvailability(date) {
+    try {
+      const dateStr = toInputDate(date);
+      const avail = await getAvailabilityByDate(dateStr, date);
 
-			const value = toInputDate(date);
+      const mapped = mapAvailabilitySlots(avail, new Date(), dateStr);
 
-			return {
-				value,
-				label: date.getDate(),
-				isCurrentMonth: date.getMonth() === month,
-				isSelected: value === formValues.date,
-			};
-		});
-	}, [formValues.date, visibleMonth]);
+      setTimeSlots(mapped);
+      setBackendReservations(avail.reservations || []);
 
-	useEffect(() => {
-		if (!openMenu) return;
+    } catch (err) {
+      console.warn('Availability error:', err?.message ?? err);
+      setTimeSlots([]);
+    }
+  }
 
-		function handlePointerDown(event) {
-			const menuRefs = [studentMenuRef, dateMenuRef, timeSlotMenuRef];
-			const isInsideMenu = menuRefs.some((menuRef) =>
-				menuRef.current?.contains(event.target)
-			);
+  /* =========================
+     REFRESH WHEN DATE CHANGES
+  ========================= */
+  useEffect(() => {
+    setSelectedSlotId(null);
+    fetchAvailability(selectedDate);
+  }, [selectedDate]);
 
-			if (!isInsideMenu) {
-				setOpenMenu(null);
-			}
-		}
+  /* =========================
+     FILTER STUDENTS
+  ========================= */
+  useEffect(() => {
+    if (!studentQuery) {
+      setSuggestions(students.slice(0, 6));
+      return;
+    }
 
-		function handleEscape(event) {
-			if (event.key === 'Escape') {
-				setOpenMenu(null);
-			}
-		}
+    const q = studentQuery.toLowerCase();
 
-		document.addEventListener('mousedown', handlePointerDown);
-		document.addEventListener('touchstart', handlePointerDown);
-		document.addEventListener('keydown', handleEscape);
+    setSuggestions(
+      students
+        .filter((s) => {
+          const name = (s.full_name || s.name || '').toLowerCase();
+          const id = String(s.student_id || '');
+          return name.includes(q) || id.includes(q);
+        })
+        .slice(0, 8)
+    );
+  }, [studentQuery, students]);
 
-		return () => {
-			document.removeEventListener('mousedown', handlePointerDown);
-			document.removeEventListener('touchstart', handlePointerDown);
-			document.removeEventListener('keydown', handleEscape);
-		};
-	}, [openMenu]);
+  /* =========================
+     CLOSE MENU ON OUTSIDE CLICK
+  ========================= */
+  useEffect(() => {
+    if (!openMenu) return;
 
-	function updateField(field, value) {
-		setFormValues((previous) => ({
-			...previous,
-			[field]: value,
-		}));
-	}
+    function handlePointerDown(event) {
+      const isInsideStudent = studentMenuRef.current && studentMenuRef.current.contains(event.target);
+      const isInsideDate = dateMenuRef.current && dateMenuRef.current.contains(event.target);
+      if (!isInsideStudent && !isInsideDate) {
+        setOpenMenu(null);
+      }
+    }
 
-	function toggleMenu(menuName) {
-		setOpenMenu((currentMenu) => (currentMenu === menuName ? null : menuName));
-	}
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        setOpenMenu(null);
+      }
+    }
 
-	function moveVisibleMonth(amount) {
-		setVisibleMonth((previous) => {
-			const nextMonth = new Date(previous);
-			nextMonth.setMonth(previous.getMonth() + amount);
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
 
-			return new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1);
-		});
-	}
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [openMenu]);
 
-	function handleDateSelect(value) {
-		updateField('date', value);
-		setOpenMenu(null);
-	}
+  /* =========================
+     SLOT VALIDATION
+  ========================= */
+  const sortedSlots = useMemo(() => {
+    return [...timeSlots].sort((a, b) =>
+      a.start.localeCompare(b.start)
+    );
+  }, [timeSlots]);
 
-	async function handleSubmit(event) {
-		event.preventDefault();
+  const selectedStartIndex = useMemo(
+    () => sortedSlots.findIndex((s) => s.id === selectedSlotId),
+    [selectedSlotId, sortedSlots]
+  );
 
-		if (!formValues.studentId) {
-			setStatusMessage('Select a student to continue.');
-			return;
-		}
+  const hoveredStartIndex = hoveredSlotIndex;
 
-		setIsSubmitting(true);
-		setStatusMessage('Creating reservation request...');
-		const schedulingStaffId = staffUser?.id ?? null;
-		const schedulingStaffName = staffUser?.name ?? null;
+function isInHoverRange(idx) {
+  if (hoveredStartIndex == null) return false;
 
-		try {
-			const reservation = await createReservation({
-				userId: formValues.studentId,
-				roomId: formValues.roomId,
-				date: formValues.date,
-				slotIds: [formValues.timeSlot],
-				notes: formValues.notes,
-				scheduledByStaffId: schedulingStaffId,
-				scheduledByStaffName: schedulingStaffName,
-			});
+  return (
+    idx >= hoveredStartIndex &&
+    idx < hoveredStartIndex + duration &&
+    isSlotAvailableByDuration(hoveredStartIndex)
+  );
+}
 
-			setStatusMessage(
-				`Reservation ${reservation.id} created for ${selectedStudent?.name ?? 'the student'}.`
-			);
-			// TODO(backend): Persist staff scheduling metadata and audit logs
-			// in a dedicated endpoint for "schedule-on-behalf" actions.
-		} catch (error) {
-			console.error('Failed to create a staff-scheduled reservation.', error);
-			setStatusMessage('Unable to create the reservation right now.');
-		} finally {
-			setIsSubmitting(false);
-		}
-	}
+  useEffect(() => {
+    if (!selectedSlotId) return;
 
-	return (
-		<section
-			className={`schedule-students-page ${
-				isPageLoading
-					? 'schedule-students-page--content-hidden'
-					: 'schedule-students-page--content-visible'
-			}`}
-		>
-			<PageHeader
-				title="Schedule for Students"
-				subtitle="Create a reservation on behalf of students who request scheduling help."
-			/>
+    const index = sortedSlots.findIndex((s) => s.id === selectedSlotId);
 
-			<div className="schedule-students__surface">
-				<form className="schedule-students__form" onSubmit={handleSubmit}>
-					<div className="schedule-students__field schedule-students__field--full">
-						<span id="schedule-students-student-label">Student</span>
+    if (index === -1 || !isSlotAvailableByDuration(index)) {
+        setSelectedSlotId(null);
+    }
+    }, [duration, sortedSlots]);
 
-						<div className="schedule-students__menu-field" ref={studentMenuRef}>
-							<button
-								type="button"
-								className={`schedule-students__menu-trigger ${
-									openMenu === 'student' ? 'schedule-students__menu-trigger--open' : ''
-								}`}
-								aria-haspopup="listbox"
-								aria-expanded={openMenu === 'student'}
-								aria-labelledby="schedule-students-student-label"
-								onClick={() => toggleMenu('student')}
-							>
-								<span className="schedule-students__menu-trigger-label">
-									{selectedStudent
-										? `${selectedStudent.name} (${selectedStudent.studentId})`
-										: 'Select a student'}
-								</span>
-								<span className="schedule-students__menu-trigger-icon" aria-hidden="true" />
-							</button>
+  function isSlotAvailableByDuration(index) {
+  const needed = sortedSlots.slice(index, index + duration);
+  if (needed.length < duration) return false;
 
-							{openMenu === 'student' ? (
-								<div className="schedule-students__menu" role="listbox">
-									{students.length > 0 ? (
-										students.map((student) => (
-											<button
-												key={student.id}
-												type="button"
-												role="option"
-												aria-selected={formValues.studentId === student.id}
-												className={`schedule-students__menu-option ${
-													formValues.studentId === student.id ? 'is-active' : ''
-												}`}
-												onClick={() => {
-													updateField('studentId', student.id);
-													setOpenMenu(null);
-												}}
-											>
-												<span>{student.name} ({student.studentId})</span>
-												<span className="schedule-students__menu-option-indicator" aria-hidden="true">
-													{formValues.studentId === student.id ? '✓' : ''}
-												</span>
-											</button>
-										))
-									) : (
-										<div className="schedule-students__menu-empty">No students available.</div>
-									)}
-								</div>
-							) : null}
-						</div>
-					</div>
+  for (const slot of needed) {
+    if (!slot || slot.isPast) return false;
 
-					<div className="schedule-students__field">
-						<span id="schedule-students-date-label">Date</span>
+    // ONLY rely on capacity
+    if (slot.available <= 0) return false;
+  }
 
-						<div className="schedule-students__menu-field" ref={dateMenuRef}>
-							<button
-								type="button"
-								className={`schedule-students__menu-trigger schedule-students__date-trigger ${
-									openMenu === 'date' ? 'schedule-students__menu-trigger--open' : ''
-								}`}
-								aria-haspopup="dialog"
-								aria-expanded={openMenu === 'date'}
-								aria-labelledby="schedule-students-date-label"
-								onClick={() => toggleMenu('date')}
-							>
-								<span className="schedule-students__menu-trigger-label">
-									{formatDateLabel(formValues.date)}
-								</span>
-								<span className="schedule-students__date-trigger-icon" aria-hidden="true">▦</span>
-							</button>
+  return true;
+}
 
-							{openMenu === 'date' ? (
-								<div className="schedule-students__date-menu" role="dialog" aria-label="Choose reservation date">
-									<div className="schedule-students__calendar-header">
-										<button
-											type="button"
-											className="schedule-students__calendar-nav"
-											onClick={() => moveVisibleMonth(-1)}
-											aria-label="Previous month"
-										>
-											‹
-										</button>
+  /* =========================
+     DATE PICKER HELPERS
+  ========================= */
+  function getMaxDate(today) {
+    const max = new Date(today);
+    max.setDate(max.getDate() + 30);
+    return max;
+  }
 
-										<div className="schedule-students__calendar-month">{visibleMonthLabel}</div>
+  function isDateDisabled(date, today, maxDate) {
+    return date < today || date > maxDate;
+  }
 
-										<button
-											type="button"
-											className="schedule-students__calendar-nav"
-											onClick={() => moveVisibleMonth(1)}
-											aria-label="Next month"
-										>
-											›
-										</button>
-									</div>
+  function moveVisibleMonth(amount) {
+    setVisibleMonth((previous) => {
+      const nextMonth = new Date(previous);
+      nextMonth.setMonth(previous.getMonth() + amount);
+      return new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1);
+    });
+  }
 
-									<div className="schedule-students__calendar-grid schedule-students__calendar-grid--weekdays">
-										{WEEKDAY_LABELS.map((day) => (
-											<span key={day}>{day}</span>
-										))}
-									</div>
+  function toggleMenu(menuName) {
+    setOpenMenu((currentMenu) => (currentMenu === menuName ? null : menuName));
+  }
 
-									<div className="schedule-students__calendar-grid">
-										{calendarDays.map((day) => (
-											<button
-												key={day.value}
-												type="button"
-												className={`schedule-students__calendar-day ${
-													day.isCurrentMonth ? '' : 'schedule-students__calendar-day--muted'
-												} ${day.isSelected ? 'schedule-students__calendar-day--selected' : ''}`}
-												onClick={() => handleDateSelect(day.value)}
-											>
-												{day.label}
-											</button>
-										))}
-									</div>
+  const visibleMonthLabel = useMemo(
+    () =>
+      visibleMonth.toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric',
+      }),
+    [visibleMonth]
+  );
 
-									<div className="schedule-students__calendar-footer">
-										<button
-											type="button"
-											className="schedule-students__calendar-today"
-											onClick={() => handleDateSelect(toInputDate(new Date()))}
-										>
-											Today
-										</button>
-									</div>
-								</div>
-							) : null}
-						</div>
-					</div>
+  const calendarDays = useMemo(() => {
+    const year = visibleMonth.getFullYear();
+    const month = visibleMonth.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const startDate = new Date(year, month, 1 - firstDayOfMonth.getDay());
 
-					<div className="schedule-students__field">
-						<span id="schedule-students-time-label">Time Slot</span>
+    return Array.from({ length: 42 }, (_, index) => {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + index);
 
-						<div className="schedule-students__menu-field" ref={timeSlotMenuRef}>
-							<button
-								type="button"
-								className={`schedule-students__menu-trigger ${
-									openMenu === 'timeSlot' ? 'schedule-students__menu-trigger--open' : ''
-								}`}
-								aria-haspopup="listbox"
-								aria-expanded={openMenu === 'timeSlot'}
-								aria-labelledby="schedule-students-time-label"
-								onClick={() => toggleMenu('timeSlot')}
-							>
-								<span className="schedule-students__menu-trigger-label">
-									{selectedTimeSlot
-										? `${selectedTimeSlot.start} - ${selectedTimeSlot.end}`
-										: 'Select a time slot'}
-								</span>
-								<span className="schedule-students__menu-trigger-icon" aria-hidden="true" />
-							</button>
+      const value = toInputDate(date);
 
-							{openMenu === 'timeSlot' ? (
-								<div className="schedule-students__menu" role="listbox">
-									{TIME_SLOTS.map((slot) => (
-										<button
-											key={slot.id}
-											type="button"
-											role="option"
-											aria-selected={formValues.timeSlot === slot.id}
-											className={`schedule-students__menu-option ${
-												formValues.timeSlot === slot.id ? 'is-active' : ''
-											}`}
-											onClick={() => {
-												updateField('timeSlot', slot.id);
-												setOpenMenu(null);
-											}}
-										>
-											<span>{slot.start} - {slot.end}</span>
-											<span className="schedule-students__menu-option-indicator" aria-hidden="true">
-												{formValues.timeSlot === slot.id ? '✓' : ''}
-											</span>
-										</button>
-									))}
-								</div>
-							) : null}
-						</div>
-					</div>
+      return {
+        value,
+        label: date.getDate(),
+        isCurrentMonth: date.getMonth() === month,
+        isSelected: value === toInputDate(selectedDate),
+      };
+    });
+  }, [selectedDate, visibleMonth]);
 
-					<label className="schedule-students__field schedule-students__field--full">
-						<span>Notes</span>
-						<textarea
-							value={formValues.notes}
-							onChange={(event) => updateField('notes', event.target.value)}
-							rows={4}
-							placeholder="Optional context for the student's request"
-						/>
-					</label>
+  const selectedDateSummary = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selected = new Date(selectedDate);
+    selected.setHours(0, 0, 0, 0);
 
-					<div className="schedule-students__actions schedule-students__field--full">
-						<button type="submit" className="schedule-students__submit" disabled={isSubmitting}>
-							{isSubmitting ? 'Saving...' : 'Create Reservation'}
-						</button>
-					</div>
-				</form>
-			</div>
+    const diffTime = selected.getTime() - today.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-			{selectedStudent ? (
-				<p className="schedule-students__status">
-					Scheduling for: <strong>{selectedStudent.name}</strong>
-				</p>
-			) : null}
-			{statusMessage ? <p className="schedule-students__message">{statusMessage}</p> : null}
-			{isPageLoading ? (
-				<div
-					className="schedule-students-transition"
-					role="status"
-					aria-live="polite"
-					aria-label="Loading schedule for students page"
-				>
-					<div className="schedule-students-transition__card">
-						<img
-							src={cicsLogo}
-							alt="UST CICS logo"
-							className="schedule-students-transition__logo"
-						/>
-						<div className="schedule-students-transition__loader" aria-hidden="true">
-							<span></span>
-						</div>
-					</div>
-				</div>
-			) : null}
-		</section>
-	);
+    let badge = '';
+    if (diffDays === 0) {
+      badge = 'Today';
+    } else if (diffDays === 1) {
+      badge = 'Tomorrow';
+    } else if (diffDays > 1 && diffDays <= 30) {
+      badge = `In ${diffDays} days`;
+    } else if (diffDays < 0) {
+      badge = 'Past date';
+    } else {
+      badge = selectedDate.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
+    }
+
+    const label = selectedDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+
+    return {
+      label,
+      badge,
+    };
+  }, [selectedDate]);
+
+  /* =========================
+     HANDLERS
+  ========================= */
+  function handleDateSelect(value) {
+    setSelectedDate(new Date(`${value}T00:00:00`));
+    setSelectedSlotId(null);
+    setOpenMenu(null);
+  }
+
+  function handleSlotSelect(slotId) {
+    setSelectedSlotId(slotId);
+  }
+
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  if (!selectedStudentId) {
+    setStatusMessage('Please select a student.');
+    return;
+  }
+
+  if (!selectedSlotId) {
+    setStatusMessage('Please select a time slot.');
+    return;
+  }
+
+  const selectedSlot = sortedSlots.find((s) => s.id === selectedSlotId);
+  const startIndex = sortedSlots.findIndex((s) => s.id === selectedSlotId);
+
+  if (!selectedSlot || startIndex < 0) {
+    setStatusMessage('Invalid slot selection.');
+    return;
+  }
+
+  // compute end time AFTER slot is confirmed
+  const endTime =
+    sortedSlots[startIndex + duration - 1]?.end ||
+    selectedSlot.end;
+
+  setIsSubmitting(true);
+  setStatusMessage('Creating reservation...');
+
+  try {
+    await validateReservation({
+      userId: selectedStudentId,
+      reservationDate: toInputDate(selectedDate),
+      durationHours: duration,
+    });
+
+    const reservation = await createReservationForStudent({
+      userId: selectedStudentId,
+      reservationDate: toInputDate(selectedDate),
+      startTime: selectedSlot.start,
+      endTime,
+      approvedBy: staffUser.id,
+    });
+
+    const studentName = students.find((student) => student.id === selectedStudentId)?.full_name ||
+      students.find((student) => student.id === selectedStudentId)?.name ||
+      'Selected student';
+    const createdAtLabel = reservation.created_at
+      ? new Date(reservation.created_at).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      : null;
+
+    setStatusMessage(
+      `Reservation saved for ${studentName} (ID: ${reservation.id})${createdAtLabel ? ` at ${createdAtLabel}` : ''}. Status: ${reservation.status ?? 'approved'}.`
+    );
+
+    setSelectedSlotId(null);
+    setDuration(1);
+
+    await fetchAvailability(selectedDate);
+
+  } catch (err) {
+    setStatusMessage(err.message || 'Failed to create reservation');
+  } finally {
+    setIsSubmitting(false);
+  }
+}
+
+  /* =========================
+     UI
+  ========================= */
+  return (
+    <section
+      className={`schedule-students-page ${
+        isPageLoading
+          ? 'schedule-students-page--content-hidden'
+          : 'schedule-students-page--content-visible'
+      }`}
+    >
+      <PageHeader
+        title="Create Reservation for Students"
+        subtitle="Create a reservation on behalf of students who request scheduling help."
+      />
+
+
+      <div className="schedule-students__surface">
+        <form onSubmit={handleSubmit} className="schedule-students__form">
+            <div className='schedule-students__form-wrap'>
+                <div className="schedule-students__field schedule-students__field">
+                    <span id="schedule-students-student-label">Student</span>
+                    <div className="schedule-students__menu-field" ref={studentMenuRef}>
+                    <input
+                        id="schedule-students-student-input"
+                        type="text"
+                        value={studentQuery}
+                        onChange={(e) => {
+                        setStudentQuery(e.target.value);
+                        setOpenMenu('student');
+                        }}
+                        onFocus={() => setOpenMenu('student')}
+                        placeholder="Search by name or student number"
+                        aria-autocomplete="list"
+                        aria-expanded={openMenu === 'student'}
+                        aria-controls="schedule-students-student-list"
+                    />
+                    {openMenu === 'student' && (
+                        <div
+                        className="schedule-students__menu"
+                        role="listbox"
+                        id="schedule-students-student-list"
+                        >
+                        {suggestions.length > 0 ? (
+                            suggestions.map((student) => (
+                            <button
+                                key={student.id}
+                                type="button"
+                                role="option"
+                                aria-selected={selectedStudentId === student.id}
+                                className={`schedule-students__menu-option ${
+                                selectedStudentId === student.id ? 'is-active' : ''
+                                }`}
+                                onClick={() => {
+                                setSelectedStudentId(student.id);
+                                setStudentQuery(student.full_name || student.name || '');
+                                setOpenMenu(null);
+                                }}
+                            >
+                                <span>
+                                {student.full_name || student.name} ({student.student_id || 'N/A'})
+                                </span>
+                                <span
+                                className="schedule-students__menu-option-indicator"
+                                aria-hidden="true"
+                                >
+                                {selectedStudentId === student.id ? '✓' : ''}
+                                </span>
+                            </button>
+                            ))
+                        ) : (
+                            <div className="schedule-students__menu-empty">No matching students.</div>
+                        )}
+                        </div>
+                    )}
+                    </div>
+                </div>
+
+                <div className="schedule-students__field">
+                    <span id="schedule-students-date-label">Date</span>
+                    <div className="schedule-students__menu-field date" ref={dateMenuRef}>
+                        <button
+                            type="button"
+                            className={`schedule-students__menu-trigger schedule-students__date-trigger ${
+                                openMenu === 'date' ? 'schedule-students__menu-trigger--open' : ''
+                            }`}
+                            aria-haspopup="dialog"
+                            aria-expanded={openMenu === 'date'}
+                            aria-labelledby="schedule-students-date-label"
+                            onClick={() => toggleMenu('date')}
+                        >
+                            <div className="selected-date__formatted" aria-live="polite">
+                                <span className="selected-date__formatted-label">{selectedDateSummary.label}</span>
+                                <span className="selected-date__formatted-badge">{selectedDateSummary.badge}</span>
+                            </div>
+                            <span className="schedule-students__date-trigger-icon" aria-hidden="true">
+                                <CalendarBlankIcon size={20} weight='duotone' />
+                            </span>
+                        </button>
+
+                        {openMenu === 'date' && (
+                            <div className="schedule-students__date-menu" role="dialog" aria-label="Choose reservation date">
+                                <div className="schedule-students__calendar-header">
+                                    <button
+                                        type="button"
+                                        className="schedule-students__calendar-nav"
+                                        onClick={() => moveVisibleMonth(-1)}
+                                        aria-label="Previous month"
+                                    >
+                                        ‹
+                                    </button>
+                                    <div className="schedule-students__calendar-month">{visibleMonthLabel}</div>
+                                    <button
+                                        type="button"
+                                        className="schedule-students__calendar-nav"
+                                        onClick={() => moveVisibleMonth(1)}
+                                        aria-label="Next month"
+                                    >
+                                        ›
+                                    </button>
+                                </div>
+                                <div className="schedule-students__calendar-grid schedule-students__calendar-grid--weekdays">
+                                    {WEEKDAY_LABELS.map((d) => (
+                                        <span key={d}>{d}</span>
+                                    ))}
+                                </div>
+                                <div className="schedule-students__calendar-grid">
+                                    {calendarDays.map((day) => {
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                        const maxDate = getMaxDate(today);
+                                        const disabled = isDateDisabled(new Date(day.value), today, maxDate);
+                                        return (
+                                            <button
+                                                key={day.value}
+                                                type="button"
+                                                disabled={disabled}
+                                                className={`schedule-students__calendar-day ${
+                                                    day.isCurrentMonth ? '' : 'schedule-students__calendar-day--muted'
+                                                } ${day.isSelected ? 'schedule-students__calendar-day--selected' : ''} ${
+                                                    disabled ? 'schedule-students__calendar-day--disabled' : ''
+                                                }`}
+                                                onClick={() => handleDateSelect(day.value)}
+                                                aria-label={`${
+                                                    new Date(day.value).toLocaleString('default', {
+                                                        weekday: 'long',
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                    })
+                                                }${disabled ? ' (unavailable)' : ''}`}
+                                            >
+                                                {day.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <div className="schedule-students__calendar-footer">
+                                    <button
+                                        type="button"
+                                        className="schedule-students__calendar-today"
+                                        onClick={() => handleDateSelect(toInputDate(new Date()))}
+                                    >
+                                        Today
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="schedule-students__field schedule-students__field">
+                    <span>Duration</span>
+                    <div className="schedule-students__duration-options">
+                    <div
+                        className="schedule-students__duration-progress"
+                        style={{ width: `${(duration / 3) * 100}%` }}
+                    />
+                    <div className="schedule-students__duration-segments">
+                        {[1, 2, 3].map((h) => (
+                        <button
+                            type="button"
+                            key={h}
+                            onClick={() => setDuration(h)}
+                            className={`schedule-students__duration-segment ${
+                            duration === h ? 'is-active' : ''
+                            }`}
+                        >
+                            <span className="schedule-students__duration-segment-label">
+                            {h}h
+                            </span>
+                        </button>
+                        ))}
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+          <div className="schedule-students__field schedule-students__field--full">
+            <span>Time Slots</span>
+            <div className="schedule-students__timeslot-grid">
+              {sortedSlots.map((slot, idx) => {
+                const disabled = !isSlotAvailableByDuration(idx);
+                const isSelected = selectedSlotId === slot.id;
+                const isInDurationRange =
+                  selectedStartIndex >= 0 &&
+                  idx >= selectedStartIndex &&
+                  idx < selectedStartIndex + duration;
+                  const isHoveredRange = isInHoverRange(idx);
+
+                return (
+                  <button
+                    key={slot.id}
+                    type="button"
+                    disabled={disabled}
+                    className={`schedule-students__timeslot-btn
+                    ${isSelected ? 'is-active' : ''}
+                    ${isInDurationRange ? 'is-in-duration-range' : ''}
+                    ${isHoveredRange ? 'is-hover-range' : ''}
+                    `}
+                    onClick={() => handleSlotSelect(slot.id)}
+                    onMouseEnter={() => setHoveredSlotIndex(idx)}
+                    onMouseLeave={() => setHoveredSlotIndex(null)}
+                  >
+                    <span className="schedule-students__timeslot-btn-time">
+                      {formatTimeOfDay(slot.start)}
+                    </span>
+                    <span className="schedule-students__timeslot-btn-range">
+                      {formatTimeRange(slot.start, slot.end)}
+                    </span>
+                    <span className="schedule-students__timeslot-btn-meta">
+                      {slot.available} left · {slot.status}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="schedule-students__actions schedule-students__field--full">
+            <button type="submit" className="schedule-students__submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : 'Create Reservation'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {statusMessage ? <p className="schedule-students__message">{statusMessage}</p> : null}
+
+      {isPageLoading ? (
+        <div
+          className="schedule-students-transition"
+          role="status"
+          aria-live="polite"
+          aria-label="Loading schedule for students page"
+        >
+          <div className="schedule-students-transition__card">
+            <img src={cicsLogo} alt="UST CICS logo" className="schedule-students-transition__logo" />
+            <div className="schedule-students-transition__loader" aria-hidden="true">
+              <span />
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
 }

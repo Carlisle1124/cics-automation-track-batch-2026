@@ -14,6 +14,24 @@ function enrichReservation(reservation) {
 	};
 }
 
+function mapReservationRow(row) {
+	if (!row) return row;
+
+	return {
+		id: row.id,
+		userId: row.user_id ?? row.userId,
+		reservationDate: row.reservation_date ?? row.reservationDate,
+		startTime: row.start_time ?? row.startTime,
+		endTime: row.end_time ?? row.endTime,
+		durationHours: row.duration_hours ?? row.durationHours,
+		status: row.status,
+		createdBy: row.created_by ?? row.createdBy,
+		createdAt: row.created_at ?? row.createdAt,
+		qrCode: row.qr_code ?? row.qrCode,
+		expiresAt: row.expires_at ?? row.expiresAt,
+	};
+}
+
 export function getReservationsByUser(userId) {
 	return handleRequest(
 		() => {
@@ -155,6 +173,38 @@ export function createReservation(reservationInput) {
 			body: JSON.stringify(reservationInput),
 		}
 	);
+}
+
+export function createReservationForStudent(reservationInput) {
+	return (async () => {
+		const payload = {
+			user_id: reservationInput.userId,
+			reservation_date: reservationInput.reservationDate,
+			start_time: reservationInput.startTime,
+			end_time: reservationInput.endTime,
+			status: reservationInput.status ?? 'approved',
+			approved_by: reservationInput.approvedBy,
+		};
+
+		const { data, error } = await supabase
+			.from('reservations')
+			.insert(payload)
+			.select(`
+				id,
+				user_id,
+				reservation_date,
+				start_time,
+				end_time,
+				status,
+				approved_by,
+				created_at
+			`)
+			.single();
+
+		if (error) throw new Error(error.message);
+
+		return mapReservationRow(data);
+	})();
 }
 
 export function cancelReservation(reservationId) {

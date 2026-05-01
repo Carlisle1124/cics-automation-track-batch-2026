@@ -116,6 +116,102 @@
 	grid-column: 1 / -1;
 }
 
+.schedule-students__timeslot-grid {
+	display: grid;
+	grid-template-columns: repeat(9, minmax(0, 1fr));
+	gap: 0.75rem;
+	grid-column: 1 / -1;
+}
+
+.schedule-students__timeslot-btn {
+	min-width: 0;
+	display: grid;
+	gap: 0.22rem;
+	align-content: center;
+	justify-items: start;
+	padding: 0.9rem 0.9rem 0.82rem;
+	border: 1px solid color-mix(in oklab, var(--primary-5) 14%, var(--border-subtle) 86%);
+	border-radius: var(--radius-md);
+	background: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--bg-card) 95%, white 5%),
+		color-mix(in oklab, var(--bg-elevated) 90%, white 10%)
+	);
+	color: var(--text-primary);
+	box-shadow:
+		0 1px 0 rgba(255, 255, 255, 0.72) inset,
+		0 10px 20px rgba(122, 0, 20, 0.05);
+	transition:
+		transform var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
+}
+
+.schedule-students__timeslot-btn:hover:not(:disabled) {
+	transform: translateY(-1px);
+	  background: color-mix(in oklab, var(--tertiary-11) 20%, transparent);
+	border: 1.6px dashed var(--color-tertiary);
+	box-shadow: 0 0 0 3px rgba(190, 21, 46, 0.08), 0 14px 26px rgba(122, 0, 20, 0.1);
+	opacity: 0.85;
+}
+
+.schedule-students__timeslot-btn.is-active {
+	border-color: var(--primary-5);
+	background: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--primary-5) 10%, white 90%),
+		color-mix(in oklab, var(--primary-5) 16%, var(--bg-card) 84%)
+	);
+	box-shadow:
+		0 0 0 3px rgba(190, 21, 46, 0.1),
+		0 14px 26px rgba(122, 0, 20, 0.12);
+}
+
+.schedule-students__timeslot-btn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+	box-shadow:
+		0 1px 0 rgba(255, 255, 255, 0.72) inset,
+		0 6px 14px rgba(122, 0, 20, 0.03);
+}
+
+.schedule-students__timeslot-btn-time {
+	font-size: 0.95rem;
+	font-weight: 800;
+	letter-spacing: 0.01em;
+}
+
+.schedule-students__timeslot-btn-range,
+.schedule-students__timeslot-btn-meta {
+	font-size: 0.78rem;
+	line-height: 1.2;
+	color: var(--text-secondary);
+}
+
+.schedule-students__timeslot-btn-meta {
+	font-weight: 700;
+}
+
+.schedule-students__timeslot-btn.is-hover-range {
+  background: color-mix(in oklab, var(--tertiary-11) 20%, transparent);
+  border: 1.6px dashed var(--color-tertiary);
+  box-shadow: 0 0 0 3px rgba(190, 21, 46, 0.08), 0 14px 26px rgba(122, 0, 20, 0.1);
+  opacity: 0.85;
+}
+
+.schedule-students__timeslot-btn.is-hover-range:not(.is-in-duration-range) {
+  outline: 1px dashed var(--accent);
+}
+
+.schedule-students__form-wrap {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: clamp(0.9rem, 1.3vw, 1.15rem);
+	grid-column: 1 / -1;
+	min-width: 0;
+}
+
 .schedule-students__field > span {
 	font-size: 0.75rem;
 	font-weight: 700;
@@ -125,6 +221,15 @@
 }
 
 .schedule-students__field textarea {
+	font-size: 14px;
+}
+.schedule-students__menu-field input{
+	font-size: 0.92rem;
+	min-height: 44px;
+}
+
+.schedule-students__field textarea,
+.schedule-students__menu-field input {
 	width: 100%;
 	border-radius: var(--radius-md);
 	border: 1px solid color-mix(in oklab, var(--primary-5) 18%, var(--border-subtle) 82%);
@@ -136,7 +241,6 @@
 	color: var(--text-primary);
 	padding: 0.9rem 1rem;
 	font: inherit;
-	font-size: 14px;
 	line-height: 1.5;
 	transition:
 		border-color var(--duration-fast) var(--ease-standard),
@@ -149,12 +253,14 @@
 	min-height: clamp(5.5rem, 14vh, 7rem);
 }
 
-.schedule-students__field textarea:hover {
+.schedule-students__field textarea:hover,
+.schedule-students__menu-field input:hover {
 	border-color: color-mix(in oklab, var(--primary-5) 34%, var(--border-subtle) 66%);
 	background: color-mix(in oklab, var(--primary-5) 4%, var(--bg-card) 96%);
 }
 
-.schedule-students__field textarea:focus {
+.schedule-students__field textarea:focus,
+.schedule-students__menu-field input:focus {
 	outline: none;
 	border-color: var(--primary-5);
 	background: color-mix(in oklab, var(--bg-card) 96%, white 4%);
@@ -166,6 +272,187 @@
 .schedule-students__menu-field {
 	position: relative;
 	width: 100%;
+}
+
+.schedule-students__menu-field.date.wrap {
+	display: flex;
+	gap: 0.75rem;
+	width: 100%;
+}
+
+.schedule-students__menu-field.wrap button{
+	display: flex;
+	flex: 1;
+}
+
+.selected-date__formatted {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin: 0 0 0.45rem;
+	padding: 0 0.1rem;
+}
+
+.selected-date__formatted-label {
+	font-size: 0.92rem;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	color: var(--text-primary);
+}
+
+.selected-date__formatted-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.2rem 0.55rem;
+	border-radius: 999px;
+	border: 1px solid color-mix(in oklab, var(--primary-5) 26%, var(--border-subtle) 74%);
+	background: color-mix(in oklab, var(--primary-5) 8%, white 92%);
+	color: var(--primary-5);
+	font-size: 0.76rem;
+	font-weight: 700;
+	white-space: nowrap;
+	box-shadow: 0 1px 0 rgba(255, 255, 255, 0.72) inset;
+}
+
+.schedule-students__duration-options{
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	position: relative;
+	width: 100%;
+	padding: 0.45rem;
+	border-radius: var(--radius-md);
+	background: color-mix(in oklab, var(--bg-card) 96%, white 4%);
+	border: 1px solid var(--border-subtle);
+	box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset;
+}
+
+.schedule-students__duration-btn {
+	border: none;
+	border-radius: var(--radius-md);
+	background: transparent;
+	color: var(--text-primary);
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	padding: 0.25rem 0.35rem;
+	transition:
+		background-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+	padding: 0.45rem 2rem;
+	width: fit-content;
+}
+
+.schedule-students__duration-btn.is-active {
+	background: var(--primary-5);
+	color: var(--text-inverse);
+	font-weight: 700;
+	flex: 1;
+	animation: duration-select 420ms cubic-bezier(.22,1,.36,1);
+}
+
+@keyframes duration-select {
+0% { transform: scale(0.98); box-shadow: none; }
+60% { transform: scale(1.03); }
+100% { transform: scale(1); }
+}
+
+.schedule-students__duration-progress {
+	position: absolute;
+	inset: 0.35rem 0.35rem 0.35rem 0.35rem;
+	height: calc(100% - 0.7rem);
+	background: linear-gradient(90deg, var(--primary-5) 0%, color-mix(in oklab, var(--primary-5) 88%, black 12%) 100%);
+	border-radius: calc(var(--radius-md) - 2px);
+	z-index: 1;
+	transition: width 260ms ease;
+	box-shadow: 0 6px 18px rgba(190,21,46,0.12);
+}
+
+.schedule-students__duration-segments {
+	position: relative;
+	z-index: 2;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0,1fr));
+	width: 100%;
+	gap: 0.35rem;
+}
+
+.schedule-students__duration-segment {
+	background: transparent;
+	border: none;
+	padding: 0.45rem 0.75rem;
+	border-radius: calc(var(--radius-pill));
+	cursor: pointer;
+	transition: color 200ms ease, transform 160ms ease;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.schedule-students__duration-segment-label {
+	color: var(--text-primary);
+	opacity: 0.7;
+}
+
+.schedule-students__duration-segment:hover:not(.is-active) .schedule-students__duration-segment-label {
+	color: var(--text-primary);
+	opacity: 1;
+}
+
+.schedule-students__duration-segment.is-active .schedule-students__duration-segment-label {
+	color: var(--text-inverse);
+	opacity: 1;
+}
+
+.schedule-students__duration-segment:active { transform: scale(0.985); }
+
+/* small motion for progress change */
+@media (prefers-reduced-motion: no-preference) {
+	.schedule-students__duration-progress { transition: width 260ms cubic-bezier(.22,1,.36,1); }
+}
+
+/* timeslot entry and selection */
+.schedule-students__timeslot-btn {
+	opacity: 0;
+	transform: translateY(6px) scale(0.995);
+	animation: slot-fade-in 360ms cubic-bezier(.22,1,.36,1) forwards;
+	will-change: transform, opacity;
+}
+
+@keyframes slot-fade-in {
+from { opacity: 0; transform: translateY(8px) scale(0.992); }
+to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.schedule-students__timeslot-btn.is-active {
+	transition: transform 260ms cubic-bezier(.22,1,.36,1), box-shadow 260ms, border-color 200ms;
+	transform-origin: left center;
+	transform: translateY(-2px) scale(1.01);
+	box-shadow: 0 10px 22px rgba(122,0,20,0.10);
+}
+
+/* Duration range indicator: subtle background to show multi-hour selection */
+.schedule-students__timeslot-btn.is-in-duration-range {
+	border-color: var(--primary-5);
+	background: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--primary-5) 10%, white 90%),
+		color-mix(in oklab, var(--primary-5) 16%, var(--bg-card) 84%)
+	);
+	box-shadow:
+		0 0 0 3px rgba(190, 21, 46, 0.1),
+		0 14px 26px rgba(122, 0, 20, 0.12);
+}
+
+/* when merged vertically on mobile */
+@media (max-width: 639px) {
+	.schedule-students__timeslot-btn { animation-duration: 320ms; }
+	.schedule-students__timeslot-btn.is-active { transform: translateY(-1px) scale(1.01); }
+	.schedule-students__timeslot-grid { grid-auto-rows: minmax(3.75rem, auto); }
 }
 
 .schedule-students__menu-trigger {
@@ -475,6 +762,13 @@
 	box-shadow: 0 8px 16px rgba(190, 21, 46, 0.22);
 }
 
+.schedule-students__calendar-day--disabled {
+	opacity: 0.35;
+	color: color-mix(in oklab, var(--text-secondary) 50%, transparent 50%);
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
 .schedule-students__calendar-footer {
 	display: flex;
 	justify-content: flex-end;
@@ -631,6 +925,14 @@
 	.schedule-students__form {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
+
+	.schedule-students__form-wrap {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.schedule-students__form > .schedule-students__field--full:last-child {
+		grid-column: 1 / -1;
+	}
 }
 
 /* ≥ 768px — standard padding */
@@ -664,6 +966,16 @@
 	.schedule-students__menu-trigger,
 	.schedule-students__field textarea {
 		padding: 0.78rem 0.85rem;
+	}
+
+		.schedule-students__timeslot-grid {
+			grid-template-columns: 1fr;
+			gap: 0.6rem;
+			grid-auto-rows: minmax(3.5rem, auto);
+		}
+
+	.schedule-students__timeslot-btn {
+		padding: 0.8rem 0.82rem 0.74rem;
 	}
 
 	.schedule-students__date-menu {
@@ -735,6 +1047,15 @@
 	.schedule-students__field textarea {
 		min-height: 40px;
 		padding: 0.65rem 0.8rem;
+	}
+
+	.schedule-students__timeslot-grid {
+		grid-template-columns: 1fr;
+		gap: 0.55rem;
+	}
+
+	.schedule-students__timeslot-btn {
+		padding: 0.78rem 0.82rem 0.72rem;
 	}
 
 	.schedule-students__field textarea {
