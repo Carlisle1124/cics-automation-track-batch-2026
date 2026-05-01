@@ -8,7 +8,6 @@ import './AuthPages.css';
 
 const UST_DOMAIN = '@ust.edu.ph';
 const RESEND_COOLDOWN_SECONDS = 180;
-const location = useLocation();
 
 function validateEmail(value) {
 	const trimmed = value.trim().toLowerCase();
@@ -34,6 +33,7 @@ function validateConfirmPassword(password, confirmPassword) {
 }
 
 export default function ForgotPassword() {
+    const location = useLocation();
 	const [step, setStep] = useState('request'); // 'request', 'reset', 'success', 'error'
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [email, setEmail] = useState('');
