@@ -52,6 +52,7 @@ function validateEmail(value) {
 	const trimmed = value.trim().toLowerCase();
 
 	if (!trimmed) return 'Please enter your UST email address.';
+	if (trimmed.length > 255) return 'Email address must be 255 characters or fewer..';
 	if (!trimmed.includes('@')) return 'Please enter a valid email address.';
 	if (!trimmed.endsWith(UST_DOMAIN)) return 'Only @ust.edu.ph emails are allowed.';
 	const local = trimmed.slice(0, trimmed.indexOf('@'));
@@ -61,6 +62,7 @@ function validateEmail(value) {
 
 function validatePassword(value) {
 	if (!value.trim()) return 'Please enter your password.';
+	if (value.length > 64) return 'Password must be 64 characters or fewer.';
 	return '';
 }
 
@@ -307,6 +309,7 @@ const setStatus = useCallback((message, type = 'info') => {
 								aria-describedby={loginErrors.email ? 'login-email-error' : undefined}
 								aria-invalid={loginErrors.email ? 'true' : undefined}
 								onChange={(e) => setEmail(e.target.value)}
+								maxLength={255}
 								required
 							/>
 						</div>
@@ -336,6 +339,7 @@ const setStatus = useCallback((message, type = 'info') => {
 								aria-describedby={loginErrors.password ? 'login-password-error' : undefined}
 								aria-invalid={loginErrors.password ? 'true' : undefined}
 								onChange={(e) => setPassword(e.target.value)}
+								maxLength={64}
 								required
 							/>
 						</div>

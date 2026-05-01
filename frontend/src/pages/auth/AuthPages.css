@@ -460,6 +460,12 @@
   transform-origin: left center;
 }
 
+.auth-page--register .auth-field__error-row--placeholder {
+  visibility: hidden;
+  min-height: 1.25rem;
+  pointer-events: none;
+}
+
 .auth-field__error-icon {
   width: 1rem;
   height: 1rem;
