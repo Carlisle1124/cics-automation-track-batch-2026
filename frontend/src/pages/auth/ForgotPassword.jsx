@@ -91,6 +91,24 @@ export default function ForgotPassword() {
 			listener.subscription.unsubscribe();
 		};
 	}, [step]);
+    
+    useEffect(() => {
+    const hash = window.location.hash;
+
+    if (hash.includes('error=')) {
+        const params = new URLSearchParams(hash.replace('#', ''));
+
+        const error = params.get('error');
+        const description = params.get('error_description');
+
+        if (error) {
+        setStep('error');
+        setLinkError(description || 'Invalid or expired reset link.');
+        setStatusMessage('Link expired or invalid.');
+        setStatusType('error');
+        }
+    }
+    }, []);
 
 	function formatCountdown(seconds) {
 		const m = Math.floor(seconds / 60);
