@@ -413,10 +413,6 @@ export default function ForgotPassword() {
 							</svg>
 						</div>
 						<h3>Link Expired or Invalid</h3>
-						<p>{linkError}</p>
-						<Link to="/auth/forgot-password" className="auth-primary-btn">
-							Request New Link
-						</Link>
 					</div>
 				) : null}
 
