@@ -7,6 +7,8 @@ import {
 	X,
 	UserCircle,
 	WarningCircle,
+	CaretDown as CaretDownIcon,
+	CaretUp as CaretUpIcon,
 } from '@phosphor-icons/react';
 import PageHeader from '../../shared/components/PageHeader';
 import Modal from '../../shared/components/Modal';
@@ -581,6 +583,8 @@ export default function Users() {
 	const [error, setError] = useState(null);
 	const [activeTab, setActiveTab] = useState('all');
 	const [search, setSearch] = useState('');
+	const [sortColumn, setSortColumn] = useState('registered');
+	const [sortDirection, setSortDirection] = useState('desc');
 	const [currentPage, setCurrentPage] = useState(1);
 
 	const [viewUser, setViewUser] = useState(null);
@@ -642,6 +646,28 @@ export default function Users() {
 		setCurrentPage(1);
 	}
 
+	function handleSort(column) {
+		setCurrentPage(1);
+		if (sortColumn === column) {
+			setSortDirection((direction) => (direction === 'asc' ? 'desc' : 'asc'));
+			return;
+		}
+		setSortColumn(column);
+		setSortDirection(column === 'registered' || column === 'no_shows' ? 'desc' : 'asc');
+	}
+
+	function sortIcon(column) {
+		if (sortColumn !== column) {
+			return <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />;
+		}
+
+		return sortDirection === 'asc' ? (
+			<CaretUpIcon size={20} weight="duotone" />
+		) : (
+			<CaretDownIcon size={20} weight="duotone" />
+		);
+	}
+
 	const filteredUsers = useMemo(() => {
 		let list = [...users];
 
@@ -661,8 +687,46 @@ export default function Users() {
 			);
 		}
 
+		const directionMultiplier = sortDirection === 'asc' ? 1 : -1;
+
+		list.sort((a, b) => {
+			if (sortColumn === 'full_name') {
+				return String(a.full_name || '').localeCompare(String(b.full_name || '')) * directionMultiplier;
+			}
+
+			if (sortColumn === 'student_id') {
+				return String(a.student_id || '').localeCompare(String(b.student_id || '')) * directionMultiplier;
+			}
+
+			if (sortColumn === 'email') {
+				return String(a.email || '').localeCompare(String(b.email || '')) * directionMultiplier;
+			}
+
+			if (sortColumn === 'role') {
+				return String(a.role || '').localeCompare(String(b.role || '')) * directionMultiplier;
+			}
+
+			if (sortColumn === 'status') {
+				const aStatus = a.is_account_suspended ? 'suspended' : 'active';
+				const bStatus = b.is_account_suspended ? 'suspended' : 'active';
+				return aStatus.localeCompare(bStatus) * directionMultiplier;
+			}
+
+			if (sortColumn === 'no_shows') {
+				return ((Number(a.no_show_count) || 0) - (Number(b.no_show_count) || 0)) * directionMultiplier;
+			}
+
+			if (sortColumn === 'registered') {
+				const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
+				const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
+				return (aDate - bDate) * directionMultiplier;
+			}
+
+			return 0;
+		});
+
 		return list;
-	}, [users, activeTab, search]);
+	}, [users, activeTab, search, sortColumn, sortDirection]);
 
 	const totalItems = filteredUsers.length;
 	const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
@@ -804,28 +868,30 @@ export default function Users() {
 						))}
 					</div>
 
-					<div className="admin-users__search-wrap">
-						<span className="admin-users__search-icon" aria-hidden="true">
-							<MagnifyingGlass size={16} weight="bold" />
-						</span>
-						<input
-							type="search"
-							className="admin-users__search-input"
-							placeholder="Search by name, email, or ID…"
-							value={search}
-							onChange={handleSearchChange}
-							aria-label="Search users"
-						/>
-						{search && (
-							<button
-								type="button"
-								className="admin-users__search-clear"
-								aria-label="Clear search"
-								onClick={handleSearchClear}
-							>
-								<X size={14} weight="bold" />
-							</button>
-						)}
+					<div className="reservations-table__controls">
+						<div className="admin-users__search-wrap">
+							<span className="admin-users__search-icon" aria-hidden="true">
+								<MagnifyingGlass size={16} weight="bold" />
+							</span>
+							<input
+								type="search"
+								className="admin-users__search-input"
+								placeholder="Search by name, email, or ID…"
+								value={search}
+								onChange={handleSearchChange}
+								aria-label="Search users"
+							/>
+							{search && (
+								<button
+									type="button"
+									className="admin-users__search-clear"
+									aria-label="Clear search"
+									onClick={handleSearchClear}
+								>
+									<X size={14} weight="bold" />
+								</button>
+							)}
+						</div>
 					</div>
 				</div>
 
@@ -834,13 +900,48 @@ export default function Users() {
 					<table className="reservations-table__table admin-users__table">
 						<thead>
 							<tr className="table-header-row">
-								<th className="table-header-cell">Full Name</th>
-								<th className="table-header-cell">Student ID</th>
-								<th className="table-header-cell">Email</th>
-								<th className="table-header-cell">Role</th>
-								<th className="table-header-cell">Status</th>
-								<th className="table-header-cell">No-shows</th>
-								<th className="table-header-cell">Registered</th>
+								<th className="table-header-cell">
+									<button type="button" className="header-sort-btn" onClick={() => handleSort('full_name')}>
+										Full Name
+										<span className="header-sort-icon" aria-hidden="true">{sortIcon('full_name')}</span>
+									</button>
+								</th>
+								<th className="table-header-cell">
+									<button type="button" className="header-sort-btn" onClick={() => handleSort('student_id')}>
+										Student ID
+										<span className="header-sort-icon" aria-hidden="true">{sortIcon('student_id')}</span>
+									</button>
+								</th>
+								<th className="table-header-cell">
+									<button type="button" className="header-sort-btn" onClick={() => handleSort('email')}>
+										Email
+										<span className="header-sort-icon" aria-hidden="true">{sortIcon('email')}</span>
+									</button>
+								</th>
+								<th className="table-header-cell">
+									<button type="button" className="header-sort-btn" onClick={() => handleSort('role')}>
+										Role
+										<span className="header-sort-icon" aria-hidden="true">{sortIcon('role')}</span>
+									</button>
+								</th>
+								<th className="table-header-cell">
+									<button type="button" className="header-sort-btn" onClick={() => handleSort('status')}>
+										Status
+										<span className="header-sort-icon" aria-hidden="true">{sortIcon('status')}</span>
+									</button>
+								</th>
+								<th className="table-header-cell">
+									<button type="button" className="header-sort-btn" onClick={() => handleSort('no_shows')}>
+										No-shows
+										<span className="header-sort-icon" aria-hidden="true">{sortIcon('no_shows')}</span>
+									</button>
+								</th>
+								<th className="table-header-cell">
+									<button type="button" className="header-sort-btn" onClick={() => handleSort('registered')}>
+										Registered
+										<span className="header-sort-icon" aria-hidden="true">{sortIcon('registered')}</span>
+									</button>
+								</th>
 								<th className="table-header-cell" aria-label="Actions" />
 							</tr>
 						</thead>

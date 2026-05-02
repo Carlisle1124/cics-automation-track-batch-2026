@@ -9,6 +9,7 @@
   box-sizing: border-box;
   padding: clamp(0.75rem, 1.2vw, 1rem);
   gap: clamp(0.55rem, 0.9vw, 0.8rem);
+  font-size: 0.94rem;
   border-radius: var(--radius-xl);
   overflow: visible;
 }
@@ -58,7 +59,7 @@
 }
 
 .admin-manage-reservations__header .page-header__subtitle {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .admin-manage-reservations__table-shell {
@@ -99,6 +100,66 @@
   margin-top: auto;
 }
 
+.admin-manage-reservations .reservations-table__header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-manage-reservations .reservations-table__tabs {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  width: auto;
+  flex-wrap: wrap;
+}
+
+.admin-manage-reservations .reservations-table__controls {
+  width: auto;
+}
+
+.admin-manage-reservations .reservations-table__header,
+.admin-manage-reservations .reservations-table__footer {
+  flex-shrink: 0;
+  background: transparent;
+}
+
+.admin-manage-reservations .reservations-table__footer {
+  margin-top: auto;
+}
+
+.admin-manage-reservations .reservations-table__wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.admin-manage-reservations .reservations-table__wrapper::-webkit-scrollbar {
+  height: 0.55rem;
+  width: 0.55rem;
+}
+
+.admin-manage-reservations .reservations-table__wrapper::-webkit-scrollbar-track {
+  background: color-mix(in oklab, var(--bg-elevated) 88%, transparent 12%);
+  border-radius: var(--radius-pill);
+}
+
+.admin-manage-reservations .reservations-table__wrapper::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--secondary-7) 58%, transparent 42%);
+  border-radius: var(--radius-pill);
+}
+
+.admin-manage-reservations .reservations-table__wrapper::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--primary-5) 42%, var(--secondary-7) 58%);
+}
+
 .admin-manage-reservations__table {
   width: max-content;
   min-width: max(100%, 42rem);
@@ -120,6 +181,106 @@
 
 .admin-manage-reservations__table-shell .table-header-row {
   background: color-mix(in oklab, var(--bg-elevated) 92%, white 8%);
+}
+
+.admin-manage-reservations .table-header-cell {
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.admin-manage-reservations .table-header-cell,
+.admin-manage-reservations .table-cell {
+  white-space: nowrap;
+}
+
+.admin-manage-reservations .table-cell {
+  font-size: 0.84rem;
+}
+
+.admin-manage-reservations .reservations-table__tabs .tab-button {
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.82rem;
+  background-color: transparent;
+  border: 1px solid color-mix(in oklab, var(--primary-5) 18%, var(--border-subtle) 82%);
+  color: var(--text-secondary);
+}
+
+.admin-manage-reservations .reservations-table__tabs .tab-button:hover {
+  border-color: color-mix(in oklab, var(--primary-5) 24%, var(--border-subtle) 76%);
+  background: color-mix(in oklab, var(--primary-5) 6%, var(--bg-elevated) 94%);
+  color: var(--text-primary);
+}
+
+.admin-manage-reservations .reservations-table__tabs .tab-button--active {
+  background: var(--color-primary);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 12px 24px rgba(190, 21, 46, 0.24);
+}
+
+.admin-manage-reservations .reservations-table__tabs .tab-button--active:hover {
+  background: linear-gradient(135deg, var(--primary-6), var(--primary-4));
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 12px 24px rgba(190, 21, 46, 0.24);
+}
+
+.admin-manage-reservations .reservations-table__tabs .tab-button .tab-button__label {
+  font-size: var(--text-sm);
+}
+
+.admin-manage-reservations .reservations-table__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.admin-manage-reservations .pagination-info {
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+.admin-manage-reservations .pagination-controls {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.admin-manage-reservations .pagination-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: white;
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-manage-reservations .pagination-btn:hover:not(:disabled) {
+  border-color: var(--border-primary);
+  background: var(--bg-elevated);
+}
+
+.admin-manage-reservations .pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .admin-manage-reservations__table-shell .tab-button {
@@ -171,6 +332,7 @@
     color-mix(in oklab, var(--bg-elevated) 92%, white 8%)
   );
   color: var(--text-primary);
+  font-size: 13px;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.6) inset,
     0 8px 18px rgba(122, 0, 20, 0.05);
@@ -212,7 +374,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
 }
@@ -265,7 +427,7 @@
   border-radius: calc(var(--radius-md) - 0.05rem);
   background: transparent;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   text-align: left;
   box-shadow: none;
@@ -312,7 +474,7 @@
   justify-content: center;
   padding: 0.4rem 0.7rem;
   border-radius: var(--radius-sm);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -486,6 +648,30 @@
 
   .admin-manage-reservations__sort-control {
     width: 100%;
+  }
+}
+
+@media (min-width: 901px) {
+  .admin-manage-reservations .reservations-table__header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .admin-manage-reservations .reservations-table__tabs {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  .admin-manage-reservations .reservations-table__controls {
+    width: auto;
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+
+  .admin-manage-reservations__sort-control {
+    width: min(16rem, 100%);
   }
 }
 

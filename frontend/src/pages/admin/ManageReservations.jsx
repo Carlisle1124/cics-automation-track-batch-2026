@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { getAllReservations, subscribeToReservationChanges } from '../../data/services/reservationService';
 import PageHeader from '../../shared/components/PageHeader';
 import cicsLogo from '../../assets/CICS-Logo.webp';
-import '../../features/reservations/components/ReservationsTable.css';
 import './ManageReservations.css';
 
 const FILTER_TABS = [

@@ -13,6 +13,7 @@
   box-sizing: border-box;
   padding: clamp(0.75rem, 1.2vw, 1rem);
   gap: clamp(0.55rem, 0.9vw, 0.8rem);
+  font-size: 0.94rem;
   border-radius: var(--radius-xl);
   overflow: visible;
 }
@@ -40,7 +41,7 @@
 }
 
 .admin-users__header .page-header__subtitle {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* ── Table shell ─────────────────────────────────────── */
@@ -81,6 +82,111 @@
   margin-top: auto;
 }
 
+.admin-users .reservations-table__header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-users .reservations-table__tabs {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  width: auto;
+  flex-wrap: wrap;
+}
+
+.admin-users .reservations-table__controls {
+  width: auto;
+}
+
+.admin-users .reservations-table__header,
+.admin-users .reservations-table__footer {
+  flex-shrink: 0;
+  background: transparent;
+}
+
+.admin-users .reservations-table__footer {
+  margin-top: auto;
+}
+
+.admin-users .reservations-table__wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.admin-users .reservations-table__wrapper::-webkit-scrollbar {
+  height: 0.55rem;
+  width: 0.55rem;
+}
+
+.admin-users .reservations-table__wrapper::-webkit-scrollbar-track {
+  background: color-mix(in oklab, var(--bg-elevated) 88%, transparent 12%);
+  border-radius: var(--radius-pill);
+}
+
+.admin-users .reservations-table__wrapper::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--secondary-7) 58%, transparent 42%);
+  border-radius: var(--radius-pill);
+}
+
+.admin-users .reservations-table__wrapper::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--primary-5) 42%, var(--secondary-7) 58%);
+}
+
+.admin-users .table-header-cell {
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  padding: 0;
+}
+
+.admin-users .table-header-cell,
+.admin-users .table-cell {
+  white-space: nowrap;
+}
+
+.admin-users .table-cell {
+  font-size: 0.84rem;
+}
+
+.admin-users .table-header-cell {
+  cursor: pointer;
+}
+
+/* Sortable header button: keep full cell clickable */
+.admin-users .header-sort-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.72rem;
+  text-align: left;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.admin-users .header-sort-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.5rem;
+}
+
 /* ── Table header row with search ────────────────────── */
 .admin-users__table-header {
   flex-direction: column;
@@ -116,7 +222,7 @@
     color-mix(in oklab, var(--bg-elevated) 92%, white 8%)
   );
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 8px 18px rgba(122, 0, 20, 0.05);
   transition:
@@ -170,7 +276,7 @@
 /* ── Table ───────────────────────────────────────────── */
 .admin-users__table {
   width: max-content;
-  min-width: max(100%, 52rem);
+  min-width: max(100%, 60rem);
   table-layout: auto;
 }
 
@@ -182,6 +288,90 @@
 
 .admin-users__table-shell .table-header-row {
   background: color-mix(in oklab, var(--bg-elevated) 92%, white 8%);
+  
+}
+
+.admin-users__table-shell .tab-button {
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.82rem;
+  background-color: transparent;
+  border: 1px solid color-mix(in oklab, var(--primary-5) 18%, var(--border-subtle) 82%);
+  color: var(--text-secondary);
+}
+
+.admin-users__table-shell .tab-button:hover {
+  border-color: color-mix(in oklab, var(--primary-5) 24%, var(--border-subtle) 76%);
+  background: color-mix(in oklab, var(--primary-5) 6%, var(--bg-elevated) 94%);
+  color: var(--text-primary);
+}
+
+.admin-users__table-shell .tab-button--active {
+  background: var(--color-primary);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 12px 24px rgba(190, 21, 46, 0.24);
+}
+
+.admin-users__table-shell .tab-button--active:hover {
+  background: linear-gradient(135deg, var(--primary-6), var(--primary-4));
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 12px 24px rgba(190, 21, 46, 0.24);
+}
+
+.admin-users__table-shell .tab-button .tab-button__label {
+  font-size: var(--text-sm);
+}
+
+.admin-users .reservations-table__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.admin-users .pagination-info {
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+.admin-users .pagination-controls {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.admin-users .pagination-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: white;
+  color: var(--text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-users .pagination-btn:hover:not(:disabled) {
+  border-color: var(--border-primary);
+  background: var(--bg-elevated);
+}
+
+.admin-users .pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ── Tab hover tweaks ────────────────────────────────── */
@@ -248,7 +438,7 @@
   color: var(--text-secondary);
   border-radius: var(--radius-sm);
   padding: 0.38rem 0.7rem;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -577,6 +767,34 @@
     width: 100%;
   }
 
+  .admin-users .reservations-table__controls {
+    width: 100%;
+  }
+
+  .admin-users .reservations-table__header {
+    gap: 0.75rem;
+  }
+
+  .admin-users .table-header-cell,
+  .admin-users .table-cell {
+    padding: 0.72rem 0.72rem;
+  }
+
+  .admin-users .table-header-cell {
+    font-size: 0.68rem;
+  }
+
+  .admin-users .header-sort-btn {
+    padding: 0.68rem 0.72rem;
+    font-size: 0.68rem;
+  }
+
+  .admin-users__table-shell .reservations-table__tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
   .admin-users__fab {
     bottom: 1.25rem;
     right: 1.25rem;
@@ -591,7 +809,13 @@
 
 @media (max-width: 420px) {
   .admin-users__table {
-    min-width: 44rem;
+    min-width: 48rem;
+  }
+
+  .admin-users .table-header-cell,
+  .admin-users .table-cell {
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
   }
 }
 
@@ -599,6 +823,113 @@
   .admin-users__table-shell .reservations-table__header {
     align-items: flex-start;
     flex-wrap: wrap;
+  }
+
+  .admin-users__table-shell .reservations-table__tabs {
+    flex: 1 1 auto;
+  }
+
+  .admin-users__table-shell .reservations-table__controls {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .admin-users__search-wrap {
+    width: 100%;
+  }
+}
+
+@media (min-width: 901px) {
+  .admin-users__table-shell .reservations-table__wrapper {
+    overflow-x: hidden;
+  }
+
+  .admin-users__table {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    table-layout: fixed;
+  }
+
+  .admin-users__table .table-header-cell,
+  .admin-users__table .table-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .admin-users__table .table-header-cell:nth-child(1),
+  .admin-users__table .table-cell:nth-child(1) {
+    width: 17%;
+  }
+
+  .admin-users__table .table-header-cell:nth-child(2),
+  .admin-users__table .table-cell:nth-child(2) {
+    width: 12%;
+  }
+
+  .admin-users__table .table-header-cell:nth-child(3),
+  .admin-users__table .table-cell:nth-child(3) {
+    width: 21%;
+  }
+
+  .admin-users__table .table-header-cell:nth-child(4),
+  .admin-users__table .table-cell:nth-child(4) {
+    width: 10%;
+  }
+
+  .admin-users__table .table-header-cell:nth-child(5),
+  .admin-users__table .table-cell:nth-child(5) {
+    width: 10%;
+  }
+
+  .admin-users__table .table-header-cell:nth-child(6),
+  .admin-users__table .table-cell:nth-child(6) {
+    width: 8%;
+  }
+
+  .admin-users__table .table-header-cell:nth-child(7),
+  .admin-users__table .table-cell:nth-child(7) {
+    width: 12%;
+  }
+
+  .admin-users__table .table-header-cell:nth-child(8),
+  .admin-users__table .table-cell:nth-child(8) {
+    width: 10%;
+  }
+
+  .admin-users__actions-cell {
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .admin-users__action-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+  }
+
+  .admin-users .reservations-table__header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .admin-users .reservations-table__tabs {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  .admin-users .reservations-table__controls {
+    width: auto;
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+
+  .admin-users__search-wrap {
+    width: min(22rem, 100%);
   }
 }
 
