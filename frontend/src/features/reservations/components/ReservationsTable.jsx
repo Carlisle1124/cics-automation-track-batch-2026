@@ -1,167 +1,203 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { cancelReservation } from '../../../data/services/reservationService';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { cancelReservation, getReservationsByUser, subscribeToReservationChanges } from '../../../data/services/reservationService';
+import { Info, MagnifyingGlass, X, CaretDown as CaretDownIcon, CaretUp as CaretUpIcon } from '@phosphor-icons/react';
+import Modal from '../../../shared/components/Modal';
 import './ReservationsTable.css';
 
-// Extended mock data matching the structure in mockData.js
-const USERS_DATA = [
-  { id: 'user-001', name: 'Juan Dela Cruz', studentId: '2022-00001' },
-  { id: 'user-002', name: 'Maria Santos', studentId: '2022-00002' },
-  { id: 'user-003', name: 'Carlos Mendoza', studentId: '2022-00003' },
-  { id: 'user-004', name: 'Ana Garcia', studentId: '2022-00004' },
-  { id: 'user-005', name: 'Luis Torres', studentId: '2022-00005' },
-  { id: 'user-006', name: 'Rosa Rivera', studentId: '2022-00006' },
+const FILTER_TABS = [
+  { id: 'upcoming', label: 'Upcoming' },
+  { id: 'ongoing', label: 'Ongoing' },
+  { id: 'past', label: 'Past' },
+  { id: 'all', label: 'All' },
 ];
 
-const ROOMS_DATA = [
-  { id: 'room-001', name: 'Learning Commons' },
-];
+const SORT_OPTIONS = ['Latest First', 'Earliest First', 'Status A-Z'];
+const ITEMS_PER_PAGE = 8;
 
-const TIME_SLOTS_DATA = {
-  'ts-08': { start: '08:00', end: '09:00' },
-  'ts-09': { start: '09:00', end: '10:00' },
-  'ts-10': { start: '10:00', end: '11:00' },
-  'ts-11': { start: '11:00', end: '12:00' },
-  'ts-12': { start: '12:00', end: '13:00' },
-  'ts-13': { start: '13:00', end: '14:00' },
-  'ts-14': { start: '14:00', end: '15:00' },
-  'ts-15': { start: '15:00', end: '16:00' },
-  'ts-16': { start: '16:00', end: '17:00' },
-};
+function safeDate(value) {
+  const d = value ? new Date(value) : null;
+  return d && !Number.isNaN(d.getTime()) ? d : null;
+}
 
-const RESERVATIONS_DATA = [
-  {
-    id: 'res-001',
-    userId: 'user-001',
-    roomId: 'room-001',
-    date: '2026-04-09',
-    slotIds: ['ts-10', 'ts-11'],
-    status: 'confirmed',
-    checkInTime: null,
-    expiryTime: '2026-04-09T10:15:00Z',
-    createdAt: '2026-04-08T09:00:00Z',
-  },
-  {
-    id: 'res-002',
-    userId: 'user-002',
-    roomId: 'room-001',
-    date: '2026-04-09',
-    slotIds: ['ts-09'],
-    status: 'checked_in',
-    checkInTime: '2026-04-09T09:05:00Z',
-    createdAt: '2026-04-08T08:30:00Z',
-  },
-  {
-    id: 'res-003',
-    userId: 'user-003',
-    roomId: 'room-001',
-    date: '2026-04-08',
-    slotIds: ['ts-14', 'ts-15'],
-    status: 'completed',
-    checkInTime: '2026-04-08T14:02:00Z',
-    createdAt: '2026-04-07T10:00:00Z',
-  },
-  {
-    id: 'res-004',
-    userId: 'user-004',
-    roomId: 'room-001',
-    date: '2026-04-09',
-    slotIds: ['ts-13'],
-    status: 'pending',
-    checkInTime: null,
-    expiryTime: '2026-04-09T12:45:00Z',
-    createdAt: '2026-04-09T12:00:00Z',
-  },
-  {
-    id: 'res-005',
-    userId: 'user-005',
-    roomId: 'room-001',
-    date: '2026-04-08',
-    slotIds: ['ts-12'],
-    status: 'completed',
-    checkInTime: '2026-04-08T12:08:00Z',
-    createdAt: '2026-04-07T09:30:00Z',
-  },
-  {
-    id: 'res-006',
-    userId: 'user-006',
-    roomId: 'room-001',
-    date: '2026-04-07',
-    slotIds: ['ts-08', 'ts-09', 'ts-10'],
-    status: 'completed',
-    checkInTime: '2026-04-07T08:05:00Z',
-    createdAt: '2026-04-06T14:00:00Z',
-  },
-];
+function toDisplayDate(reservation) {
+  const value = reservation.reservation_date ?? reservation.reservationDate ?? reservation.date;
+  const date = safeDate(value);
+  return date
+    ? date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '—';
+}
 
-const TABS = [
-  { id: 'all', label: 'All Entries' },
-  { id: 'confirmed', label: 'Upcoming' },
-  { id: 'completed', label: 'Past Reservations' },
-];
+function toDisplayTime(timeValue) {
+  if (!timeValue) return '—';
+  const date = safeDate(`1970-01-01T${timeValue}`);
+  if (!date) return String(timeValue);
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
 
-const SORT_OPTIONS = ['Latest First', 'Earliest First', 'User A-Z'];
+function getDuration(startTime, endTime) {
+  if (!startTime || !endTime) return '—';
 
-export default function ReservationsTable({ userRole = 'student', userId = null }) {
-  const [activeTab, setActiveTab] = useState('all');
+  const start = safeDate(`1970-01-01T${startTime}`);
+  const end = safeDate(`1970-01-01T${endTime}`);
+  if (!start || !end) return '—';
+
+  const diffMs = end.getTime() - start.getTime();
+  if (diffMs <= 0) return '—';
+
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${minutes}m`;
+}
+
+function statusBadgeClass(status) {
+  switch (status) {
+    case 'approved':
+    case 'confirmed':
+      return 'status-badge status-badge--confirmed';
+    case 'completed':
+      return 'status-badge status-badge--completed';
+    case 'checked_in':
+      return 'status-badge status-badge--checked-in';
+    case 'cancelled':
+    case 'cancelled_by_user':
+      return 'status-badge status-badge--cancelled';
+    case 'expired':
+    case 'auto_cancelled':
+      return 'status-badge status-badge--expired';
+    case 'pending':
+    default:
+      return 'status-badge status-badge--pending';
+  }
+}
+
+function formatStatusValue(status) {
+  const s = status ?? 'pending';
+  if (s === 'cancelled_by_user') return 'cancelled';
+  return s;
+}
+
+function getReservationDate(reservation) {
+  return safeDate(reservation.reservation_date ?? reservation.reservationDate ?? reservation.date);
+}
+
+function filterByTab(reservation, activeTab) {
+  if (activeTab === 'all') return true;
+
+  const now = new Date();
+  const resDate = getReservationDate(reservation);
+  if (!resDate) return activeTab === 'all';
+
+  const startTime = reservation.start_time ?? reservation.startTime;
+  const endTime = reservation.end_time ?? reservation.endTime;
+
+  const startDateTime = startTime ? safeDate(`${resDate.toISOString().slice(0, 10)}T${startTime}`) : null;
+  const endDateTime = endTime ? safeDate(`${resDate.toISOString().slice(0, 10)}T${endTime}`) : null;
+
+  if (activeTab === 'ongoing') {
+    if (startDateTime && endDateTime) {
+      return now >= startDateTime && now <= endDateTime;
+    }
+    return now.toDateString() === resDate.toDateString();
+  }
+
+  if (activeTab === 'upcoming') {
+    if (startDateTime) return now < startDateTime;
+    return resDate >= new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  if (activeTab === 'past') {
+    if (endDateTime) return now > endDateTime;
+    return resDate < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  return true;
+}
+
+export default function ReservationsTable({ userId }) {
+  const [reservations, setReservations] = useState([]);
+  const [activeTab, setActiveTab] = useState('upcoming');
   const [sortBy, setSortBy] = useState('Latest First');
+  const [sortColumn, setSortColumn] = useState('reservationDate');
+  const [sortDirection, setSortDirection] = useState('desc'); // 'asc' | 'desc'
+  const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [reservations, setReservations] = useState(RESERVATIONS_DATA);
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const [cancellingId, setCancellingId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
-  const [actionMenuPosition, setActionMenuPosition] = useState(null);
-  const menuRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const [selectedReservation, setSelectedReservation] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState(null);
+
   const sortMenuRef = useRef(null);
-  const itemsPerPage = 12;
 
-  // Close dropdown when clicking outside
   useEffect(() => {
-    if (!openMenuId) return;
+    let active = true;
 
-    function handleOutsideClick(event) {
-      const clickedInsideButton = menuRef.current?.contains(event.target);
-      const clickedInsideDropdown = dropdownRef.current?.contains(event.target);
+    async function loadReservations() {
+      if (!userId) {
+        setReservations([]);
+        setIsLoading(false);
+        return;
+      }
 
-      if (!clickedInsideButton && !clickedInsideDropdown) {
-        setOpenMenuId(null);
-        setActionMenuPosition(null);
+      try {
+        const [data] = await getReservationsByUser(userId);
+        if (!active) return;
+        setReservations(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error loading reservations:', error);
+        if (active) setReservations([]);
+      } finally {
+        if (active) setIsLoading(false);
       }
     }
 
-    function handleEscape(event) {
-      if (event.key === 'Escape') {
-        setOpenMenuId(null);
-        setActionMenuPosition(null);
-      }
-    }
-
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('keydown', handleEscape);
+    loadReservations();
 
     return () => {
-      document.removeEventListener('mousedown', handleOutsideClick);
-      document.removeEventListener('keydown', handleEscape);
+      active = false;
     };
-  }, [openMenuId]);
+  }, [userId]);
 
   useEffect(() => {
-    if (!openMenuId) return;
+    const subscription = subscribeToReservationChanges(({ type, data }) => {
+      const ownerId = data?.userId ?? data?.user_id;
+      if (userId && ownerId && ownerId !== userId) return;
 
-    function handleViewportChange() {
-      setOpenMenuId(null);
-      setActionMenuPosition(null);
-    }
+      setReservations((prev) => {
+        if (type === 'INSERT') return [data, ...prev];
+        if (type === 'UPDATE') return prev.map((res) => (res.id === data.id ? { ...res, ...data } : res));
+        if (type === 'DELETE') return prev.filter((res) => res.id !== data.id);
+        return prev;
+      });
+    });
 
-    window.addEventListener('resize', handleViewportChange);
-    window.addEventListener('scroll', handleViewportChange, true);
+    return () => subscription.unsubscribe();
+  }, [userId]);
 
-    return () => {
-      window.removeEventListener('resize', handleViewportChange);
-      window.removeEventListener('scroll', handleViewportChange, true);
-    };
-  }, [openMenuId]);
+  useEffect(() => {
+    if (!userId) return;
+    console.log('[ReservationsTable] Logged-in user reservations:', {
+      userId,
+      count: reservations.length,
+      reservations,
+    });
+  }, [userId, reservations]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, search, sortColumn, sortDirection, sortBy]);
 
   useEffect(() => {
     if (!isSortMenuOpen) return;
@@ -173,9 +209,7 @@ export default function ReservationsTable({ userRole = 'student', userId = null 
     }
 
     function handleEscape(event) {
-      if (event.key === 'Escape') {
-        setIsSortMenuOpen(false);
-      }
+      if (event.key === 'Escape') setIsSortMenuOpen(false);
     }
 
     document.addEventListener('mousedown', handlePointerDown);
@@ -189,361 +223,425 @@ export default function ReservationsTable({ userRole = 'student', userId = null 
     };
   }, [isSortMenuOpen]);
 
-  const handleCancelReservation = useCallback(async (reservationId) => {
-    setCancellingId(reservationId);
-    setOpenMenuId(null);
-    setActionMenuPosition(null);
-    try {
-      await cancelReservation(reservationId);
-      setReservations((prev) =>
-        prev.map((r) => (r.id === reservationId ? { ...r, status: 'cancelled_by_user' } : r))
-      );
-    } catch {
-      // Silently revert — in production show an error toast
-    } finally {
-      setCancellingId(null);
-    }
-  }, []);
+  const filteredReservations = useMemo(() => {
+    const q = search.trim().toLowerCase();
 
-  function handleSortSelect(option) {
-    setSortBy(option);
-    setIsSortMenuOpen(false);
-  }
+    let list = reservations.filter((reservation) => filterByTab(reservation, activeTab));
 
-  function handleActionMenuToggle(event, reservationId) {
-    const isAlreadyOpen = openMenuId === reservationId;
+    if (q) {
+      list = list.filter((reservation) => {
+        const haystack = [
+          reservation.userName,
+          reservation.user_name,
+          reservation.user_email,
+          reservation.roomName,
+          reservation.room_name,
+          reservation.status,
+          reservation.reservationDate,
+          reservation.reservation_date,
+          reservation.date,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
 
-    if (isAlreadyOpen) {
-      setOpenMenuId(null);
-      setActionMenuPosition(null);
-      return;
+        return haystack.includes(q);
+      });
     }
 
-    const rect = event.currentTarget.getBoundingClientRect();
-    const dropdownWidth = 192;
-    const dropdownHeight = 56;
-    const viewportPadding = 12;
-    const dropdownGap = 8;
+    // Column-based sorting
+    const dir = sortDirection === 'asc' ? 1 : -1;
 
-    const maxLeft = Math.max(
-      viewportPadding,
-      window.innerWidth - dropdownWidth - viewportPadding
-    );
+    list.sort((a, b) => {
+      try {
+        if (sortColumn === 'reservationDate') {
+          const aDate = getReservationDate(a) ?? safeDate(a.createdAt ?? a.created_at) ?? new Date(0);
+          const bDate = getReservationDate(b) ?? safeDate(b.createdAt ?? b.created_at) ?? new Date(0);
+          return (aDate.getTime() - bDate.getTime()) * dir;
+        }
 
-    const left = Math.min(
-      Math.max(viewportPadding, rect.right - dropdownWidth),
-      maxLeft
-    );
+        if (sortColumn === 'timeSlot') {
+          const aVal = a.start_time ?? a.startTime ?? '';
+          const bVal = b.start_time ?? b.startTime ?? '';
+          return String(aVal).localeCompare(String(bVal)) * dir;
+        }
 
-    const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
-    const spaceAbove = rect.top - viewportPadding;
-    const placement = spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove ? 'bottom' : 'top';
+        if (sortColumn === 'duration') {
+          const aStart = safeDate(`1970-01-01T${a.start_time ?? a.startTime}`);
+          const aEnd = safeDate(`1970-01-01T${a.end_time ?? a.endTime}`);
+          const bStart = safeDate(`1970-01-01T${b.start_time ?? b.startTime}`);
+          const bEnd = safeDate(`1970-01-01T${b.end_time ?? b.endTime}`);
+          const aDur = aStart && aEnd ? aEnd.getTime() - aStart.getTime() : -Infinity;
+          const bDur = bStart && bEnd ? bEnd.getTime() - bStart.getTime() : -Infinity;
+          return (aDur - bDur) * dir;
+        }
 
-    const top =
-      placement === 'top'
-        ? Math.max(viewportPadding, rect.top - dropdownHeight - dropdownGap)
-        : Math.min(
-            rect.bottom + dropdownGap,
-            window.innerHeight - dropdownHeight - viewportPadding
-          );
+        if (sortColumn === 'status') {
+          return String(a.status ?? '').localeCompare(String(b.status ?? '')) * dir;
+        }
 
-    setActionMenuPosition({
-      top,
-      left,
-      placement,
-    });
-
-    setOpenMenuId(reservationId);
-  }
-
-  function getRowActions(reservation) {
-    const { status } = reservation;
-    if (userRole === 'student') {
-      if (['pending', 'confirmed'].includes(status)) {
-        return [{ label: 'Cancel Reservation', action: () => handleCancelReservation(reservation.id), danger: true }];
+        return 0;
+      } catch (e) {
+        return 0;
       }
-      return [];
-    }
-    // Admin / staff actions
-    const actions = [];
-    if (status === 'pending') {
-      actions.push({ label: 'Confirm', action: () => {}, danger: false });
-    }
-    if (['pending', 'confirmed'].includes(status)) {
-      actions.push({ label: 'Cancel', action: () => handleCancelReservation(reservation.id), danger: true });
-    }
-    return actions;
-  }
-
-  // Get user name by ID
-  const getUserName = (userId) => {
-    const user = USERS_DATA.find(u => u.id === userId);
-    return user ? user.name : 'Unknown User';
-  };
-
-  // Get student ID by user ID
-  const getStudentId = (userId) => {
-    const user = USERS_DATA.find(u => u.id === userId);
-    return user ? user.studentId : 'N/A';
-  };
-
-  // Get room name by ID
-  const getRoomName = (roomId) => {
-    const room = ROOMS_DATA.find(r => r.id === roomId);
-    return room ? room.name : 'Unknown Room';
-  };
-
-  // Format time range from slot IDs
-  const formatTimeRange = (slotIds) => {
-    if (!slotIds || slotIds.length === 0) return 'N/A';
-    const firstSlot = TIME_SLOTS_DATA[slotIds[0]];
-    const lastSlot = TIME_SLOTS_DATA[slotIds[slotIds.length - 1]];
-    if (!firstSlot || !lastSlot) return 'N/A';
-    return `${firstSlot.start} — ${lastSlot.end}`;
-  };
-
-  // If the real Supabase UUID doesn't match any mock user, fall back to user-001
-  const effectiveUserId = USERS_DATA.find(u => u.id === userId) ? userId : 'user-001';
-
-  // Filter data based on role and active tab
-  let filteredData = reservations.filter(item => {
-    // If student, only show their reservations
-    if (userRole === 'student' && userId) {
-      if (item.userId !== effectiveUserId) return false;
-    }
-    // Apply tab filter
-    if (activeTab === 'all') return true;
-    if (activeTab === 'confirmed') return ['pending', 'confirmed', 'checked_in'].includes(item.status);
-    if (activeTab === 'completed') return item.status === 'completed';
-    return true;
-  });
-
-  // Sort data
-  if (sortBy === 'Latest First') {
-    filteredData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  } else if (sortBy === 'Earliest First') {
-    filteredData.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-  } else if (sortBy === 'User A-Z') {
-    filteredData.sort((a, b) => getUserName(a.userId).localeCompare(getUserName(b.userId)));
-  }
-
-  const totalItems = filteredData.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
-
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      pending: { label: 'PENDING', className: 'status-badge status-badge--pending' },
-      confirmed: { label: 'CONFIRMED', className: 'status-badge status-badge--confirmed' },
-      checked_in: { label: 'CHECKED IN', className: 'status-badge status-badge--checked-in' },
-      completed: { label: 'COMPLETED', className: 'status-badge status-badge--completed' },
-      cancelled: { label: 'CANCELLED', className: 'status-badge status-badge--cancelled' },
-      expired: { label: 'EXPIRED', className: 'status-badge status-badge--expired' },
-    };
-    return statusMap[status] || statusMap.pending;
-  };
-
-  const formatCheckInTime = (checkInTime) => {
-    if (!checkInTime) return '—';
-    return new Date(checkInTime).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
     });
-  };
+
+    return list;
+  }, [reservations, activeTab, search, sortBy, sortColumn, sortDirection]);
+
+  const totalItems = filteredReservations.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const paginatedReservations = filteredReservations.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
+
+  function openCancelModal(reservation) {
+    setCancelTarget(reservation);
+    setShowCancelModal(true);
+  }
+
+  function closeCancelModal() {
+    setShowCancelModal(false);
+    setCancelTarget(null);
+  }
+
+  async function handleConfirmCancel() {
+    if (!cancelTarget) return;
+
+    try {
+      await cancelReservation(cancelTarget.id);
+
+      setReservations((prev) =>
+        prev.map((item) =>
+          item.id === cancelTarget.id
+                ? {
+                ...item,
+                status: 'cancelled_by_user',
+              }
+            : item
+        )
+      );
+
+      closeCancelModal();
+    } catch (error) {
+      console.error('Error cancelling reservation:', error);
+      window.alert('Failed to cancel reservation. Please try again.');
+    }
+  }
+
+  function handleOpenDetails(reservation) {
+    setSelectedReservation(reservation);
+  }
+
+  function handleCloseDetails() {
+    setSelectedReservation(null);
+  }
 
   return (
-    <div className={`reservations-table ${userRole === 'student' ? 'reservations-table--student' : ''}`}>
-      {/* Header with tabs and sort */}
+    <div className="reservations-table table-shell reservations-table--student">
       <div className="reservations-table__header">
         <div className="reservations-table__tabs">
-          {TABS.map(tab => (
+          {FILTER_TABS.map((tab) => (
             <button
               key={tab.id}
+              type="button"
               className={`tab-button ${activeTab === tab.id ? 'tab-button--active' : ''}`}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setCurrentPage(1);
-                setIsSortMenuOpen(false);
-              }}
+              onClick={() => setActiveTab(tab.id)}
             >
-              {tab.label}
+              <span className='tab-button__label'>{tab.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="reservations-table__controls">
-          <div className="student-reservations-sort" ref={sortMenuRef}>
+        <div className="reservations-table__search-wrap">
+          <span className="reservations-table__search-icon" aria-hidden="true">
+            <MagnifyingGlass size={16} weight="bold" />
+          </span>
+          <input
+            name='search'
+            type="search"
+            className="reservations-table__search-input"
+            placeholder="Search reservations..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            aria-label="Search reservations"
+          />
+          {search ? (
             <button
               type="button"
-              id="student-reservations-sort-button"
-              className={`student-reservations-sort__trigger ${
-                isSortMenuOpen ? 'student-reservations-sort__trigger--open' : ''
-              }`}
-              aria-haspopup="listbox"
-              aria-expanded={isSortMenuOpen}
-              aria-controls="student-reservations-sort-menu"
-              onClick={() => setIsSortMenuOpen((open) => !open)}
+              className="reservations-table__search-clear"
+              aria-label="Clear search"
+              onClick={() => setSearch('')}
             >
-              <span className="student-reservations-sort__trigger-label">{sortBy}</span>
-              <span className="student-reservations-sort__trigger-icon" aria-hidden="true" />
+              <X size={14} weight="bold" />
             </button>
-
-            {isSortMenuOpen ? (
-              <div
-                id="student-reservations-sort-menu"
-                className="student-reservations-sort__menu"
-                role="listbox"
-                aria-labelledby="student-reservations-sort-button"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    role="option"
-                    aria-selected={sortBy === option}
-                    className={`student-reservations-sort__option ${
-                      sortBy === option ? 'is-active' : ''
-                    }`}
-                    onClick={() => handleSortSelect(option)}
-                  >
-                    <span>{option}</span>
-                    <span className="student-reservations-sort__option-indicator" aria-hidden="true">
-                      {sortBy === option ? '✓' : ''}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
+          ) : null}
         </div>
       </div>
 
-      {/* Table */}
       <div className="reservations-table__wrapper">
         <table className="reservations-table__table">
           <thead>
             <tr className="table-header-row">
-              <th className="table-header-cell">USER</th>
-              <th className="table-header-cell">STUDENT ID</th>
-              <th className="table-header-cell">ROOM</th>
-              <th className="table-header-cell">DATE & TIME</th>
-              <th className="table-header-cell">CHECK-IN</th>
-              <th className="table-header-cell">STATUS</th>
-              <th className="table-header-cell">ACTIONS</th>
+              <th className="table-header-cell">
+                <button
+                  type="button"
+                  className="header-sort-btn"
+                  onClick={() => {
+                    if (sortColumn === 'reservationDate') setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+                    else {
+                      setSortColumn('reservationDate');
+                      setSortDirection('desc');
+                    }
+                  }}
+                  aria-label="Sort by reservation date"
+                >
+                  Reservation Date
+                  <span className="header-sort-icon" aria-hidden="true">
+                    {sortColumn === 'reservationDate' && sortDirection === 'desc' ? (
+                      <CaretDownIcon size={20} weight="duotone" />
+                    ) : sortColumn === 'reservationDate' && sortDirection === 'asc' ? (
+                      <CaretUpIcon size={20} weight="duotone" />
+                    ) : (
+                      <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />
+                    )}
+                  </span>
+                </button>
+              </th>
+              <th className="table-header-cell">
+                <button
+                  type="button"
+                  className="header-sort-btn"
+                  onClick={() => {
+                    if (sortColumn === 'timeSlot') setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+                    else {
+                      setSortColumn('timeSlot');
+                      setSortDirection('asc');
+                    }
+                  }}
+                  aria-label="Sort by time slot"
+                >
+                  Time Slot
+                  <span className="header-sort-icon" aria-hidden="true">
+                    {sortColumn === 'timeSlot' && sortDirection === 'desc' ? (
+                      <CaretDownIcon size={20} weight="duotone" />
+                    ) : sortColumn === 'timeSlot' && sortDirection === 'asc' ? (
+                      <CaretUpIcon size={20} weight="duotone" />
+                    ) : (
+                      <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />
+                    )}
+                  </span>
+                </button>
+              </th>
+              <th className="table-header-cell">
+                <button
+                  type="button"
+                  className="header-sort-btn"
+                  onClick={() => {
+                    if (sortColumn === 'duration') setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+                    else {
+                      setSortColumn('duration');
+                      setSortDirection('desc');
+                    }
+                  }}
+                  aria-label="Sort by duration"
+                >
+                  Duration
+                  <span className="header-sort-icon" aria-hidden="true">
+                    {sortColumn === 'duration' && sortDirection === 'desc' ? (
+                      <CaretDownIcon size={20} weight="duotone" />
+                    ) : sortColumn === 'duration' && sortDirection === 'asc' ? (
+                      <CaretUpIcon size={20} weight="duotone" />
+                    ) : (
+                      <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />
+                    )}
+                  </span>
+                </button>
+              </th>
+              <th className="table-header-cell">
+                <button
+                  type="button"
+                  className="header-sort-btn"
+                  onClick={() => {
+                    if (sortColumn === 'status') setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+                    else {
+                      setSortColumn('status');
+                      setSortDirection('asc');
+                    }
+                  }}
+                  aria-label="Sort by status"
+                >
+                  Status
+                  <span className="header-sort-icon" aria-hidden="true">
+                    {sortColumn === 'status' && sortDirection === 'desc' ? (
+                      <CaretDownIcon size={20} weight="duotone" />
+                    ) : sortColumn === 'status' && sortDirection === 'asc' ? (
+                      <CaretUpIcon size={20} weight="duotone" />
+                    ) : (
+                      <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />
+                    )}
+                  </span>
+                </button>
+              </th>
+              <th className="table-header-cell">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {paginatedData.map(reservation => {
-              const statusInfo = getStatusBadge(reservation.status);
-              return (
-                <tr key={reservation.id} className="table-body-row">
-                  <td className="table-cell">
-                    <div className="user-name">{getUserName(reservation.userId)}</div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="student-id">{getStudentId(reservation.userId)}</div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="room-name">{getRoomName(reservation.roomId)}</div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="date-time">
-                      <div className="date">{new Date(reservation.date).toLocaleDateString()}</div>
-                      <div className="time">{formatTimeRange(reservation.slotIds)}</div>
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    <div className="check-in-time">{formatCheckInTime(reservation.checkInTime)}</div>
-                  </td>
-                  <td className="table-cell">
-                    <span className={statusInfo.className}>{statusInfo.label}</span>
-                  </td>
-                  <td className="table-cell">
-                    {(() => {
-                      const actions = getRowActions(reservation);
-                      if (actions.length === 0) return <span className="action-none">—</span>;
-                      const isOpen = openMenuId === reservation.id;
-                      const isCancelling = cancellingId === reservation.id;
-                      return (
-                        <div
-                          className="action-menu-container"
-                          ref={isOpen ? menuRef : null}
+            {isLoading ? (
+              <tr className="table-body-row">
+                <td className="table-cell" colSpan={5}>
+                  Loading reservations...
+                </td>
+              </tr>
+            ) : paginatedReservations.length > 0 ? (
+              paginatedReservations.map((reservation) => {
+                const startTime = reservation.start_time ?? reservation.startTime;
+                const endTime = reservation.end_time ?? reservation.endTime;
+                const dateLabel = toDisplayDate(reservation);
+                const startLabel = toDisplayTime(startTime);
+                const endLabel = toDisplayTime(endTime);
+
+                return (
+                  <tr key={reservation.id} className="table-body-row">
+                    <td className="table-cell">
+                      <span className="date">{dateLabel}</span>
+                    </td>
+                    <td className="table-cell">
+                      <span className="time"> 
+                        <div className='time-pill'>{startLabel}</div> - 
+                        <div className='time-pill'>{endLabel}</div>
+                      </span>
+                    </td>
+                    <td className="table-cell">
+                      <span className="time">{getDuration(startTime, endTime)}</span>
+                    </td>
+                    <td className="table-cell">
+                      <span className={statusBadgeClass(reservation.status)}>{String(formatStatusValue(reservation.status))}</span>
+                    </td>
+                    <td className="table-cell">
+                      <div className="action-menu-container">
+                        <button
+                          type="button"
+                          className="action-menu-btn"
+                          aria-label="View reservation details"
+                          onClick={() => handleOpenDetails(reservation)}
                         >
+                          <Info size={16} weight="bold" />
+                        </button>
+                        {(reservation.status === 'pending' || reservation.status === 'approved' || reservation.status === 'confirmed') && (
                           <button
                             type="button"
-                            className={`action-menu-btn ${isCancelling ? 'action-menu-btn--loading' : ''}`}
-                            aria-label="More actions"
-                            aria-expanded={isOpen}
-                            disabled={isCancelling}
-                            onClick={(event) => handleActionMenuToggle(event, reservation.id)}
+                            className="action-menu-btn"
+                            aria-label="Cancel reservation"
+                            onClick={() => openCancelModal(reservation)}
                           >
-                            {isCancelling ? '…' : '⋮'}
+                            <X size={16} weight="bold" />
                           </button>
-                          {isOpen && actionMenuPosition && typeof document !== 'undefined'
-                            ? createPortal(
-                                <div
-                                  ref={dropdownRef}
-                                  className={`action-dropdown action-dropdown--floating student-action-dropdown student-action-dropdown--${
-                                    actionMenuPosition.placement
-                                  }`}
-                                  role="menu"
-                                  style={{
-                                    top: `${actionMenuPosition.top}px`,
-                                    left: `${actionMenuPosition.left}px`,
-                                  }}
-                                >
-                                  {actions.map((item) => (
-                                    <button
-                                      key={item.label}
-                                      type="button"
-                                      className={`action-dropdown__item ${item.danger ? 'action-dropdown__item--danger' : ''}`}
-                                      role="menuitem"
-                                      onClick={item.action}
-                                    >
-                                      {item.label}
-                                    </button>
-                                  ))}
-                                </div>,
-                                document.body
-                              )
-                            : null}
-                        </div>
-                      );
-                    })()}
-                  </td>
-                </tr>
-              );
-            })}
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr className="table-body-row">
+                <td className="table-cell" colSpan={5}>
+                  No reservations found for the selected filter.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* Footer with pagination */}
       <div className="reservations-table__footer">
         <div className="pagination-info">
-          Displaying {Math.min(itemsPerPage, paginatedData.length)} of {totalItems} reservations
+          Displaying {paginatedReservations.length} of {totalItems} {totalItems === 1 ? 'reservation' : 'reservations'}
         </div>
+
         <div className="pagination-controls">
           <button
+            type="button"
             className="pagination-btn"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
+            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            disabled={safePage === 1}
             aria-label="Previous page"
           >
             ‹
           </button>
           <button
+            type="button"
             className="pagination-btn"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(currentPage + 1)}
+            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            disabled={safePage === totalPages}
             aria-label="Next page"
           >
             ›
           </button>
         </div>
       </div>
+
+      <Modal
+        isOpen={Boolean(selectedReservation)}
+        title="Reservation Details"
+        onClose={handleCloseDetails}
+        className="ui-modal--flexible reservations-table__details-modal"
+      >
+        {selectedReservation ? (
+          <div className="reservations-table__details-content">
+            <div className="reservations-table__details-row">
+              <span className="reservations-table__details-label">Date</span>
+              <span className="reservations-table__details-value">{toDisplayDate(selectedReservation)}</span>
+            </div>
+            <div className="reservations-table__details-row">
+              <span className="reservations-table__details-label">Time</span>
+              <span className="reservations-table__details-value">
+                {toDisplayTime(selectedReservation.start_time ?? selectedReservation.startTime)} - {toDisplayTime(selectedReservation.end_time ?? selectedReservation.endTime)}
+              </span>
+            </div>
+            <div className="reservations-table__details-row">
+              <span className="reservations-table__details-label">Duration</span>
+              <span className="reservations-table__details-value">
+                {getDuration(selectedReservation.start_time ?? selectedReservation.startTime, selectedReservation.end_time ?? selectedReservation.endTime)}
+              </span>
+            </div>
+            <div className="reservations-table__details-row">
+              <span className="reservations-table__details-label">Status</span>
+              <span className={statusBadgeClass(selectedReservation.status)}>
+                {String(formatStatusValue(selectedReservation.status))}
+              </span>
+            </div>
+            {selectedReservation.denial_reason ? (
+              <div className="reservations-table__details-row reservations-table__details-row--stacked">
+                <span className="reservations-table__details-label">Denial Reason</span>
+                <p className="reservations-table__details-reason">{selectedReservation.denial_reason}</p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </Modal>
+      <Modal
+        isOpen={showCancelModal}
+        title="Cancel Reservation"
+        onClose={closeCancelModal}
+        className="ui-modal--flexible reservations-table__cancel-modal"
+      >
+        {cancelTarget ? (
+          <div className="reservations-table__cancel-content">
+            <p>
+              Are you sure you want to cancel the reservation on <strong>{toDisplayDate(cancelTarget)}</strong> at <strong>{toDisplayTime(cancelTarget.start_time ?? cancelTarget.startTime)} - {toDisplayTime(cancelTarget.end_time ?? cancelTarget.endTime)}</strong>?
+            </p>
+            <div className="reservations-table__modal-actions">
+              <button type="button" className="btn btn--danger" onClick={handleConfirmCancel}>
+                Confirm Cancel
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }

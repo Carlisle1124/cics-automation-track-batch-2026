@@ -4,200 +4,242 @@
    Desktop: traditional table
    ============================================================ */
 
-.reservations-table {
+/* ── Header ─────────────────────────────────────────── */
+.reservations-table__header {
+  padding: clamp(0.2rem, 0.6vw, 0.4rem);
+  margin-bottom: 0;
+}
+
+.reservations-table__header .page-header__title {
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+}
+
+.reservations-table__header .page-header__subtitle {
+  font-size: 14px;
+}
+
+/* ── Table shell ─────────────────────────────────────── */
+.reservations-table.table-shell {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  margin-top: clamp(0.5rem, 0.9vw, 0.85rem);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--bg-card) 96%, white 4%),
+    var(--bg-card)
+  );
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
-.reservations-table__header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: var(--space-3);
-  border-bottom: 1px solid var(--border-subtle);
-  gap: var(--space-3);
-}
-
-.reservations-table__tabs {
-  display: flex;
-  gap: var(--space-2);
-  width: 100%;
-  flex-wrap: wrap;
-}
-
-.tab-button {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+.reservations-table.table-shell .reservations-table__header,
+.reservations-table.table-shell .reservations-table__footer {
+  flex-shrink: 0;
   background: transparent;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-standard);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  min-height: 44px;
-  flex: 1;
-  text-align: center;
 }
 
-.tab-button:hover {
-  border-color: var(--border-primary);
-  color: var(--text-primary);
-}
-
-.tab-button--active {
-  background: var(--primary-5);
-  color: white;
-  border-color: var(--primary-5);
-  box-shadow: 0 4px 12px rgba(190, 21, 46, 0.24);
-}
-
-.reservations-table__controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  width: 100%;
-}
-
-.sort-dropdown {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: white;
-  color: var(--text-primary);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color var(--duration-fast) var(--ease-standard);
-  width: 100%;
-  min-height: 44px;
-}
-
-.sort-dropdown:hover {
-  border-color: var(--border-primary);
-}
-
-.sort-dropdown:focus {
-  outline: none;
-  border-color: var(--primary-5);
-  box-shadow: 0 0 0 3px rgba(190, 21, 46, 0.1);
-}
-
-.reservations-table__wrapper {
-  flex: 1;
-  overflow-y: auto;
+.reservations-table.table-shell .reservations-table__wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
 }
 
+.reservations-table.table-shell .reservations-table__footer {
+  margin-top: auto;
+}
+
+/* ── Table header row with search ────────────────────── */
+.reservations-table__table-header {
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── Search bar ──────────────────────────────────────── */
+.reservations-table__search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.reservations-table__search-icon {
+  position: absolute;
+  left: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.reservations-table__search-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 2.4rem 0.6rem 2.2rem;
+  border: 1px solid color-mix(in oklab, var(--primary-5) 18%, var(--border-subtle) 82%);
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--bg-card) 96%, white 4%),
+    color-mix(in oklab, var(--bg-elevated) 92%, white 8%)
+  );
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 400;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 8px 18px rgba(122, 0, 20, 0.05);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.reservations-table__search-input::placeholder {
+  color: color-mix(in oklab, var(--text-secondary) 70%, transparent 30%);
+}
+
+.reservations-table__search-input:focus {
+  outline: none;
+  border-color: var(--primary-5);
+  box-shadow:
+    0 0 0 3px rgba(190, 21, 46, 0.12),
+    0 8px 18px rgba(122, 0, 20, 0.06);
+}
+
+/* Hide default clear (×) on search inputs in WebKit */
+.reservations-table__search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.reservations-table__search-clear {
+  position: absolute;
+  right: 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--bg-elevated) 90%, transparent 10%);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.reservations-table__search-clear:hover {
+  background: color-mix(in oklab, var(--primary-5) 12%, var(--bg-elevated) 88%);
+  color: var(--primary-5);
+}
+
+/* ── Table ───────────────────────────────────────────── */
 .reservations-table__table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
+}
+
+.reservations-table__table .table-header-cell,
+.reservations-table__table .table-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Column width distribution */
+.reservations-table__table .table-header-cell:nth-child(1),
+.reservations-table__table .table-cell:nth-child(1) {
+  width: 18%;
+}
+
+.reservations-table__table .table-cell:nth-child(1) {
   font-size: var(--text-sm);
-  min-width: 600px;
-}
-
-.table-header-row {
-  background: var(--bg-elevated);
-  border-bottom: 1px solid var(--border-subtle);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.table-header-cell {
-  padding: var(--space-2) var(--space-3);
-  text-align: left;
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-}
-
-.table-body-row {
-  border-bottom: 1px solid var(--border-subtle);
-  transition: background var(--duration-fast) var(--ease-standard);
-}
-
-.table-body-row:hover {
-  background: color-mix(in oklab, var(--bg-elevated) 60%, transparent 40%);
-}
-
-.table-cell {
-  padding: var(--space-2) var(--space-3);
-  vertical-align: middle;
-}
-
-/* User column */
-.user-name {
   font-weight: 500;
   color: var(--text-primary);
-  white-space: nowrap;
-  font-size: 0.85rem;
 }
 
-/* Student ID column */
-.student-id {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  font-family: 'Courier New', monospace;
-  white-space: nowrap;
+.reservations-table__table .table-header-cell:nth-child(2),
+.reservations-table__table .table-cell:nth-child(2) {
+  width: 18%;
 }
 
-/* Room column */
-.room-name {
+.reservations-table__table .table-cell:nth-child(2) {
+  font-size: var(--text-sm);
   font-weight: 500;
   color: var(--text-primary);
-  white-space: nowrap;
-  font-size: 0.85rem;
 }
 
-/* Date & Time column */
-.date-time {
+.reservations-table__table .table-cell:nth-child(2) span{
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
 }
 
-.date {
+.reservations-table__table .table-cell:nth-child(2) span .time-pill{
+  padding: 0.28rem 0.5rem;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  border-radius: var(--radius-pill);
+}
+
+.reservations-table__table .table-header-cell:nth-child(3),
+.reservations-table__table .table-cell:nth-child(3) {
+  width: 14%;
+}
+
+.reservations-table__table .table-cell:nth-child(3) {
+  font-size: var(--text-sm);
   font-weight: 500;
   color: var(--text-primary);
-  white-space: nowrap;
-  font-size: 0.85rem;
 }
 
-.time {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
+.reservations-table__table .table-header-cell:nth-child(4),
+.reservations-table__table .table-cell:nth-child(4) {
+  width: 14%;
 }
 
-/* Check-in column */
-.check-in-time {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
+.reservations-table__table .table-header-cell:nth-child(5),
+.reservations-table__table .table-cell:nth-child(5) {
+  width: 16%;
 }
 
-/* Status Badge */
-.status-badge {
-  display: inline-block;
-  padding: 0.375rem var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-align: center;
-  white-space: nowrap;
+.reservations-table__table-shell .table-header-row {
+  background: color-mix(in oklab, var(--bg-elevated) 92%, white 8%);
+}
+
+/* ── Tab hover tweaks ────────────────────────────────── */
+.reservations-table__table-shell .tab-button {
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.reservations-table__table-shell .tab-button:hover {
+  border-color: color-mix(in oklab, var(--primary-5) 24%, var(--border-subtle) 76%);
+  background: color-mix(in oklab, var(--primary-5) 6%, var(--bg-elevated) 94%);
+  color: var(--text-primary);
+}
+
+.reservations-table__table-shell .tab-button--active:hover {
+  background: linear-gradient(135deg, var(--primary-6), var(--primary-4));
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 12px 24px rgba(190, 21, 46, 0.24);
 }
 
 .status-badge--pending {
@@ -271,10 +313,57 @@
   text-align: center;
 }
 
-/* Action Dropdown */
+/* Action Column */
 .action-menu-container {
-  position: relative;
-  display: inline-block;
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+.action-menu-container button {
+  border: 1px solid var(--border-subtle);
+}
+
+.reservations-table__details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.reservations-table__details-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.reservations-table__details-row--stacked {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.reservations-table__details-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.reservations-table__details-value {
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+.reservations-table__details-reason {
+  margin: 0;
+  width: 100%;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.45;
 }
 
 .action-dropdown {
@@ -430,15 +519,34 @@
   cursor: not-allowed;
 }
 
-/* ============================================================
-   Student Reservations — Admin-style table controls
-   ============================================================ */
-
 .reservations-table--student {
   height: auto;
   min-height: 100%;
   background: transparent;
   border-radius: inherit;
+}
+
+.reservations-table--student .reservations-table__header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.reservations-table--student .reservations-table__tabs {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* keep tabs grouped on the left in desktop */
+  gap: var(--space-3);
+  width: auto; /* allow controls to sit beside tabs */
+  flex-wrap: wrap; /* wrap when space is constrained */
+}
+
+.reservations-table--student .student-reservations-sort {
+  width: min(16rem, 100%);
+}
+
+.reservations-table--student .reservations-table__search-wrap {
+  width: 100%;
 }
 
 .reservations-table--student .reservations-table__header,
@@ -487,13 +595,19 @@
 }
 
 .reservations-table--student .reservations-table__table {
-  width: max-content;
-  min-width: 100%;
-  table-layout: auto;
+  width: 100%;
+  table-layout: fixed;
 }
 
 .reservations-table--student .table-header-row {
   background: color-mix(in oklab, var(--bg-elevated) 92%, white 8%);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.reservations-table--student .table-header-cell {
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--text-secondary);
 }
 
 .reservations-table--student .table-header-cell,
@@ -501,26 +615,67 @@
   white-space: nowrap;
 }
 
-.reservations-table--student .tab-button {
-  transition:
-    background-color var(--duration-fast) var(--ease-standard),
-    border-color var(--duration-fast) var(--ease-standard),
-    color var(--duration-fast) var(--ease-standard),
-    box-shadow var(--duration-fast) var(--ease-standard),
-    transform var(--duration-fast) var(--ease-standard);
+/* Sortable header button: make entire header cell clickable */
+.header-sort-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 0 0 0.5rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  text-transform: uppercase;
 }
 
-.reservations-table--student .tab-button:hover {
-  border-color: color-mix(in oklab, var(--primary-5) 24%, var(--border-subtle) 76%);
-  background: color-mix(in oklab, var(--primary-5) 6%, var(--bg-elevated) 94%);
-  color: var(--text-primary);
+.header-sort-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.5rem;
 }
 
-.reservations-table--student .tab-button--active:hover {
+.reservations-table__tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.reservations-table__tabs .tab-button {
+  text-transform: uppercase;
+  font-weight: 700;
+
+  background-color: transparent;
+  border: 1px solid color-mix(in oklab, var(--primary-5) 18%, var(--border-subtle) 82%);
+  color: var(--text-secondary);
+}
+
+.reservations-table__tabs .tab-button:hover {
+    border-color: color-mix(in oklab, var(--primary-5) 24%, var(--border-subtle) 76%);
+    background: color-mix(in oklab, var(--primary-5) 6%, var(--bg-elevated) 94%);
+    color: var(--text-primary);
+}
+
+.reservations-table__tabs .tab-button--active {
+  background: var(--color-primary);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 12px 24px rgba(190, 21, 46, 0.24);
+}
+
+.reservations-table__tabs .tab-button--active:hover {
   background: linear-gradient(135deg, var(--primary-6), var(--primary-4));
   color: #ffffff;
   border-color: transparent;
   box-shadow: 0 12px 24px rgba(190, 21, 46, 0.24);
+}
+
+.reservations-table__tabs .tab-button .tab-button__label {
+  font-size: var(--text-sm);
 }
 
 .student-reservations-sort {
@@ -680,6 +835,27 @@
   }
 }
 
+.reservations-table__cancel-modal {
+  width: min(22rem, calc(100vw - 2rem));
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 20px 34px rgba(90, 0, 16, 0.14),
+    0 0 0 1px rgba(123, 0, 20, 0.04);
+}
+
+.reservations-table__cancel-modal .ui-modal__body {
+  padding: var(--space-4);
+}
+
+.reservations-table__cancel-modal .btn.btn--danger {
+  width: 100%;
+  padding: 0.78rem;
+  font-size: 1rem;
+  margin-top: 1.2rem;
+}
+
 @media (max-width: 639px) {
   .reservations-table--student .reservations-table__header {
     padding: 0.75rem 0.9rem;
@@ -693,7 +869,7 @@
 
   .reservations-table--student .reservations-table__tabs {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
     gap: 0.6rem;
   }
@@ -709,19 +885,61 @@
   .student-reservations-sort {
     width: 100%;
   }
-
-  .reservations-table--student .table-header-cell,
+  
   .reservations-table--student .table-cell {
     padding: 0.72rem 0.72rem;
   }
-
+  
   .reservations-table--student .table-header-cell {
+    padding: 0.68rem 0.72rem;
     font-size: 0.68rem;
+  }
+
+  .reservations-table--student .table-header-cell .header-sort-btn {
+    padding: 0.68rem 0.72rem;
   }
 
   .reservations-table--student .status-badge {
     padding: 0.36rem 0.58rem;
     font-size: 0.68rem;
+  }
+
+  /* Mobile: allow horizontal scrolling and wider columns for readability */
+  .reservations-table--student .reservations-table__wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+
+  .reservations-table--student .reservations-table__table {
+    table-layout: auto; /* let column widths expand */
+    min-width: 720px; /* encourage horizontal scroll on narrow devices */
+  }
+
+  /* Slightly wider column distribution for mobile readability */
+  .reservations-table--student .reservations-table__table .table-header-cell:nth-child(1),
+  .reservations-table--student .reservations-table__table .table-cell:nth-child(1) {
+    width: 30%;
+  }
+
+  .reservations-table--student .reservations-table__table .table-header-cell:nth-child(2),
+  .reservations-table--student .reservations-table__table .table-cell:nth-child(2) {
+    width: 30%;
+  }
+
+  .reservations-table--student .reservations-table__table .table-header-cell:nth-child(3),
+  .reservations-table--student .reservations-table__table .table-cell:nth-child(3) {
+    width: 15%;
+  }
+
+  .reservations-table--student .reservations-table__table .table-header-cell:nth-child(4),
+  .reservations-table--student .reservations-table__table .table-cell:nth-child(4) {
+    width: 15%;
+  }
+
+  .reservations-table--student .reservations-table__table .table-header-cell:nth-child(5),
+  .reservations-table--student .reservations-table__table .table-cell:nth-child(5) {
+    width: 10%;
   }
 }
 
@@ -767,7 +985,7 @@
   .reservations-table--student .tab-button {
     min-height: 38px;
     padding: 0.42rem 0.8rem;
-    font-size: 13px;
+    font-size: 0.9rem;
   }
 
   .student-reservations-sort__trigger {
@@ -837,6 +1055,33 @@
   .reservations-table__footer {
     padding: var(--space-3) var(--space-4);
   }
+
+  .reservations-table--student .reservations-table__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Keep header typography compact on medium desktop widths */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .reservations-table--student .table-header-cell {
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+  }
+
+  .reservations-table--student .table-cell {
+    font-size: 0.84rem;
+  }
+
+  .reservations-table--student .table-header-cell .header-sort-btn {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+    font-size: 0.72rem;
+  }
+
+  .reservations-table--student .header-sort-icon {
+    margin-left: 0.35rem;
+  }
 }
 
 /* ============================================================
@@ -844,7 +1089,6 @@
    ============================================================ */
 @media (min-width: 1024px) {
   .table-header-cell {
-    padding: var(--space-3) var(--space-4);
     font-size: 0.75rem;
   }
 
@@ -856,5 +1100,23 @@
   .room-name,
   .date {
     font-size: var(--text-sm);
+  }
+}
+
+/* Desktop: allow table to size to content like admin users table */
+@media (min-width: 1024px) {
+  .reservations-table__table {
+    width: max-content;
+    min-width: max(100%, 52rem);
+    table-layout: auto;
+  }
+
+  .reservations-table__table .table-header-cell,
+  .reservations-table__table .table-cell {
+    white-space: nowrap;
+  }
+
+  .reservations-table__table .table-header-cell {
+    cursor: pointer;
   }
 }

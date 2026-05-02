@@ -54,9 +54,7 @@ export default function Reservations() {
 				subtitle={user ? `Review upcoming and past bookings for ${user.full_name}.` : 'Review upcoming and past bookings here.'}
 			/>
 
-			<div className="student-reservations__table-shell">
-				<ReservationsTable userRole="student" userId={user?.id} />
-			</div>
+			<ReservationsTable userRole="student" userId={user?.id} />
 
 			{isPageLoading ? (
 				<div

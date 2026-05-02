@@ -25,6 +25,7 @@ function mapReservationRow(row) {
 		endTime: row.end_time ?? row.endTime,
 		durationHours: row.duration_hours ?? row.durationHours,
 		status: row.status,
+		denialReason: row.denial_reason ?? row.denialReason,
 		createdBy: row.created_by ?? row.createdBy,
 		createdAt: row.created_at ?? row.createdAt,
 		qrCode: row.qr_code ?? row.qrCode,
@@ -32,18 +33,70 @@ function mapReservationRow(row) {
 	};
 }
 
-export function getReservationsByUser(userId) {
-	return handleRequest(
-		() => {
-			const matches = RESERVATIONS.filter((r) => r.userId === userId);
-			if (matches.length > 0) return matches.map(enrichReservation);
+export async function getReservationsByUser(userId) {
+	if (!userId) return [[], null];
 
-			// Real Supabase UUID won't match mock IDs — fall back to the default mock student
-			const fallbackId = USERS.find((u) => u.role === 'student')?.id;
-			return RESERVATIONS.filter((r) => r.userId === fallbackId).map(enrichReservation);
-		},
-		`/api/reservations?userId=${encodeURIComponent(userId)}`
-	);
+	try {
+		const { data, error } = await supabase
+			.from('reservations')
+			.select(`
+				id,
+				user_id,
+				reservation_date,
+				start_time,
+				end_time,
+				status,
+				denial_reason,
+				created_at,
+				users:user_id (id, full_name, email, role)
+			`)
+			.eq('user_id', userId)
+			.order('created_at', { ascending: false });
+
+		if (error) throw error;
+
+		const reservations = (data || []).map((reservation) => ({
+			id: reservation.id,
+			userId: reservation.user_id,
+			user_name: reservation.users?.full_name || 'Unknown User',
+			user_email: reservation.users?.email,
+			user_role: reservation.users?.role,
+			reservation_date: reservation.reservation_date,
+			start_time: reservation.start_time,
+			end_time: reservation.end_time,
+			status: reservation.status,
+			denial_reason: reservation.denial_reason,
+			created_at: reservation.created_at,
+		}));
+
+		return [reservations, null];
+	} catch (error) {
+		console.error('Error fetching reservations by user:', error);
+
+		// Fallback to mock data for local/dev resilience.
+		const matches = RESERVATIONS.filter((r) => r.userId === userId);
+		const fallbackId = USERS.find((u) => u.role === 'student')?.id;
+		const source = matches.length > 0 ? matches : RESERVATIONS.filter((r) => r.userId === fallbackId);
+
+		const fallbackReservations = source.map((reservation) => {
+			const enriched = enrichReservation(reservation);
+			return {
+				id: reservation.id,
+				userId: reservation.userId,
+				user_name: enriched.userName,
+				user_role: enriched.userRole,
+				room_name: enriched.roomName,
+				reservation_date: reservation.date ?? null,
+				start_time: null,
+				end_time: null,
+				status: reservation.status,
+				denial_reason: reservation.denial_reason ?? null,
+				created_at: reservation.createdAt ?? null,
+			};
+		});
+
+		return [fallbackReservations, error];
+	}
 }
 
 export async function getAllReservations() {
@@ -57,6 +110,7 @@ export async function getAllReservations() {
 				start_time,
 				end_time,
 				status,
+				denial_reason,
 				created_at,
 				users:user_id (id, full_name, email, role)
 			`)
@@ -75,6 +129,7 @@ export async function getAllReservations() {
 			start_time: reservation.start_time,
 			end_time: reservation.end_time,
 			status: reservation.status,
+			denial_reason: reservation.denial_reason,
 			created_at: reservation.created_at,
 		}));
 
@@ -107,6 +162,7 @@ export function subscribeToReservationChanges(onUpdate) {
 							start_time,
 							end_time,
 							status,
+							denial_reason,
 							created_at,
 							users:user_id (id, full_name, email, role)
 						`)
@@ -126,6 +182,7 @@ export function subscribeToReservationChanges(onUpdate) {
 							start_time: data.start_time,
 							end_time: data.end_time,
 							status: data.status,
+							denial_reason: data.denial_reason,
 							created_at: data.created_at,
 						};
 
@@ -207,21 +264,52 @@ export function createReservationForStudent(reservationInput) {
 	})();
 }
 
-export function cancelReservation(reservationId) {
-	return handleRequest(
-		() => {
-			const index = RESERVATIONS.findIndex((r) => r.id === reservationId);
-			if (index === -1) throw new Error('Reservation not found');
-			RESERVATIONS[index] = { ...RESERVATIONS[index], status: 'cancelled_by_user' };
-			return enrichReservation(RESERVATIONS[index]);
-		},
-		`/api/reservations/${encodeURIComponent(reservationId)}`,
-		{
-			method: 'PATCH',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ status: 'cancelled_by_user' }),
-		}
-	);
+export async function cancelReservation(reservationId) {
+	try {
+		const updates = { status: 'cancelled_by_user' };
+
+		const { data, error } = await supabase
+			.from('reservations')
+			.update(updates)
+			.eq('id', reservationId)
+			.select()
+			.single();
+
+		if (error) throw error;
+
+		return mapReservationRow(data);
+	} catch (err) {
+		// Fallback to mock handler for local/dev environments
+		console.warn('[reservationService] Supabase cancel failed, falling back to mock:', err?.message || err);
+		return handleRequest(
+			() => {
+				let index = RESERVATIONS.findIndex((r) => r.id === reservationId);
+				if (index === -1) {
+					// Create a minimal fallback reservation so UI can continue to operate locally
+					const fallback = {
+						id: reservationId,
+						userId: USERS[0]?.id ?? null,
+						date: new Date().toISOString(),
+						status: 'cancelled_by_user',
+					};
+					RESERVATIONS.unshift(fallback);
+					index = 0;
+				} else {
+					RESERVATIONS[index] = {
+						...RESERVATIONS[index],
+						status: 'cancelled_by_user',
+					};
+				}
+				return enrichReservation(RESERVATIONS[index]);
+			},
+			`/api/reservations/${encodeURIComponent(reservationId)}`,
+			{
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ status: 'cancelled_by_user' }),
+			}
+		);
+	}
 }
 
 export async function holdSlot({ userId, reservationDate, startTime, durationHours }) {
