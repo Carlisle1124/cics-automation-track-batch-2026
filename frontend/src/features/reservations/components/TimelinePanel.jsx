@@ -100,9 +100,9 @@ export default function TimelinePanel({
                 (slotHour === currentHour && now.getMinutes() > 0)));
 
             return (
-            <div className='timeline-slot__wrapper'>
+            <div key={slot.id} className='timeline-slot__wrapper'>
                 <div
-                    key={slot.id}
+                    
                     className={`timeline__slot 
                         ${ isSelected ? 'timeline__slot--selected' 
                             : ''

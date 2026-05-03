@@ -34,12 +34,18 @@
 
 .days-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.55rem;
     padding: 0.5rem;
     padding-top: 0;
   min-width: 0;
   will-change: transform, opacity;
+}
+
+@media (min-width: 1025px) {
+  .days-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }
 
 .days-grid--next {
@@ -135,7 +141,6 @@ line-height: 1;
   flex: 1; /* equal width */
   max-width: none; /* remove the 12rem cap */
   height: 2.5rem;
-  font-size: 0.9rem;
   font-weight: 500;
   padding: 0.5rem 1rem;
 }
@@ -147,7 +152,7 @@ line-height: 1;
     color: var(--text-secondary);
     border: 1px solid var(--border-subtle);
     max-width: 12rem;
-
+    font-size: 0.8rem;
 }
 
 .open-calendar-btn {
@@ -157,11 +162,13 @@ line-height: 1;
     color: var(--text-inverse);
     max-width: 12rem;
     border: none;
+    font-size: 0.8rem;
 }
 
 .calendar-expanded {
-  margin-top: 10px;
-  margin-bottom: 12px;
+  width: 100%;
+
+  margin-bottom: 10px;
   padding: 12px;
   border-radius: 12px;
 

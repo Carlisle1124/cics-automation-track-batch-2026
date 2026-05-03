@@ -6,6 +6,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  padding: 1rem;
 }
 
 .profile-page__loading {
@@ -265,5 +266,117 @@
 
   .profile-card {
     padding: 1rem;
+  }
+}
+
+/* ==============================================================================
+   Shared responsiveness + transition rules (adapted from Reservations.css)
+   Applies selection styles, content-visible/hidden transitions, sticky header
+   behavior, and small-screen adjustments used on the Reservations page.
+   ==============================================================================
+*/
+
+.profile-page::selection,
+.profile-page *::selection {
+  background: rgba(229, 194, 122, 0.42);
+  color: #3a1119;
+}
+
+.profile-page::-moz-selection,
+.profile-page *::-moz-selection {
+  background: rgba(229, 194, 122, 0.42);
+  color: #3a1119;
+}
+
+.profile-page--content-hidden .page-header,
+.profile-page--content-hidden .profile-stats-grid,
+.profile-page--content-hidden .profile-content-grid {
+  opacity: 0;
+  transform: translateY(1.25rem);
+  pointer-events: none;
+}
+
+.profile-page--content-visible .page-header,
+.profile-page--content-visible .profile-stats-grid,
+.profile-page--content-visible .profile-content-grid {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 420ms var(--ease-standard),
+    transform 560ms var(--ease-standard);
+}
+
+.profile-page--content-visible .page-header {
+  transition-delay: 40ms;
+}
+
+.profile-page--content-visible .profile-stats-grid {
+  transition-delay: 100ms;
+}
+
+.profile-page .page-header--student-sticky {
+  position: relative;
+  top: auto;
+  z-index: 1;
+  background: transparent;
+  padding: clamp(0.2rem, 0.6vw, 0.4rem);
+  margin-bottom: 0;
+}
+
+.profile-page .page-header--student-sticky::after {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .profile-page {
+    padding: 0.6rem;
+    gap: 0.55rem;
+  }
+
+  .profile-page .page-header--student-sticky {
+    padding: 0.1rem 0.05rem 0;
+  }
+
+  .profile-stats-grid {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .profile-page {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+
+  .profile-stats-grid,
+  .profile-content-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .profile-page {
+    height: auto;
+    min-height: 100%;
+    padding: 0.6rem;
+    gap: 0.55rem;
+    overflow: visible;
+  }
+
+  .profile-stats-grid {
+    margin-top: 0.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-page--content-hidden .page-header,
+  .profile-page--content-hidden .profile-stats-grid,
+  .profile-page--content-visible .page-header,
+  .profile-page--content-visible .profile-stats-grid {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }

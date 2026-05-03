@@ -98,3 +98,40 @@
     
     border-right: 1px solid var(--border-subtle);
 }
+
+.occupancy-stats__group {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .occupancy-stats-wrapper {
+        display: flex;
+        gap: 1rem;
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0.75rem 0;
+    }
+
+    .current-date-display {
+        padding: 0 0.75rem;
+    }
+
+    .occupancy-stats {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .occupancy-stats__item-slots {
+        border: 0;
+        width: 100%;
+    }
+
+    .occupancy-stats__group {
+    display: flex;
+    align-items: center;
+    gap: 0.01rem;
+}
+}

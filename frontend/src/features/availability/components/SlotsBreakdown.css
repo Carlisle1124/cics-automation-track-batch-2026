@@ -15,48 +15,50 @@
 
 /* Timeline card container */
 .slots-breakdown__timeline-card {
-  flex: 1;
-  height: 100%;
-  max-height: 100%;
+  flex: 0 0 auto;
+  height: auto;
+  max-height: none;
   min-height: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* === SIDEBAR === */
 .slots-breakdown__sidebar-wrap {
   width: 100%;
-  height: 100%;
+  height: auto;
   min-height: 0;
   min-width: 0;
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 .slots-breakdown__sidebar-card {
   width: 100%;
   min-height: 0;
-  height: clamp(22rem, 56vh, 44rem);
+  height: auto;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
+  margin-bottom: 0.75rem;
 }
 
 .slots-breakdown__sidebar-scroll {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .slots-breakdown__sidebar {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  height: 100%;
+  height: auto;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: visible;
   scrollbar-width: thin;
   scrollbar-color: rgba(64, 45, 0, 0.24) transparent;
 }
@@ -495,14 +497,65 @@ li.sidebar__msg-item {
 /* ============================================================
    Responsive — Mobile-first breakpoints
    ============================================================ */
-@media (min-width: 768px) {
+
+/* Mobile + Tablet Layout (≤1024px): Reorder components for better UX
+  Order: DatePicker → DurationPicker → Timeline → Held Slot Panel */
+@media (max-width: 1024px) {
+  .sidebar__msg {
+    display: none;
+  }
+
+  /* Sidebar first (DatePicker, DurationPicker) */
+  .slots-breakdown__sidebar-wrap {
+    order: 1;
+  }
+
+  /* Timeline second */
+  .slots-breakdown__timeline-card {
+    order: 2;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Held Slot Panel (mobile external version) appears after timeline */
+  .slots-breakdown__held-slot-panel-mobile {
+    order: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    
+    width: 100%;
+    flex: 0 0 auto;
+  }
+
+  /* Hide stats from sidebar on mobile */
+  .sidebar__stats--desktop-only {
+    display: none;
+  }
+
+  .slots-breakdown__panel-card {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+}
+
+@media (min-width: 1025px) {
+  /* Hide mobile-only panel on desktop */
+  .slots-breakdown__held-slot-panel-mobile {
+    display: none;
+  }
+
+  /* Show stats in sidebar on desktop */
+  .sidebar__stats--desktop-only {
+    display: flex;
+  }
+
   .slots-breakdown {
     gap: 1.5rem;
   }
 
   .slots-breakdown__timeline-card,
   .slots-breakdown__sidebar-card {
-    height: 100%;
+    height: auto;
   }
 
   .timeline__slot {
@@ -516,7 +569,7 @@ li.sidebar__msg-item {
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1025px) {
   .slots-breakdown {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 520px;
@@ -526,22 +579,30 @@ li.sidebar__msg-item {
   }
 
   .slots-breakdown__timeline-card {
+    flex: 1;
     height: 100%;
+    max-height: 100%;
+    overflow: hidden;
   }
 
   .slots-breakdown__sidebar-wrap {
     position: sticky;
     align-self: start;
     height: 100%;
+    overflow: hidden;
   }
 
   .slots-breakdown__sidebar-card {
     height: 100%;
+    overflow: hidden;
   }
 
   .slots-breakdown__sidebar-scroll,
   .slots-breakdown__sidebar {
     height: 100%;
     min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 }
+

@@ -9,9 +9,14 @@ function addDays(date, days) {
   return result;
 }
 
-// Utility: Get 5 consecutive dates starting from windowStart
+// Utility: Get N consecutive dates starting from windowStart
+function getDayWindow(windowStart, daysToShow) {
+  return Array.from({ length: daysToShow }, (_, i) => addDays(windowStart, i));
+}
+
+// Utility: Get 5 consecutive dates starting from windowStart (for backwards compatibility)
 function getFiveDayWindow(windowStart) {
-  return Array.from({ length: 5 }, (_, i) => addDays(windowStart, i));
+  return getDayWindow(windowStart, 5);
 }
 
 // Utility: Get day of week abbreviation
@@ -100,7 +105,7 @@ export default function DatePicker({
   onDateChange,
   onToday,
 }) {
-  // windowStartDate is the first day shown in the 5-day grid (always starts from today)
+  // windowStartDate is the first day shown in the grid (always starts from today)
   const [windowStartDate, setWindowStartDate] = useState(() => {
     return normalizeDate(new Date());
   });
@@ -110,11 +115,14 @@ export default function DatePicker({
   const [popoverMonth, setPopoverMonth] = useState(() => getStartOfMonth(selectedDate));
   const [gridDirection, setGridDirection] = useState('next');
   const [renderCalendar, setRenderCalendar] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 1025);
   
   const popoverRef = useRef(null);
   const popoverTriggerRef = useRef(null);
 
-  const fiveDayWindow = getFiveDayWindow(windowStartDate);
+  // Determine days to show based on screen width: 3 for mobile, 5 for desktop
+  const daysToShow = isMobileView ? 3 : 5;
+  const dayWindow = getDayWindow(windowStartDate, daysToShow);
 
   // Get month/year from selected date
   const monthYear = formatMonthLabel(selectedDate);
@@ -123,17 +131,27 @@ export default function DatePicker({
   const today = normalizeDate(new Date());
   const maxDate = getMaxDate(today);
 
+  // Handle window resize to update mobile view state
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 1025);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const handlePreviousWeek = () => {
     setGridDirection('prev');
     setWindowStartDate(prev => {
-      const next = addDays(prev, -5);
+      const next = addDays(prev, -daysToShow);
       return normalizeDate(next) < today ? today : next;
     });
   };
 
   const handleNextWeek = () => {
     setGridDirection('next');
-    setWindowStartDate(prev => addDays(prev, 5));
+    setWindowStartDate(prev => addDays(prev, daysToShow));
   };
 
   const handleDayClick = (date) => {
@@ -243,7 +261,7 @@ export default function DatePicker({
           <button
             type="button"
             className="previous-day-btn"
-            aria-label="Previous 5 days"
+            aria-label={`Previous ${daysToShow} days`}
             onClick={handlePreviousWeek}
             disabled={normalizeDate(windowStartDate) <= today}
           >
@@ -254,7 +272,7 @@ export default function DatePicker({
             key={`${windowStartDate.getTime()}-${gridDirection}`}
             className={`days-grid days-grid--${gridDirection}`}
           >
-            {fiveDayWindow.map((date) => {
+            {dayWindow.map((date) => {
               const isSelected = isSameDay(date, selectedDate);
               const disabled = isDateDisabled(date, today, maxDate);
 
@@ -284,7 +302,7 @@ export default function DatePicker({
           <button
             type="button"
             className="next-day-btn"
-            aria-label="Next 5 days"
+            aria-label={`Next ${daysToShow} days`}
             onClick={handleNextWeek}
           >
             <CaretRight weight="bold" />

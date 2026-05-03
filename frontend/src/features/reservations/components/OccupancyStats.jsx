@@ -20,6 +20,7 @@ export default function OccupancyStats({ slots, availableSlots, selectedDate }) 
             <span className="occupancy-stats__slots-label">Slots</span>
             </div>
         
+        <div className="occupancy-stats__group">
             <div className="occupancy-stats__item">
           <div className="occupancy-stats__legend-dot occupancy-stats__legend-dot--vacant" />
             <span className="occupancy-stats__value">{availableSlots}</span>
@@ -41,6 +42,7 @@ export default function OccupancyStats({ slots, availableSlots, selectedDate }) 
             <span className="occupancy-stats__value">{slots.filter((s) => s.status === 'full').length}</span>
             <span className="occupancy-stats__label">Full</span>
             </div>
+        </div>
         
       </div>
     </div>

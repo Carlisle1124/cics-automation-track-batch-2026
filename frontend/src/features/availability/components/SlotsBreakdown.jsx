@@ -58,6 +58,7 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
   const [reservationSuccess, setReservationSuccess] = useState(false);
 
   const dateInputRef = useRef(null);
+  const heldSlotRef = useRef(null);
 
   // Format selected date for API calls
   const selectedDateValue = [
@@ -262,12 +263,160 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
     }
   };
 
+  const scrollToHeldSlotPanel = useCallback(() => {
+    if (window.innerWidth <= 1024 && heldSlotRef.current) {
+      setTimeout(() => {
+        heldSlotRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, []);
+
+  // Auto-scroll to held slot panel on mobile/tablet when selection changes
+  useEffect(() => {
+    if (selectedSlotId) {
+      scrollToHeldSlotPanel();
+    }
+  }, [selectedDate, selectedSlotId, holdDuration, scrollToHeldSlotPanel]);
+
+  // Handle window resize to re-evaluate scroll on viewport changes
+  useEffect(() => {
+    const handleResize = () => {
+      if (selectedSlotId) {
+        scrollToHeldSlotPanel();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [selectedSlotId, scrollToHeldSlotPanel]);
+
   const getCapacityPercent = (reserved, capacity) =>
     Math.round((reserved / (capacity || CAPACITY)) * 100);
+
+  const getTimeRange = (slot) => {
+    const startHour = parseInt(slot.start.split(':')[0], 10);
+    // add one hour to get end hour for display (since slots are 1 hour long)
+    const endHour = parseInt(slot.end.split(':')[0], 10) + 1;
+    return `${formatHour(slot.start)} - ${formatHour(`${endHour.toString().padStart(2, '0')}:00`)}`;
+  };
 
   const availableSlots = slots.filter((s) => s.status === 'available').length;
   const minutesSinceStart = Math.max(0, Math.min(540, (now.getHours() - 8) * 60 + now.getMinutes()));
   const currentTimeTop = `${(minutesSinceStart / 540) * 100}%`;
+
+  // Render selected slot panel content
+  const renderSelectedSlotPanel = () => {
+    if (reservationSuccess || !selectedSlotId) return null;
+    
+    const selectedSlot = slots.find((s) => s.id === selectedSlotId);
+    if (!selectedSlot) return null;
+    const statusInfo = getStatusInfo(selectedSlot.status);
+
+    return (
+      <div className="sidebar__selection-info" ref={heldSlotRef}>
+        <div className="selection-info">
+          <h4 className="selection-info__title">
+            {activeHold
+              ? 'Slot Held'
+              : holdLoading
+              ? 'Holding Slot...'
+              : 'Selected Slot'}
+          </h4>
+
+          <div className="selection-info__details">
+            <div className="info-row">
+              <span className="info-label">Time</span>
+              <span className="info-value">{selectedSlot.hour}</span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">Range</span>
+              <span className="info-value">
+                {getTimeRange(selectedSlot)}
+              </span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">Duration</span>
+              <span className="info-value">
+                {holdDuration} hour{holdDuration > 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">Status</span>
+              <span className={`status-badge ${statusInfo.className}`}>
+                {statusInfo.label}
+              </span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">Available</span>
+              <span className="info-value">
+                {selectedSlot.available}/{selectedSlot.capacity}
+              </span>
+            </div>
+          </div>
+
+          <div className="selection-info__capacity">
+            <div
+              className={`capacity-bar__fill capacity-bar__fill--${selectedSlot.status}`}
+              style={{
+                width: `${getCapacityPercent(
+                  selectedSlot.reserved,
+                  selectedSlot.capacity
+                )}%`,
+              }}
+            />
+          </div>
+
+          {/* Countdown */}
+          {activeHold && holdCountdown !== null && (
+            <div className="hold-countdown">
+              <div className="hold-countdown__timer">
+                {formatCountdown(holdCountdown)}
+              </div>
+              <p className="hold-countdown__msg">
+                Slot held. Confirm before time runs out.
+              </p>
+            </div>
+          )}
+
+          {/* Error inline */}
+          {holdError && (
+            <div className="warning-message">{holdError}</div>
+          )}
+
+          {/* Full warning */}
+          {selectedSlot.available === 0 && !activeHold && !holdLoading && (
+            <div className="warning-message">This slot is fully booked.</div>
+          )}
+
+          {/* Actions */}
+          {activeHold ? (
+            <div className="selection-info__actions">
+              <button
+                className="selection-info__btn"
+                onClick={handleConfirmReservation}
+                disabled={holdLoading}
+              >
+                {holdLoading ? 'Confirming...' : 'Confirm Reservation'}
+              </button>
+              <button
+                className="selection-info__btn selection-info__btn--secondary"
+                onClick={handleCancelHold}
+                disabled={holdLoading}
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            holdLoading && (
+              <button className="selection-info__btn" disabled>
+                Holding...
+              </button>
+            )
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="slots-breakdown">
@@ -340,8 +489,8 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
                   now={now}
                 />
 
-                {/* Stats */}
-                <div className="sidebar__stats">
+                {/* Stats (desktop only) */}
+                <div className="sidebar__stats sidebar__stats--desktop-only">
                   {/* Success */}
                   {reservationSuccess && (
                     <div className="sidebar__selection-info">
@@ -372,124 +521,57 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
                     </div>
                   )}
 
-                  {/* Selected slot panel */}
-                  {!reservationSuccess &&
-                    selectedSlotId &&
-                    (() => {
-                      const selectedSlot = slots.find((s) => s.id === selectedSlotId);
-                      if (!selectedSlot) return null;
-                      const statusInfo = getStatusInfo(selectedSlot.status);
-
-                      return (
-                        <div className="sidebar__selection-info">
-                          <div className="selection-info">
-                            <h4 className="selection-info__title">
-                              {activeHold
-                                ? 'Slot Held'
-                                : holdLoading
-                                ? 'Holding Slot...'
-                                : 'Selected Slot'}
-                            </h4>
-
-                            <div className="selection-info__details">
-                              <div className="info-row">
-                                <span className="info-label">Time</span>
-                                <span className="info-value">{selectedSlot.hour}</span>
-                              </div>
-                              <div className="info-row">
-                                <span className="info-label">Range</span>
-                                <span className="info-value">
-                                  {selectedSlot.start.slice(0, 5)} — {selectedSlot.end.slice(0, 5)}
-                                </span>
-                              </div>
-                              <div className="info-row">
-                                <span className="info-label">Duration</span>
-                                <span className="info-value">
-                                  {holdDuration} hour{holdDuration > 1 ? 's' : ''}
-                                </span>
-                              </div>
-                              <div className="info-row">
-                                <span className="info-label">Status</span>
-                                <span className={`status-badge ${statusInfo.className}`}>
-                                  {statusInfo.label}
-                                </span>
-                              </div>
-                              <div className="info-row">
-                                <span className="info-label">Available</span>
-                                <span className="info-value">
-                                  {selectedSlot.available}/{selectedSlot.capacity}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="selection-info__capacity">
-                              <div
-                                className={`capacity-bar__fill capacity-bar__fill--${selectedSlot.status}`}
-                                style={{
-                                  width: `${getCapacityPercent(
-                                    selectedSlot.reserved,
-                                    selectedSlot.capacity
-                                  )}%`,
-                                }}
-                              />
-                            </div>
-
-                            {/* Countdown */}
-                            {activeHold && holdCountdown !== null && (
-                              <div className="hold-countdown">
-                                <div className="hold-countdown__timer">
-                                  {formatCountdown(holdCountdown)}
-                                </div>
-                                <p className="hold-countdown__msg">
-                                  Slot held. Confirm before time runs out.
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Error inline */}
-                            {holdError && (
-                              <div className="warning-message">{holdError}</div>
-                            )}
-
-                            {/* Full warning */}
-                            {selectedSlot.available === 0 && !activeHold && !holdLoading && (
-                              <div className="warning-message">This slot is fully booked.</div>
-                            )}
-
-                            {/* Actions */}
-                            {activeHold ? (
-                              <div className="selection-info__actions">
-                                <button
-                                  className="selection-info__btn"
-                                  onClick={handleConfirmReservation}
-                                  disabled={holdLoading}
-                                >
-                                  {holdLoading ? 'Confirming...' : 'Confirm Reservation'}
-                                </button>
-                                <button
-                                  className="selection-info__btn selection-info__btn--secondary"
-                                  onClick={handleCancelHold}
-                                  disabled={holdLoading}
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            ) : (
-                              holdLoading && (
-                                <button className="selection-info__btn" disabled>
-                                  Holding...
-                                </button>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })()}
+                  {/* Selected slot panel (desktop) */}
+                  {renderSelectedSlotPanel()}
                 </div>
               </div>
             </div>
           </div>
         </Card>
+      </div>
+
+      {/* Held Slot Panel (mobile only) - appears after timeline */}
+      <div className="slots-breakdown__held-slot-panel-mobile">
+        {/* Success */}
+        {reservationSuccess && (
+          <Card className="slots-breakdown__panel-card">
+            <div className="sidebar__selection-info">
+              <div className="selection-info selection-info--success">
+                <div className="selection-success__icon">✓</div>
+                <h4 className="selection-info__title">Reservation Submitted!</h4>
+                <p className="selection-success__msg">
+                  Your reservation is pending staff approval.
+                </p>
+                <button
+                  className="selection-info__btn"
+                  onClick={() => {
+                    setReservationSuccess(false);
+                    setSelectedSlotId(null);
+                    setHoldError('');
+                  }}
+                >
+                  Reserve Another
+                </button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Stand-alone error (no slot selected) */}
+        {holdError && !selectedSlotId && !reservationSuccess && (
+          <Card className="slots-breakdown__panel-card">
+            <div className="warning-message" style={{ marginTop: '0.5rem' }}>
+              {holdError}
+            </div>
+          </Card>
+        )}
+
+        {/* Selected slot panel */}
+        {renderSelectedSlotPanel() && (
+          <Card className="slots-breakdown__panel-card">
+            {renderSelectedSlotPanel()}
+          </Card>
+        )}
       </div>
     </div>
   );

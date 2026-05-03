@@ -188,6 +188,10 @@
   height: 1.2rem;
 }
 
+.app-sidebar__link.is-active .app-sidebar__glyph svg {
+  color: var(--tertiary-9);
+}
+
 .app-sidebar__glyph svg:active {
   color: var(--color-tertiary);
 }
@@ -392,6 +396,12 @@
     color: #ffffff;
     background: rgba(255, 255, 255, 0.18);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+@media (max-width: 767px) {
+  .app-sidebar__link:not(.is-active) .app-sidebar__glyph svg {
+    color: var(--text-secondary);
   }
 }
 

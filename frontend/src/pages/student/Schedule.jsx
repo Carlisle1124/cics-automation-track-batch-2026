@@ -18,7 +18,9 @@ export default function Schedule() {
 				subtitle="Browse available time slots and reserve a spot for today."
 			/>
 
-			<SlotsBreakdown onSlotSelect={handleSlotSelect} />
+			<div className="schedule-page__content">
+				<SlotsBreakdown onSlotSelect={handleSlotSelect} />
+			</div>
 		</section>
 	);
 }

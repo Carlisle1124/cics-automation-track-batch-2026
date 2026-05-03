@@ -124,9 +124,8 @@ export default function Navbar({ role }) {
                             {({ isActive }) => (
                                 <>
                                     <span className="app-sidebar__glyph" aria-hidden="true">
-                                        <item.icon 
-                                            weight="duotone" 
-                                            color={isActive ? "var(--tertiary-9)" : "var(--text-inverse)"} 
+                                        <item.icon
+                                            weight={isActive ? 'fill' : 'duotone'}
                                         />
                                     </span>
                                     <span className="app-sidebar__label" aria-hidden="true">{item.label}</span>
