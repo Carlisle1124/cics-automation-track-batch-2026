@@ -536,6 +536,118 @@ li.sidebar__msg-item {
     width: 100%;
     flex: 0 0 auto;
   }
+
+  /* ============================================================
+     MOBILE BOTTOM SHEET: Fix layout shift by converting
+     .selection-info into a fixed overlay on mobile
+     ============================================================ */
+
+  /* Selection info wrapper - positioned fixed to take it out of flow */
+  .sidebar__selection-info {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    animation: slideUpSheet 0.25s ease-out;
+  }
+
+  /* Selection info card - styled as bottom sheet */
+  .selection-info {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 1rem;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    border-radius: 16px 16px 0 0;
+    background: color-mix(in oklab, var(--primary-5) 8%, white 92%);
+    border: 1px solid var(--primary-5);
+    border-bottom: none;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Optional subtle backdrop overlay */
+  .sidebar__selection-info::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: 999;
+    animation: fadeInBackdrop 0.25s ease-out;
+    pointer-events: none;
+  }
+
+  /* Bottom sheet slide-up animation */
+  @keyframes slideUpSheet {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Backdrop fade-in animation */
+  @keyframes fadeInBackdrop {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Ensure scrollbar is visible for long content */
+  .selection-info::-webkit-scrollbar {
+    width: 0.5rem;
+  }
+
+  .selection-info::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .selection-info::-webkit-scrollbar-thumb {
+    background-color: rgba(64, 45, 0, 0.18);
+    border-radius: 999px;
+    border: 0.1rem solid transparent;
+    background-clip: content-box;
+  }
+
+  .selection-info::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(64, 45, 0, 0.28);
+  }
+
+  /* Success state on mobile */
+  .selection-info--success {
+    background: color-mix(in oklab, #10b981 8%, white 92%);
+    border-color: #10b981;
+    border-bottom: none;
+  }
+
+  /* Panel card naturally collapses since selection-info is now fixed (removed from flow) */
+  .slots-breakdown__panel-card {
+    /* Let it collapse naturally when child is fixed positioned */
+    min-height: 0;
+    flex: 0 0 auto;
+  }
+
+  /* Prevent body scroll when bottom sheet is active (optional enhancement) */
+  /* Consider adding overflow: hidden to body when .selection-info is visible */
 }
 
 @media (min-width: 1025px) {
@@ -547,6 +659,48 @@ li.sidebar__msg-item {
   /* Show stats in sidebar on desktop */
   .sidebar__stats--desktop-only {
     display: flex;
+  }
+
+  /* DESKTOP RESET: Restore selection-info to normal in-flow behavior */
+  .sidebar__selection-info {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    animation: slideUp var(--duration-base) var(--ease-standard);
+  }
+
+  .sidebar__selection-info::before {
+    display: none;
+  }
+
+  .selection-info {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    width: auto;
+    max-height: none;
+    overflow-y: visible;
+    overflow-x: visible;
+    margin: 0;
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    background: color-mix(in oklab, var(--primary-5) 8%, white 92%);
+    border: 1px solid var(--primary-5);
+    border-bottom: 1px solid var(--primary-5);
+    box-shadow: none;
+  }
+
+  .selection-info--success {
+    background: color-mix(in oklab, #10b981 8%, white 92%);
+    border-color: #10b981;
+    border-bottom: 1px solid #10b981;
   }
 
   .slots-breakdown {
