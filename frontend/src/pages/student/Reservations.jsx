@@ -1,13 +1,43 @@
 import { useEffect, useState } from 'react';
 import { getCurrentUser } from '../../data/services/authService';
 import ReservationsTable from '../../features/reservations/components/ReservationsTable';
+import {
+  FILTER_TABS,
+  ITEMS_PER_PAGE,
+  SORT_OPTIONS,
+  filterByTab,
+  formatStatusValue,
+  getDuration,
+  getReservationDate,
+  safeDate,
+  statusBadgeClass,
+  toDisplayDate,
+  toDisplayTime,
+} from '../../features/reservations/services/reservationsConfig';
 import PageHeader from '../../shared/components/PageHeader';
 import cicsLogo from '../../assets/CICS-Logo.webp';
 import './Reservations.css';
 
+import { TableIcon, SquaresFourIcon } from '@phosphor-icons/react';
+
+export {
+  FILTER_TABS,
+  ITEMS_PER_PAGE,
+  SORT_OPTIONS,
+  filterByTab,
+  formatStatusValue,
+  getDuration,
+  getReservationDate,
+  safeDate,
+  statusBadgeClass,
+  toDisplayDate,
+  toDisplayTime,
+};
+
 export default function Reservations() {
 	const [user, setUser] = useState(null);
 	const [isPageLoading, setIsPageLoading] = useState(true);
+	const [viewMode, setViewMode] = useState('table');
 
 	useEffect(() => {
 		const previousTitle = document.title;
@@ -54,7 +84,27 @@ export default function Reservations() {
 				subtitle={user ? `Review upcoming and past bookings for ${user.full_name}.` : 'Review upcoming and past bookings here.'}
 			/>
 
-			<ReservationsTable userRole="student" userId={user?.id} />
+			<div className="student-reservations__toggle-view">
+				<button
+					type="button"
+					className={`student-reservations__view-toggle ${viewMode === 'table' ? 'student-reservations__view-toggle--active' : ''}`}
+					aria-pressed={viewMode === 'table'}
+					onClick={() => setViewMode('table')}
+				>
+					<TableIcon size={18} weight="bold" aria-hidden="true" style={{ marginRight: '0.5rem' }} />
+					Table view
+				</button>
+				<button
+					type="button"
+					className={`student-reservations__view-toggle ${viewMode === 'grid' ? 'student-reservations__view-toggle--active' : ''}`}
+					aria-pressed={viewMode === 'grid'}
+					onClick={() => setViewMode('grid')}
+				>
+					<SquaresFourIcon size={18} weight="bold" aria-hidden="true" style={{ marginRight: '0.5rem' }} />
+					Grid view
+				</button>
+			</div>
+			<ReservationsTable userRole="student" userId={user?.id} viewMode={viewMode} />
 
 			{isPageLoading ? (
 				<div

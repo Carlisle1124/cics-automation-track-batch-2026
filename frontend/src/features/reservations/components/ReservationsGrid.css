@@ -1,0 +1,277 @@
+.reservations-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 0.9rem;
+	padding: 1rem;
+	overflow: auto;
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 248, 242, 0.15));
+}
+
+.reservations-grid__sortbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	grid-column: 1 / -1;
+	padding-bottom: 0.15rem;
+}
+
+.reservations-grid__sortbutton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.35rem;
+	min-height: 2.35rem;
+	padding: 0.45rem 0.8rem;
+	border: 1px solid var(--border-subtle);
+	border-radius: 999px;
+	background: color-mix(in oklab, var(--bg-elevated) 90%, white 10%);
+	color: var(--text-secondary);
+	font-size: 0.8rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+
+.reservations-grid__sortbutton:hover {
+	border-color: color-mix(in oklab, var(--primary-5) 24%, var(--border-subtle) 76%);
+	background: color-mix(in oklab, var(--primary-5) 8%, var(--bg-elevated) 92%);
+	color: var(--text-primary);
+}
+
+.reservations-grid__sorticon {
+	display: inline-flex;
+	align-items: center;
+}
+
+.reservations-grid__state {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 14rem;
+	padding: 1.25rem;
+	color: var(--text-secondary);
+	font-size: 0.95rem;
+	text-align: center;
+}
+
+.reservations-grid__card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+	padding: 0;
+	border: 1px solid color-mix(in oklab, var(--border-subtle) 82%, var(--primary-5) 18%);
+	border-radius: 1.05rem;
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 243, 236, 0.98)),
+		var(--bg-card);
+	box-shadow:
+		0 16px 30px rgba(90, 0, 16, 0.08),
+		0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+	min-height: 100%;
+	overflow: hidden;
+}
+
+.reservations-grid__card-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 0.9rem 1rem;
+	border-bottom: 1px solid color-mix(in oklab, var(--border-subtle) 88%, white 12%);
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.4));
+}
+
+.reservations-grid__status-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	min-width: 0;
+	flex-wrap: wrap;
+}
+
+.reservations-grid__status-dot {
+	width: 0.65rem;
+	height: 0.65rem;
+	border-radius: 999px;
+	background: #22c55e;
+	box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.16);
+	flex: 0 0 auto;
+}
+
+.reservations-grid__code {
+	color: var(--text-secondary);
+	font-size: 0.78rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.reservations-grid__body {
+	display: grid;
+	gap: 0.7rem;
+	padding: 0.95rem 1rem 0.8rem;
+}
+
+.reservations-grid__line {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.6rem;
+	color: var(--text-primary);
+	font-size: 0.92rem;
+	line-height: 1.35;
+}
+
+.reservations-grid__line svg {
+	flex: 0 0 auto;
+	margin-top: 0.08rem;
+	color: var(--primary-5);
+}
+
+.reservations-grid__line-text {
+	min-width: 0;
+	word-break: break-word;
+}
+
+.reservations-grid__line--primary {
+	font-size: 0.96rem;
+	font-weight: 700;
+}
+
+.reservations-grid__line--subtle {
+	color: var(--text-secondary);
+	font-size: 0.86rem;
+	padding-top: 0.2rem;
+	border-top: 1px solid color-mix(in oklab, var(--border-subtle) 86%, white 14%);
+	margin-top: 0.05rem;
+	padding-top: 0.65rem;
+	font-weight: 600;
+	font-style: normal;
+	letter-spacing: 0.01em;
+	font-variant-numeric: tabular-nums;
+	font-feature-settings: 'tnum';
+	
+}
+
+.reservations-grid__line--subtle svg {
+	color: var(--text-secondary);
+}
+
+.reservations-grid__line strong {
+	font-weight: 800;
+}
+
+.reservations-grid__line-muted {
+	color: var(--text-secondary);
+	font-weight: 700;
+}
+
+.reservations-grid__detail {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+.reservations-grid__label {
+	font-size: 0.72rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-secondary);
+}
+
+.reservations-grid__value {
+	color: var(--text-primary);
+	font-size: 0.95rem;
+	line-height: 1.35;
+}
+
+.reservations-grid__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.45rem;
+	padding: 0.85rem 1rem 1rem;
+	border-top: 1px solid color-mix(in oklab, var(--border-subtle) 88%, white 12%);
+	background: rgba(255, 255, 255, 0.4);
+}
+
+.reservations-grid__action {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.45rem;
+	min-height: 2.5rem;
+	padding: 0.55rem 0.95rem;
+	border: 1px solid var(--border-subtle);
+	border-radius: 0.85rem;
+	background: linear-gradient(180deg, color-mix(in oklab, var(--bg-elevated) 92%, white 8%), var(--bg-elevated));
+	color: var(--text-primary);
+	font-size: 0.84rem;
+	font-weight: 700;
+	cursor: pointer;
+	transition:
+		transform var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+
+.reservations-grid__action:hover {
+	transform: translateY(-1px);
+	border-color: color-mix(in oklab, var(--primary-5) 28%, var(--border-subtle) 72%);
+	background: color-mix(in oklab, var(--primary-5) 7%, var(--bg-elevated) 93%);
+}
+
+.reservations-grid__action:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+	transform: none;
+	background: var(--bg-elevated);
+}
+
+.reservations-grid__action--danger:hover {
+	border-color: color-mix(in oklab, #ef4444 28%, var(--border-subtle) 72%);
+	background: color-mix(in oklab, #ef4444 8%, var(--bg-elevated) 92%);
+	color: #b91c1c;
+}
+
+.reservations-grid__action--danger:disabled:hover {
+	color: var(--text-primary);
+	border-color: var(--border-subtle);
+	background: var(--bg-elevated);
+}
+
+.reservations-grid__action-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1rem;
+	height: 1rem;
+	font-size: 0.9rem;
+	line-height: 1;
+}
+
+@media (max-width: 639px) {
+	.reservations-grid {
+		padding: 0.75rem;
+		grid-template-columns: 1fr;
+	}
+
+	.reservations-grid__sortbar {
+		gap: 0.4rem;
+	}
+
+	.reservations-grid__sortbutton {
+		flex: 1 1 calc(50% - 0.2rem);
+	}
+
+	.reservations-grid__card-header,
+	.reservations-grid__body,
+	.reservations-grid__actions {
+		padding-left: 0.85rem;
+		padding-right: 0.85rem;
+	}
+}

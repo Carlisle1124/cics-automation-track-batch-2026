@@ -2,130 +2,22 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { cancelReservation, getReservationsByUser, subscribeToReservationChanges } from '../../../data/services/reservationService';
 import { Info, MagnifyingGlass, X, CaretDown as CaretDownIcon, CaretUp as CaretUpIcon } from '@phosphor-icons/react';
 import Modal from '../../../shared/components/Modal';
+import ReservationsGrid from './ReservationsGrid';
+import {
+  FILTER_TABS,
+  ITEMS_PER_PAGE,
+  filterByTab,
+  formatStatusValue,
+  getDuration,
+  getReservationDate,
+  safeDate,
+  statusBadgeClass,
+  toDisplayDate,
+  toDisplayTime,
+} from '../services/reservationsConfig';
 import './ReservationsTable.css';
 
-const FILTER_TABS = [
-  { id: 'upcoming', label: 'Upcoming' },
-  { id: 'ongoing', label: 'Ongoing' },
-  { id: 'past', label: 'Past' },
-  { id: 'all', label: 'All' },
-];
-
-const SORT_OPTIONS = ['Latest First', 'Earliest First', 'Status A-Z'];
-const ITEMS_PER_PAGE = 8;
-
-function safeDate(value) {
-  const d = value ? new Date(value) : null;
-  return d && !Number.isNaN(d.getTime()) ? d : null;
-}
-
-function toDisplayDate(reservation) {
-  const value = reservation.reservation_date ?? reservation.reservationDate ?? reservation.date;
-  const date = safeDate(value);
-  return date
-    ? date.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    : '—';
-}
-
-function toDisplayTime(timeValue) {
-  if (!timeValue) return '—';
-  const date = safeDate(`1970-01-01T${timeValue}`);
-  if (!date) return String(timeValue);
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
-}
-
-function getDuration(startTime, endTime) {
-  if (!startTime || !endTime) return '—';
-
-  const start = safeDate(`1970-01-01T${startTime}`);
-  const end = safeDate(`1970-01-01T${endTime}`);
-  if (!start || !end) return '—';
-
-  const diffMs = end.getTime() - start.getTime();
-  if (diffMs <= 0) return '—';
-
-  const hours = Math.floor(diffMs / (1000 * 60 * 60));
-  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-  if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
-  if (hours > 0) return `${hours}h`;
-  return `${minutes}m`;
-}
-
-function statusBadgeClass(status) {
-  switch (status) {
-    case 'approved':
-    case 'confirmed':
-      return 'status-badge status-badge--confirmed';
-    case 'completed':
-      return 'status-badge status-badge--completed';
-    case 'checked_in':
-      return 'status-badge status-badge--checked-in';
-    case 'cancelled':
-    case 'cancelled_by_user':
-      return 'status-badge status-badge--cancelled';
-    case 'expired':
-    case 'auto_cancelled':
-      return 'status-badge status-badge--expired';
-    case 'pending':
-    default:
-      return 'status-badge status-badge--pending';
-  }
-}
-
-function formatStatusValue(status) {
-  const s = status ?? 'pending';
-  if (s === 'cancelled_by_user') return 'cancelled';
-  return s;
-}
-
-function getReservationDate(reservation) {
-  return safeDate(reservation.reservation_date ?? reservation.reservationDate ?? reservation.date);
-}
-
-function filterByTab(reservation, activeTab) {
-  if (activeTab === 'all') return true;
-
-  const now = new Date();
-  const resDate = getReservationDate(reservation);
-  if (!resDate) return activeTab === 'all';
-
-  const startTime = reservation.start_time ?? reservation.startTime;
-  const endTime = reservation.end_time ?? reservation.endTime;
-
-  const startDateTime = startTime ? safeDate(`${resDate.toISOString().slice(0, 10)}T${startTime}`) : null;
-  const endDateTime = endTime ? safeDate(`${resDate.toISOString().slice(0, 10)}T${endTime}`) : null;
-
-  if (activeTab === 'ongoing') {
-    if (startDateTime && endDateTime) {
-      return now >= startDateTime && now <= endDateTime;
-    }
-    return now.toDateString() === resDate.toDateString();
-  }
-
-  if (activeTab === 'upcoming') {
-    if (startDateTime) return now < startDateTime;
-    return resDate >= new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  }
-
-  if (activeTab === 'past') {
-    if (endDateTime) return now > endDateTime;
-    return resDate < new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  }
-
-  return true;
-}
-
-export default function ReservationsTable({ userId }) {
+export default function ReservationsTable({ userId, viewMode = 'table' }) {
   const [reservations, setReservations] = useState([]);
   const [activeTab, setActiveTab] = useState('upcoming');
   const [sortBy, setSortBy] = useState('Latest First');
@@ -322,6 +214,7 @@ export default function ReservationsTable({ userId }) {
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
   const paginatedReservations = filteredReservations.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+  const isGridView = viewMode === 'grid';
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
@@ -411,180 +304,193 @@ export default function ReservationsTable({ userId }) {
         </div>
       </div>
 
-      <div className="reservations-table__wrapper">
-        <table className="reservations-table__table">
-          <thead>
-            <tr className="table-header-row">
-              <th className="table-header-cell">
-                <button
-                  type="button"
-                  className="header-sort-btn"
-                  onClick={() => {
-                    if (sortColumn === 'reservationDate') setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
-                    else {
-                      setSortColumn('reservationDate');
-                      setSortDirection('desc');
-                    }
-                  }}
-                  aria-label="Sort by reservation date"
-                >
-                  Reservation Date
-                  <span className="header-sort-icon" aria-hidden="true">
-                    {sortColumn === 'reservationDate' && sortDirection === 'desc' ? (
-                      <CaretDownIcon size={20} weight="duotone" />
-                    ) : sortColumn === 'reservationDate' && sortDirection === 'asc' ? (
-                      <CaretUpIcon size={20} weight="duotone" />
-                    ) : (
-                      <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />
-                    )}
-                  </span>
-                </button>
-              </th>
-              <th className="table-header-cell">
-                <button
-                  type="button"
-                  className="header-sort-btn"
-                  onClick={() => {
-                    if (sortColumn === 'timeSlot') setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
-                    else {
-                      setSortColumn('timeSlot');
-                      setSortDirection('asc');
-                    }
-                  }}
-                  aria-label="Sort by time slot"
-                >
-                  Time Slot
-                  <span className="header-sort-icon" aria-hidden="true">
-                    {sortColumn === 'timeSlot' && sortDirection === 'desc' ? (
-                      <CaretDownIcon size={20} weight="duotone" />
-                    ) : sortColumn === 'timeSlot' && sortDirection === 'asc' ? (
-                      <CaretUpIcon size={20} weight="duotone" />
-                    ) : (
-                      <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />
-                    )}
-                  </span>
-                </button>
-              </th>
-              <th className="table-header-cell">
-                <button
-                  type="button"
-                  className="header-sort-btn"
-                  onClick={() => {
-                    if (sortColumn === 'duration') setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
-                    else {
-                      setSortColumn('duration');
-                      setSortDirection('desc');
-                    }
-                  }}
-                  aria-label="Sort by duration"
-                >
-                  Duration
-                  <span className="header-sort-icon" aria-hidden="true">
-                    {sortColumn === 'duration' && sortDirection === 'desc' ? (
-                      <CaretDownIcon size={20} weight="duotone" />
-                    ) : sortColumn === 'duration' && sortDirection === 'asc' ? (
-                      <CaretUpIcon size={20} weight="duotone" />
-                    ) : (
-                      <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />
-                    )}
-                  </span>
-                </button>
-              </th>
-              <th className="table-header-cell">
-                <button
-                  type="button"
-                  className="header-sort-btn"
-                  onClick={() => {
-                    if (sortColumn === 'status') setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
-                    else {
-                      setSortColumn('status');
-                      setSortDirection('asc');
-                    }
-                  }}
-                  aria-label="Sort by status"
-                >
-                  Status
-                  <span className="header-sort-icon" aria-hidden="true">
-                    {sortColumn === 'status' && sortDirection === 'desc' ? (
-                      <CaretDownIcon size={20} weight="duotone" />
-                    ) : sortColumn === 'status' && sortDirection === 'asc' ? (
-                      <CaretUpIcon size={20} weight="duotone" />
-                    ) : (
-                      <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />
-                    )}
-                  </span>
-                </button>
-              </th>
-              <th className="table-header-cell">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr className="table-body-row">
-                <td className="table-cell" colSpan={5}>
-                  Loading reservations...
-                </td>
+      {isGridView ? (
+        <ReservationsGrid
+          isLoading={isLoading}
+          reservations={paginatedReservations}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSortColumnChange={setSortColumn}
+          onSortDirectionChange={setSortDirection}
+          onOpenDetails={handleOpenDetails}
+          onOpenCancel={openCancelModal}
+        />
+      ) : (
+        <div className="reservations-table__wrapper">
+          <table className="reservations-table__table">
+            <thead>
+              <tr className="table-header-row">
+                <th className="table-header-cell">
+                  <button
+                    type="button"
+                    className="header-sort-btn"
+                    onClick={() => {
+                      if (sortColumn === 'reservationDate') setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+                      else {
+                        setSortColumn('reservationDate');
+                        setSortDirection('desc');
+                      }
+                    }}
+                    aria-label="Sort by reservation date"
+                  >
+                    Reservation Date
+                    <span className="header-sort-icon" aria-hidden="true">
+                      {sortColumn === 'reservationDate' && sortDirection === 'desc' ? (
+                        <CaretDownIcon size={20} weight="duotone" />
+                      ) : sortColumn === 'reservationDate' && sortDirection === 'asc' ? (
+                        <CaretUpIcon size={20} weight="duotone" />
+                      ) : (
+                        <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />
+                      )}
+                    </span>
+                  </button>
+                </th>
+                <th className="table-header-cell">
+                  <button
+                    type="button"
+                    className="header-sort-btn"
+                    onClick={() => {
+                      if (sortColumn === 'timeSlot') setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+                      else {
+                        setSortColumn('timeSlot');
+                        setSortDirection('asc');
+                      }
+                    }}
+                    aria-label="Sort by time slot"
+                  >
+                    Time Slot
+                    <span className="header-sort-icon" aria-hidden="true">
+                      {sortColumn === 'timeSlot' && sortDirection === 'desc' ? (
+                        <CaretDownIcon size={20} weight="duotone" />
+                      ) : sortColumn === 'timeSlot' && sortDirection === 'asc' ? (
+                        <CaretUpIcon size={20} weight="duotone" />
+                      ) : (
+                        <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />
+                      )}
+                    </span>
+                  </button>
+                </th>
+                <th className="table-header-cell">
+                  <button
+                    type="button"
+                    className="header-sort-btn"
+                    onClick={() => {
+                      if (sortColumn === 'duration') setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+                      else {
+                        setSortColumn('duration');
+                        setSortDirection('desc');
+                      }
+                    }}
+                    aria-label="Sort by duration"
+                  >
+                    Duration
+                    <span className="header-sort-icon" aria-hidden="true">
+                      {sortColumn === 'duration' && sortDirection === 'desc' ? (
+                        <CaretDownIcon size={20} weight="duotone" />
+                      ) : sortColumn === 'duration' && sortDirection === 'asc' ? (
+                        <CaretUpIcon size={20} weight="duotone" />
+                      ) : (
+                        <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />
+                      )}
+                    </span>
+                  </button>
+                </th>
+                <th className="table-header-cell">
+                  <button
+                    type="button"
+                    className="header-sort-btn"
+                    onClick={() => {
+                      if (sortColumn === 'status') setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+                      else {
+                        setSortColumn('status');
+                        setSortDirection('asc');
+                      }
+                    }}
+                    aria-label="Sort by status"
+                  >
+                    Status
+                    <span className="header-sort-icon" aria-hidden="true">
+                      {sortColumn === 'status' && sortDirection === 'desc' ? (
+                        <CaretDownIcon size={20} weight="duotone" />
+                      ) : sortColumn === 'status' && sortDirection === 'asc' ? (
+                        <CaretUpIcon size={20} weight="duotone" />
+                      ) : (
+                        <CaretDownIcon size={20} weight="duotone" style={{ opacity: 0.25 }} />
+                      )}
+                    </span>
+                  </button>
+                </th>
+                <th className="table-header-cell">Actions</th>
               </tr>
-            ) : paginatedReservations.length > 0 ? (
-              paginatedReservations.map((reservation) => {
-                const startTime = reservation.start_time ?? reservation.startTime;
-                const endTime = reservation.end_time ?? reservation.endTime;
-                const dateLabel = toDisplayDate(reservation);
-                const startLabel = toDisplayTime(startTime);
-                const endLabel = toDisplayTime(endTime);
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr className="table-body-row">
+                  <td className="table-cell" colSpan={5}>
+                    Loading reservations...
+                  </td>
+                </tr>
+              ) : paginatedReservations.length > 0 ? (
+                paginatedReservations.map((reservation) => {
+                  const startTime = reservation.start_time ?? reservation.startTime;
+                  const endTime = reservation.end_time ?? reservation.endTime;
+                  const dateLabel = toDisplayDate(reservation);
+                  const startLabel = toDisplayTime(startTime);
+                  const endLabel = toDisplayTime(endTime);
 
-                return (
-                  <tr key={reservation.id} className="table-body-row">
-                    <td className="table-cell">
-                      <span className="date">{dateLabel}</span>
-                    </td>
-                    <td className="table-cell">
-                      <span className="time"> 
-                        <div className='time-pill'>{startLabel}</div> - 
-                        <div className='time-pill'>{endLabel}</div>
-                      </span>
-                    </td>
-                    <td className="table-cell">
-                      <span className="time">{getDuration(startTime, endTime)}</span>
-                    </td>
-                    <td className="table-cell">
-                      <span className={statusBadgeClass(reservation.status)}>{String(formatStatusValue(reservation.status))}</span>
-                    </td>
-                    <td className="table-cell">
-                      <div className="action-menu-container">
-                        <button
-                          type="button"
-                          className="action-menu-btn"
-                          aria-label="View reservation details"
-                          onClick={() => handleOpenDetails(reservation)}
-                        >
-                          <Info size={16} weight="bold" />
-                        </button>
-                        {(reservation.status === 'pending' || reservation.status === 'approved' || reservation.status === 'confirmed') && (
+                  return (
+                    <tr key={reservation.id} className="table-body-row">
+                      <td className="table-cell">
+                        <span className="date">{dateLabel}</span>
+                      </td>
+                      <td className="table-cell">
+                        <span className="time"> 
+                          <div className='time-pill'>{startLabel}</div> - 
+                          <div className='time-pill'>{endLabel}</div>
+                        </span>
+                      </td>
+                      <td className="table-cell">
+                        <span className="time">{getDuration(startTime, endTime)}</span>
+                      </td>
+                      <td className="table-cell">
+                        <span className={statusBadgeClass(reservation.status)}>{String(formatStatusValue(reservation.status))}</span>
+                      </td>
+                      <td className="table-cell">
+                        <div className="action-menu-container">
                           <button
                             type="button"
                             className="action-menu-btn"
-                            aria-label="Cancel reservation"
-                            onClick={() => openCancelModal(reservation)}
+                            aria-label="View reservation details"
+                            onClick={() => handleOpenDetails(reservation)}
                           >
-                            <X size={16} weight="bold" />
+                            <Info size={16} weight="bold" />
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
-              <tr className="table-body-row">
-                <td className="table-cell" colSpan={5}>
-                  No reservations found for the selected filter.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                          {(reservation.status === 'pending' || reservation.status === 'approved' || reservation.status === 'confirmed') && (
+                            <button
+                              type="button"
+                              className="action-menu-btn"
+                              aria-label="Cancel reservation"
+                              onClick={() => openCancelModal(reservation)}
+                            >
+                              <X size={16} weight="bold" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr className="table-body-row">
+                  <td className="table-cell" colSpan={5}>
+                    No reservations found for the selected filter.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="reservations-table__footer">
         <div className="pagination-info">
