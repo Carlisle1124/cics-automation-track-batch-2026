@@ -34,6 +34,24 @@ function formatDate(dateStr) {
 	return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+async function handleRelease(reservationId, res) {
+	const { data, error } = await supabaseAdmin
+		.from('reservations')
+		.delete()
+		.eq('id', reservationId)
+		.eq('status', 'held')
+		.select('id');
+
+	if (error) {
+		res.writeHead(500);
+		res.end(JSON.stringify({ ok: false, error: error.message }));
+		return;
+	}
+
+	res.writeHead(data?.length ? 200 : 404);
+	res.end(JSON.stringify({ ok: !!data?.length, deleted: data?.length ?? 0 }));
+}
+
 async function handleDecline(reservationId, reason, res) {
 	console.log('[decline] START id=%s reason="%s"', reservationId, reason?.slice(0, 40));
 
@@ -179,7 +197,7 @@ async function handleDecline(reservationId, reason, res) {
 function startApiServer(port = process.env.PORT || 3000) {
 	const server = http.createServer(async (req, res) => {
 		res.setHeader('Access-Control-Allow-Origin', '*');
-		res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+		res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
 		res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 		res.setHeader('Content-Type', 'application/json');
 
@@ -202,6 +220,17 @@ function startApiServer(port = process.env.PORT || 3000) {
 			try {
 				const body = await readBody(req);
 				await handleDecline(declineMatch[1], body.reason, res);
+			} catch (err) {
+				res.writeHead(500);
+				res.end(JSON.stringify({ ok: false, error: err.message }));
+			}
+			return;
+		}
+
+		const releaseMatch = url.match(/^\/api\/reservations\/([^/]+)\/release$/);
+		if (req.method === 'DELETE' && releaseMatch) {
+			try {
+				await handleRelease(releaseMatch[1], res);
 			} catch (err) {
 				res.writeHead(500);
 				res.end(JSON.stringify({ ok: false, error: err.message }));

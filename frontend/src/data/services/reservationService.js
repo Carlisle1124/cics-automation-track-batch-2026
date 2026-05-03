@@ -28,6 +28,7 @@ function mapReservationRow(row) {
 		denialReason: row.denial_reason ?? row.denialReason,
 		createdBy: row.created_by ?? row.createdBy,
 		createdAt: row.created_at ?? row.createdAt,
+		approvedBy: row.approved_by ?? row.approvedBy,
 		qrCode: row.qr_code ?? row.qrCode,
 		expiresAt: row.expires_at ?? row.expiresAt,
 	};
@@ -153,6 +154,21 @@ export function subscribeToReservationChanges(onUpdate) {
 			async (payload) => {
 				// Fetch the updated reservation with user data
 				try {
+					// Handle DELETE events separately since the record no longer exists
+					if (payload.eventType === 'DELETE') {
+						onUpdate({
+							type: 'DELETE',
+							data: { id: payload.old?.id },
+						});
+						return;
+					}
+
+					const recordId = payload.new?.id || payload.old?.id;
+					if (!recordId) {
+						console.warn('No record ID found in payload:', payload);
+						return;
+					}
+
 					const { data, error } = await supabase
 						.from('reservations')
 						.select(`
@@ -166,10 +182,13 @@ export function subscribeToReservationChanges(onUpdate) {
 							created_at,
 							users:user_id (id, full_name, email, role)
 						`)
-						.eq('id', payload.new?.id || payload.old?.id)
+						.eq('id', recordId)
 						.single();
 
-					if (error) throw error;
+					if (error) {
+						console.error('Error fetching updated reservation:', error);
+						return;
+					}
 
 					if (data) {
 						const transformed = {
@@ -190,18 +209,21 @@ export function subscribeToReservationChanges(onUpdate) {
 							type: payload.eventType,
 							data: transformed,
 						});
-					} else if (payload.eventType === 'DELETE') {
-						onUpdate({
-							type: 'DELETE',
-							data: { id: payload.old?.id },
-						});
 					}
 				} catch (error) {
 					console.error('Error processing real-time update:', error);
 				}
 			}
 		)
-		.subscribe();
+		.subscribe((status) => {
+			if (status === 'SUBSCRIBED') {
+				console.log('[ReservationService] Real-time subscription established');
+			} else if (status === 'CLOSED') {
+				console.log('[ReservationService] Real-time subscription closed');
+			} else if (status === 'CHANNEL_ERROR') {
+				console.error('[ReservationService] Real-time subscription error');
+			}
+		});
 
 	return subscription;
 }
@@ -335,6 +357,45 @@ export async function holdSlot({ userId, reservationDate, startTime, durationHou
 	return data;
 }
 
+function addHoursToTime(startTime, durationHours) {
+	if (!startTime || !Number.isFinite(durationHours)) return null;
+
+	const [hours = 0, minutes = 0, seconds = 0] = startTime.split(':').map(Number);
+	const totalSeconds = hours * 3600 + minutes * 60 + seconds + durationHours * 3600;
+	const normalizedSeconds = ((totalSeconds % 86400) + 86400) % 86400;
+	const nextHours = Math.floor(normalizedSeconds / 3600);
+	const nextMinutes = Math.floor((normalizedSeconds % 3600) / 60);
+	const nextSeconds = normalizedSeconds % 60;
+
+	return [nextHours, nextMinutes, nextSeconds].map((part) => String(part).padStart(2, '0')).join(':');
+}
+
+export async function updateHeldReservation({
+	reservationId,
+	userId,
+	reservationDate,
+	startTime,
+	durationHours,
+}) {
+	const endTime = addHoursToTime(startTime, durationHours);
+
+	const { data, error } = await supabase
+		.from('reservations')
+		.update({
+			reservation_date: reservationDate,
+			start_time: startTime,
+			end_time: endTime,
+		})
+		.eq('id', reservationId)
+		.eq('user_id', userId)
+		.eq('status', 'held')
+		.select('id, expires_at, start_time, end_time, reservation_date')
+		.single();
+
+	if (error) throw new Error(error.message);
+	return data;
+}
+
 export async function confirmSlot(reservationId, userId) {
 	const { data, error } = await supabase
 		.from('reservations')
@@ -348,6 +409,34 @@ export async function confirmSlot(reservationId, userId) {
 	return data;
 }
 
+export async function approveHeldReservation({ reservationId, userId, approvedBy }) {
+	const { data, error } = await supabase
+		.from('reservations')
+		.update({
+			status: 'approved',
+			expires_at: null,
+			approved_by: approvedBy ?? null,
+		})
+		.eq('id', reservationId)
+		.eq('user_id', userId)
+		.eq('status', 'held')
+		.select(`
+			id,
+			user_id,
+			reservation_date,
+			start_time,
+			end_time,
+			status,
+			approved_by,
+			created_at,
+			expires_at
+		`)
+		.single();
+
+	if (error) throw new Error(error.message);
+	return mapReservationRow(data);
+}
+
 export async function releaseSlot(reservationId, userId) {
 	const { error } = await supabase
 		.from('reservations')
@@ -356,6 +445,44 @@ export async function releaseSlot(reservationId, userId) {
 		.eq('user_id', userId)
 		.eq('status', 'held');
 	if (error) throw new Error(error.message);
+}
+
+function getBackendUrl() {
+	return import.meta.env.VITE_BACKEND_URL || '';
+}
+
+export async function releaseHeldReservation(reservationId) {
+	const backendUrl = getBackendUrl();
+	if (!backendUrl) {
+		throw new Error('Missing backend URL for staff hold release');
+	}
+
+	const response = await fetch(`${backendUrl}/api/reservations/${encodeURIComponent(reservationId)}/release`, {
+		method: 'DELETE',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	});
+
+	if (!response.ok) {
+		const body = await response.json().catch(() => ({}));
+		throw new Error(body.error || `Server error ${response.status}`);
+	}
+
+	return response.json();
+}
+
+export function releaseHeldReservationBeacon(reservationId) {
+	const backendUrl = getBackendUrl();
+	if (!backendUrl) return;
+
+	fetch(`${backendUrl}/api/reservations/${encodeURIComponent(reservationId)}/release`, {
+		method: 'DELETE',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		keepalive: true,
+	});
 }
 
 // Synchronous fire-and-forget release for beforeunload.

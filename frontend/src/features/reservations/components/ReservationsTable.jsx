@@ -152,9 +152,17 @@ export default function ReservationsTable({ userId }) {
       }
 
       try {
+        console.log('[ReservationsTable] Loading initial reservations for user:', userId);
         const [data] = await getReservationsByUser(userId);
         if (!active) return;
-        setReservations(Array.isArray(data) ? data : []);
+        
+        const reservationsList = Array.isArray(data) ? data : [];
+        console.log('[ReservationsTable] Initial reservations loaded:', {
+          userId,
+          count: reservationsList.length,
+          reservations: reservationsList,
+        });
+        setReservations(reservationsList);
       } catch (error) {
         console.error('Error loading reservations:', error);
         if (active) setReservations([]);
@@ -171,27 +179,48 @@ export default function ReservationsTable({ userId }) {
   }, [userId]);
 
   useEffect(() => {
+    if (!userId) return;
+
     const subscription = subscribeToReservationChanges(({ type, data }) => {
       const ownerId = data?.userId ?? data?.user_id;
-      if (userId && ownerId && ownerId !== userId) return;
+      
+      // Filter to only process updates for the current user's reservations
+      if (userId && ownerId && ownerId !== userId) {
+        console.debug('[ReservationsTable] Skipping update for different user:', ownerId);
+        return;
+      }
+
+      console.log('[ReservationsTable] Real-time update received:', { type, dataId: data?.id, userId });
 
       setReservations((prev) => {
-        if (type === 'INSERT') return [data, ...prev];
-        if (type === 'UPDATE') return prev.map((res) => (res.id === data.id ? { ...res, ...data } : res));
-        if (type === 'DELETE') return prev.filter((res) => res.id !== data.id);
+        if (type === 'INSERT') {
+          console.log('[ReservationsTable] INSERT - Adding new reservation:', data?.id);
+          return [data, ...prev];
+        }
+        if (type === 'UPDATE') {
+          console.log('[ReservationsTable] UPDATE - Updating reservation:', data?.id);
+          return prev.map((res) => (res.id === data.id ? { ...res, ...data } : res));
+        }
+        if (type === 'DELETE') {
+          console.log('[ReservationsTable] DELETE - Removing reservation:', data?.id);
+          return prev.filter((res) => res.id !== data.id);
+        }
+        console.warn('[ReservationsTable] Unknown event type:', type);
         return prev;
       });
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('[ReservationsTable] Unsubscribing from real-time updates');
+      subscription.unsubscribe();
+    };
   }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
-    console.log('[ReservationsTable] Logged-in user reservations:', {
+    console.log('[ReservationsTable] Current state:', {
       userId,
       count: reservations.length,
-      reservations,
     });
   }, [userId, reservations]);
 

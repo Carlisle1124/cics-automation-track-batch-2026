@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Card from '../../../shared/components/Card';
 import { getAvailabilityByDate } from '../../../data/services/availabilityService';
-import { holdSlot, confirmSlot, releaseSlot, releaseSlotBeacon } from '../../../data/services/reservationService';
-import { validateReservation } from '../../../data/services/reservationLogic';
 import { getCurrentUser } from '../../../data/services/authService';
 import { supabase } from '../../../data/supabaseClient';
+import { useSlotHold } from '../hooks/useSlotHold';
 import './SlotsBreakdown.css';
 
 import DatePicker from '../../reservations/components/DatePicker';
 import TimelinePanel from '../../reservations/components/TimelinePanel';
 import DurationPicker from '../../reservations/components/DurationPicker';
 import OccupancyStats from '../../reservations/components/OccupancyStats';
+import { getStatusInfo } from '../../../shared/utils/statusInfo';
 
 const CAPACITY = 50;
 
@@ -55,62 +55,50 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
 
   const [currentUser, setCurrentUser] = useState(null);
   const [holdDuration, setHoldDuration] = useState(1);
-  const [activeHold, setActiveHold] = useState(null);
-  const [holdCountdown, setHoldCountdown] = useState(null);
-  const [holdLoading, setHoldLoading] = useState(false);
-  const [holdError, setHoldError] = useState('');
   const [reservationSuccess, setReservationSuccess] = useState(false);
 
-  const activeHoldRef = useRef(null);
-  const currentUserRef = useRef(null);
-  const accessTokenRef = useRef(null);
   const dateInputRef = useRef(null);
 
-  useEffect(() => {
-    activeHoldRef.current = activeHold;
-  }, [activeHold]);
-
-  useEffect(() => {
-    currentUserRef.current = currentUser;
-  }, [currentUser]);
-
-  useEffect(() => {
-    async function loadUser() {
-      const user = await getCurrentUser();
-      setCurrentUser(user);
-      const { data: { session } } = await supabase.auth.getSession();
-      accessTokenRef.current = session?.access_token ?? null;
-    }
-    loadUser().catch(() => {});
-  }, []);
-
-  // Release hold on unmount
-  useEffect(() => {
-    return () => {
-      const hold = activeHoldRef.current;
-      const uid = currentUserRef.current?.id;
-      if (hold && uid) releaseSlot(hold.id, uid).catch(() => {});
-    };
-  }, []);
-
-  // Release hold immediately when the tab/window closes
-  useEffect(() => {
-    function handleBeforeUnload() {
-      const hold = activeHoldRef.current;
-      const uid = currentUserRef.current?.id;
-      const token = accessTokenRef.current;
-      if (hold?.id && uid && token) releaseSlotBeacon(hold.id, uid, token);
-    }
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
-
+  // Format selected date for API calls
   const selectedDateValue = [
     selectedDate.getFullYear(),
     String(selectedDate.getMonth() + 1).padStart(2, '0'),
     String(selectedDate.getDate()).padStart(2, '0'),
   ].join('-');
 
+  // Use the custom hook for slot holding
+  const {
+    activeHold,
+    holdCountdown,
+    holdLoading,
+    holdError,
+    handleSlotClick: hookHandleSlotClick,
+    handleConfirmReservation: hookHandleConfirmReservation,
+    handleCancelHold: hookHandleCancelHold,
+    releaseHoldManually,
+    setHoldError,
+  } = useSlotHold({
+    userId: currentUser?.id,
+    selectedDate,
+    holdDuration,
+    selectedDateValue,
+    onSlotSelect: (slotId) => {
+      setSelectedSlotId(slotId);
+      if (onSlotSelect) onSlotSelect(slotId);
+    },
+    skipValidation: false,
+  });
+
+  // Load current user
+  useEffect(() => {
+    async function loadUser() {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+    }
+    loadUser().catch(() => {});
+  }, []);
+
+  // Load slots for selected date
   const loadSlots = useCallback(async () => {
     setLoading(true);
     try {
@@ -138,7 +126,7 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
     loadSlots();
   }, [loadSlots]);
 
-  // Realtime — refreshes the graph for everyone when a reservation changes
+  // Realtime subscription for slot availability updates
   useEffect(() => {
     const channel = supabase
       .channel(`slots-${selectedDateValue}`)
@@ -158,23 +146,13 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
     };
   }, [selectedDateValue, loadSlots]);
 
-  // Countdown tick — releases hold when it reaches 0
+  // When hold expires, reset UI and reload slots
   useEffect(() => {
-    if (holdCountdown === null) return;
-    if (holdCountdown <= 0) {
-      const hold = activeHoldRef.current;
-      const uid = currentUserRef.current?.id;
-      if (hold && uid) releaseSlot(hold.id, uid).catch(() => {});
-      setActiveHold(null);
-      setHoldCountdown(null);
+    if (holdCountdown === 0 && activeHold === null) {
       setSelectedSlotId(null);
-      setHoldError('Your hold expired. Please select a new slot.');
       loadSlots();
-      return;
     }
-    const timer = setTimeout(() => setHoldCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [holdCountdown]);
+  }, [holdCountdown, activeHold, loadSlots]);
 
   const now = new Date();
   const currentHour = now.getHours();
@@ -193,136 +171,87 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
     day: 'numeric',
   });
 
+  // Wrapper for hook's handleSlotClick to also update local selectedSlotId
   const handleSlotClick = async (slotId) => {
     const slot = slots.find((s) => s.id === slotId);
-    if (!slot || holdLoading) return;
+    if (!slot) return;
 
-    // Clicking the same held slot does nothing
+    // If the slot is already held, don't click it
     if (activeHold && selectedSlotId === slotId) return;
 
-    setHoldError('');
     setReservationSuccess(false);
 
-    // Release existing hold when selecting a different slot
-    if (activeHold) {
-      await releaseSlot(activeHold.id, currentUser?.id).catch(() => {});
-      setActiveHold(null);
-      setHoldCountdown(null);
+    // Release hold when selecting a different slot
+    if (activeHold && selectedSlotId !== slotId) {
+      await releaseHoldManually();
     }
 
     setSelectedSlotId(slotId);
 
-    if (slot.available <= 0) return;
-
-    if (!currentUser) {
-      setHoldError('Please log in to make a reservation.');
-      return;
-    }
-
-    setHoldLoading(true);
-
+    // Call the hook's handler
     try {
-      await validateReservation({
-        userId: currentUser.id,
-        reservationDate: selectedDateValue,
-        durationHours: holdDuration,
-      });
-
-      const held = await holdSlot({
-        userId: currentUser.id,
-        reservationDate: selectedDateValue,
-        startTime: slot.start,
-        durationHours: holdDuration,
-      });
-
-      setActiveHold({ id: held.id });
-      const secs = held?.expires_at
-        ? Math.max(0, Math.round((new Date(held.expires_at) - Date.now()) / 1000))
-        : 300;
-      setHoldCountdown(secs);
-
-      if (onSlotSelect) onSlotSelect(slotId);
+      await hookHandleSlotClick(slot);
     } catch (err) {
-      setHoldError(err.message || 'Could not hold this slot. Please try again.');
       setSelectedSlotId(null);
-    } finally {
-      setHoldLoading(false);
+      throw err;
     }
   };
 
+  // Wrapper for hook's handleConfirmReservation
   const handleConfirmReservation = async () => {
     if (!activeHold || holdLoading) return;
-    setHoldLoading(true);
-    setHoldError('');
-    try {
-      await confirmSlot(activeHold.id, currentUser?.id);
+
+    const result = await hookHandleConfirmReservation();
+    if (result?.success) {
       setReservationSuccess(true);
-      setActiveHold(null);
-      setHoldCountdown(null);
       setSelectedSlotId(null);
       loadSlots();
-    } catch (err) {
-      setHoldError(err.message || 'Could not confirm reservation. Please try again.');
-    } finally {
-      setHoldLoading(false);
     }
   };
 
+  // Wrapper for hook's handleCancelHold
   const handleCancelHold = async () => {
-    if (activeHold) {
-      try {
-        await releaseSlot(activeHold.id, currentUser?.id);
-      } catch (err) {
-        console.error('[cancel] releaseSlot failed:', err.message, { id: activeHold.id, userId: currentUser?.id });
-      }
-    }
-    setActiveHold(null);
-    setHoldCountdown(null);
+    await hookHandleCancelHold();
     setSelectedSlotId(null);
-    setHoldError('');
+    setReservationSuccess(false);
     loadSlots();
   };
 
+  // Handle date change
   const handleDateChange = (event) => {
     const nextDate = parseDateValue(event.target.value);
     if (nextDate) {
-      if (activeHold) {
-        releaseSlot(activeHold.id, currentUser?.id).catch(() => {});
-        setActiveHold(null);
-        setHoldCountdown(null);
-      }
+      setSelectedDate(nextDate);
       setSelectedSlotId(null);
       setHoldError('');
       setReservationSuccess(false);
-      setSelectedDate(nextDate);
+      if (activeHold) {
+        releaseHoldManually();
+      }
     }
   };
 
   const handleToday = () => {
-    if (activeHold) {
-      releaseSlot(activeHold.id, currentUser?.id).catch(() => {});
-      setActiveHold(null);
-      setHoldCountdown(null);
-    }
+    setSelectedDate(new Date());
     setSelectedSlotId(null);
     setHoldError('');
     setReservationSuccess(false);
-    setSelectedDate(new Date());
+    if (activeHold) {
+      releaseHoldManually();
+    }
   };
 
   // Handler for DatePicker component (receives date string YYYY-MM-DD)
   const handleDateChangeFromPicker = (dateString) => {
     const nextDate = parseDateValue(dateString);
     if (nextDate) {
-      if (activeHold) {
-        releaseSlot(activeHold.id, currentUser?.id).catch(() => {});
-        setActiveHold(null);
-        setHoldCountdown(null);
-      }
+      setSelectedDate(nextDate);
       setSelectedSlotId(null);
       setHoldError('');
       setReservationSuccess(false);
-      setSelectedDate(nextDate);
+      if (activeHold) {
+        releaseHoldManually();
+      }
     }
   };
 
@@ -331,15 +260,6 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
     if (dateInputRef.current) {
       dateInputRef.current.click();
     }
-  };
-
-  const getStatusInfo = (status) => {
-    const statusMap = {
-      available: { label: 'Available', className: 'slot-card__status--available', icon: '✓' },
-      busy: { label: 'Limited', className: 'slot-card__status--busy', icon: '⚠' },
-      full: { label: 'Full', className: 'slot-card__status--full', icon: '✕' },
-    };
-    return statusMap[status] || statusMap.available;
   };
 
   const getCapacityPercent = (reserved, capacity) =>
@@ -419,24 +339,6 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
                   getCapacityPercent={getCapacityPercent}
                   now={now}
                 />
-
-                {/* Duration selector */}
-                {/* <div className="sidebar__duration-picker">
-                  <span className="duration-picker__label">Duration</span>
-                  <div className="duration-picker__options">
-                    {[1, 2, 3].map((h) => (
-                      <button
-                        key={h}
-                        className={`duration-picker__btn ${holdDuration === h ? 'duration-picker__btn--active' : ''}`}
-                        onClick={() => setHoldDuration(h)}
-                        disabled={!!activeHold}
-                      >
-                        {h} hr
-                      </button>
-                    ))}
-                  </div>
-                  <p className="duration-picker__hint">Select before clicking a slot</p>
-                </div> */}
 
                 {/* Stats */}
                 <div className="sidebar__stats">

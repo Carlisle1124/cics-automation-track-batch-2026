@@ -85,7 +85,6 @@
 	max-width: 100%;
 	display: flex;
 	flex-direction: column;
-	margin-top: clamp(0.5rem, 0.9vw, 0.85rem);
 	padding: clamp(0.95rem, 1.4vw, 1.25rem);
 	background: linear-gradient(
 		180deg,
@@ -96,6 +95,10 @@
 	border-radius: var(--radius-xl);
 	box-shadow: var(--shadow-sm);
 	overflow: visible;
+}
+
+.schedule-students__form-wrap {
+	--schedule-control-height: 48px;
 }
 
 .schedule-students__form {
@@ -118,18 +121,19 @@
 
 .schedule-students__timeslot-grid {
 	display: grid;
-	grid-template-columns: repeat(9, minmax(0, 1fr));
+	grid-template-columns: repeat(4, minmax(0, 1fr));
 	gap: 0.75rem;
 	grid-column: 1 / -1;
 }
 
 .schedule-students__timeslot-btn {
 	min-width: 0;
-	display: grid;
-	gap: 0.22rem;
-	align-content: center;
-	justify-items: start;
-	padding: 0.9rem 0.9rem 0.82rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.45rem;
+	padding: 0.85rem 0.8rem 0.78rem;
 	border: 1px solid color-mix(in oklab, var(--primary-5) 14%, var(--border-subtle) 86%);
 	border-radius: var(--radius-md);
 	background: linear-gradient(
@@ -148,12 +152,177 @@
 		background var(--duration-fast) var(--ease-standard);
 }
 
-.schedule-students__timeslot-btn:hover:not(:disabled) {
-	transform: translateY(-1px);
-	  background: color-mix(in oklab, var(--tertiary-11) 20%, transparent);
-	border: 1.6px dashed var(--color-tertiary);
-	box-shadow: 0 0 0 3px rgba(190, 21, 46, 0.08), 0 14px 26px rgba(122, 0, 20, 0.1);
-	opacity: 0.85;
+.schedule-students__timeslot-timeblock {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+	gap: 0.28rem;
+	width: 100%;
+	text-align: center;
+}
+
+.schedule-students__timeslot-btn-start,
+.schedule-students__timeslot-btn-end {
+	display: inline-flex;
+	align-items: flex-start;
+	justify-content: center;
+	font-size: 0.96rem;
+	font-weight: 800;
+	letter-spacing: 0.01em;
+	line-height: 1.1;
+	color: var(--text-primary);
+	white-space: nowrap;
+}
+
+span.schedule-students__timeslot-btn-start {
+	font-size: 0.9rem;
+	margin-bottom: 0.18rem;
+}
+
+span.schedule-students__timeslot-btn-end {
+	font-size: 0.75rem;
+	margin-top: 0.35rem;
+	opacity: 0.6;
+}
+
+span.schedule-students__timeslot-btn-separator {
+	/* Container for the mini timeline: dashed line with top & bottom dots (pseudo-elements).
+	   Keep compact height; line is centered horizontally and dots overlay the line. */
+	position: relative;
+	width: 18px;
+	min-width: 18px;
+	height: 1.2rem;
+	margin: 0 0.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	/* dashed vertical line (will be themed via currentColor in state rules) */
+	border-left: 1.8px dotted var(--neutral-6);
+	/* base dot color follows this container's color so pseudo-elements use it */
+	color: var(--tertiary-4);
+	opacity: 0.9;
+}
+
+/* Top and bottom dots using pseudo-elements. Use currentColor so state selectors can recolor both line and dots. */
+.schedule-students__timeslot-btn-separator::before,
+.schedule-students__timeslot-btn-separator::after {
+	left: -5%;
+	content: '';
+	position: absolute;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: currentColor;
+	box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset;
+}
+.schedule-students__timeslot-btn-separator::before {
+	/* top dot - sit centered at the top endpoint */
+	top: 0;
+	transform: translate(-50%, -50%);
+}
+.schedule-students__timeslot-btn-separator::after {
+	/* bottom dot - sit centered at the bottom endpoint */
+	bottom: 0;
+	transform: translate(-50%, 50%);
+}
+
+.schedule-students__timeslot-meta {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.4rem;
+	width: 100%;
+	margin-top: 0.25rem;
+	align-items: center;
+}
+
+.schedule-students__timeslot-meta span {
+	font-size: 0.72rem;
+	line-height: 1.15;
+	text-align: start;
+	width: fit-content;
+	align-self: center;
+}
+
+.schedule-students__timeslot-status span {
+	font-size: 0.55rem;
+}
+
+.schedule-students__timeslot-status {
+	display: inline-flex;
+	gap: 0.3rem;
+	align-self: center;
+	margin-left: auto;
+	padding: 0.24rem 0.55rem;
+	border-radius: 999px;
+	background: color-mix(in oklab, var(--bg-card) 94%, white 6%);
+	color: color-mix(in oklab, var(--primary-5) 30%, var(--text-secondary) 70%);
+	font-weight: 800;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	white-space: nowrap;
+
+	width: fit-content;
+	flex: 0 0 auto;
+}
+
+.timeslot-btn--available {
+	--timeslot-status-color: #10b981;
+	--timeslot-status-bg: color-mix(in oklab, #10b981 15%, transparent 85%);
+}
+
+.timeslot-btn--limited {
+	--timeslot-status-color: #f59e0b;
+	--timeslot-status-bg: color-mix(in oklab, #f59e0b 15%, transparent 85%);
+}
+
+.timeslot-btn--full {
+	--timeslot-status-color: #ef4444;
+	--timeslot-status-bg: color-mix(in oklab, #ef4444 15%, transparent 85%);
+}
+
+.timeslot-btn--available .schedule-students__timeslot-status,
+.timeslot-btn--limited .schedule-students__timeslot-status,
+.timeslot-btn--full .schedule-students__timeslot-status {
+	background: var(--timeslot-status-bg);
+	color: var(--timeslot-status-color);
+}
+
+.timeslot-btn--available .schedule-students__timeslot-status-icon,
+.timeslot-btn--limited .schedule-students__timeslot-status-icon,
+.timeslot-btn--full .schedule-students__timeslot-status-icon {
+	color: inherit;
+}
+
+.timeslot-btn--full:disabled .schedule-students__timeslot-status {
+	opacity: 0.95;
+}
+
+.timeslot-btn--full:disabled .schedule-students__timeslot-status,
+.timeslot-btn--full:disabled .schedule-students__timeslot-status-icon,
+.timeslot-btn--full:disabled .schedule-students__timeslot-status-label {
+	color: var(--timeslot-status-color);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.schedule-students__timeslot-btn:hover:not(:disabled) {
+		transform: translateY(-1px);
+		background: color-mix(in oklab, var(--tertiary-11) 20%, transparent);
+		border: 1.6px dashed var(--color-tertiary);
+		box-shadow: 0 0 0 3px rgba(190, 21, 46, 0.08), 0 14px 26px rgba(122, 0, 20, 0.1);
+		opacity: 0.85;
+	}
+}
+
+.schedule-students__timeslot-btn:hover:not(:disabled) .schedule-students__timeslot-btn-start,
+.schedule-students__timeslot-btn:hover:not(:disabled) .schedule-students__timeslot-btn-end,
+.schedule-students__timeslot-btn.is-active .schedule-students__timeslot-btn-start,
+.schedule-students__timeslot-btn.is-active .schedule-students__timeslot-btn-end,
+.schedule-students__timeslot-btn.is-in-duration-range .schedule-students__timeslot-btn-start,
+.schedule-students__timeslot-btn.is-in-duration-range .schedule-students__timeslot-btn-end,
+.schedule-students__timeslot-btn.is-hover-range .schedule-students__timeslot-btn-start,
+.schedule-students__timeslot-btn.is-hover-range .schedule-students__timeslot-btn-end {
+	color: inherit;
 }
 
 .schedule-students__timeslot-btn.is-active {
@@ -168,29 +337,45 @@
 		0 14px 26px rgba(122, 0, 20, 0.12);
 }
 
+.schedule-students__timeslot-btn.is-active .schedule-students__timeslot-btn-separator,
+.schedule-students__timeslot-btn.is-in-duration-range .schedule-students__timeslot-btn-separator,
+.schedule-students__timeslot-btn.is-hover-range .schedule-students__timeslot-btn-separator {
+	border-left-color: currentColor;
+	/* set color so pseudo-element dots use the same themed color */
+	color: currentColor;
+	opacity: 0.75;
+}
+
 .schedule-students__timeslot-btn:disabled {
 	opacity: 0.55;
 	cursor: not-allowed;
-	box-shadow:
-		0 1px 0 rgba(255, 255, 255, 0.72) inset,
-		0 6px 14px rgba(122, 0, 20, 0.03);
+	transform: none;
+	background-color: color-mix(in oklab, var(--primary-5) 8%, var(--bg-card) 92%);
+	border-color: color-mix(in oklab, var(--primary-5) 14%, var(--border-subtle) 86%);
+	color: rgb(102, 102, 102, 0.3);
 }
 
-.schedule-students__timeslot-btn-time {
-	font-size: 0.95rem;
-	font-weight: 800;
-	letter-spacing: 0.01em;
+.schedule-students__timeslot-btn:disabled span {
+	color: rgb(102, 102, 102, 0.3);
+}
+
+.schedule-students__timeslot-btn--full:disabled span {
+	color: var(--timeslot-status-color);
 }
 
 .schedule-students__timeslot-btn-range,
 .schedule-students__timeslot-btn-meta {
-	font-size: 0.78rem;
-	line-height: 1.2;
+	font-size: 0.72rem;
+	line-height: 1.15;
 	color: var(--text-secondary);
 }
 
 .schedule-students__timeslot-btn-meta {
 	font-weight: 700;
+}
+
+.schedule-students__timeslot-btn-range {
+	opacity: 0.86;
 }
 
 .schedule-students__timeslot-btn.is-hover-range {
@@ -218,11 +403,9 @@
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
 	color: var(--text-secondary);
+	height: fit-content;
 }
 
-.schedule-students__field textarea {
-	font-size: 14px;
-}
 .schedule-students__menu-field input{
 	font-size: 0.92rem;
 	min-height: 44px;
@@ -231,6 +414,7 @@
 .schedule-students__field textarea,
 .schedule-students__menu-field input {
 	width: 100%;
+	box-sizing: border-box;
 	border-radius: var(--radius-md);
 	border: 1px solid color-mix(in oklab, var(--primary-5) 18%, var(--border-subtle) 82%);
 	background: linear-gradient(
@@ -239,9 +423,9 @@
 		color-mix(in oklab, var(--bg-elevated) 92%, white 8%)
 	);
 	color: var(--text-primary);
-	padding: 0.9rem 1rem;
+	padding: 0 1rem;
 	font: inherit;
-	line-height: 1.5;
+	line-height: calc(var(--schedule-control-height) - 2px);
 	transition:
 		border-color var(--duration-fast) var(--ease-standard),
 		box-shadow var(--duration-fast) var(--ease-standard),
@@ -274,10 +458,9 @@
 	width: 100%;
 }
 
-.schedule-students__menu-field.date.wrap {
-	display: flex;
-	gap: 0.75rem;
-	width: 100%;
+.schedule-students__menu-field.search input{
+	height: var(--schedule-control-height);
+	min-height: var(--schedule-control-height);
 }
 
 .schedule-students__menu-field.wrap button{
@@ -290,7 +473,7 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: 0.75rem;
-	margin: 0 0 0.45rem;
+	margin: 0;
 	padding: 0 0.1rem;
 }
 
@@ -323,10 +506,15 @@
 	flex-wrap: wrap;
 	position: relative;
 	width: 100%;
-	padding: 0.45rem;
+	padding: 0.35rem 0.45rem;
+	min-height: var(--schedule-control-height);
+	height: var(--schedule-control-height);
+	box-sizing: border-box;
 	border-radius: var(--radius-md);
-	background: color-mix(in oklab, var(--bg-card) 96%, white 4%);
-	border: 1px solid var(--border-subtle);
+	background: linear-gradient(180deg, 
+	color-mix(in oklab, var(--bg-card) 96%, white 4%), 
+	color-mix(in oklab, var(--bg-elevated) 92%, white 8%));
+	border: 1px solid color-mix(in oklab, var(--primary-5) 18%, var(--border-subtle) 82%);
 	box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset;
 }
 
@@ -379,18 +567,21 @@
 	grid-template-columns: repeat(3, minmax(0,1fr));
 	width: 100%;
 	gap: 0.35rem;
+	height: 100%;
 }
 
 .schedule-students__duration-segment {
 	background: transparent;
 	border: none;
-	padding: 0.45rem 0.75rem;
+	padding: 0 0.75rem;
 	border-radius: calc(var(--radius-pill));
 	cursor: pointer;
 	transition: color 200ms ease, transform 160ms ease;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	height: 100%;
+	box-sizing: border-box;
 }
 
 .schedule-students__duration-segment-label {
@@ -453,6 +644,19 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 	.schedule-students__timeslot-btn { animation-duration: 320ms; }
 	.schedule-students__timeslot-btn.is-active { transform: translateY(-1px) scale(1.01); }
 	.schedule-students__timeslot-grid { grid-auto-rows: minmax(3.75rem, auto); }
+	.schedule-students__timeslot-status {
+		font-size: 0.62rem;
+		padding: 0.2rem 0.48rem;
+		gap: 0.24rem;
+	}
+	.schedule-students__timeslot-meta span {
+		font-size: 0.64rem;
+	}
+
+	.schedule-students__timeslot-status span {
+		justify-self: flex-start;
+		font-size: 0.54rem;
+	}
 }
 
 .schedule-students__menu-trigger {
@@ -804,8 +1008,167 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 
 .schedule-students__actions {
 	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
 	justify-content: flex-start;
 	padding-top: 0.25rem;
+}
+
+.schedule-students__hold-info-wrap {
+	display: grid;
+	gap: 0.6rem;
+	width: fit-content;
+}
+
+.schedule-students__hold-info {
+	position: relative;
+	display: grid;
+	gap: 0.75rem;
+	padding: 1.1rem 1.2rem;
+	border-radius: var(--radius-lg);
+	background: var(--bg-elevated);
+	border: 1.5px solid color-mix(in oklab, var(--primary-5) 28%, var(--border-subtle) 72%);
+	box-shadow:
+		0 0 0 1px rgba(190, 21, 46, 0.08),
+		0 12px 24px rgba(190, 21, 46, 0.08),
+		0 2px 8px rgba(0, 0, 0, 0.04) inset;
+	animation: hold-info-appear 320ms var(--ease-standard) forwards;
+}
+
+@keyframes hold-info-appear {
+	from {
+		opacity: 0;
+		transform: translateY(-8px) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+.hold-info__status {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+.hold-info__status-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--primary-5);
+	margin-right: 0.35rem;
+	flex-shrink: 0;
+	opacity: 0.85;
+	text-align: center;
+}
+
+.hold-info__status-timeslot {
+	display: inline-block;
+	padding: 0.25rem 0.55rem;
+	border-radius: var(--radius-sm);
+	background: linear-gradient(135deg, rgba(190, 21, 46, 0.1), rgba(190, 21, 46, 0.06));
+	font-size: 0.85rem;
+	font-weight: 800;
+	letter-spacing: 0.03em;
+	color: var(--primary-5);
+	border: 1px solid color-mix(in oklab, var(--primary-5) 20%, transparent 80%);
+}
+
+.hold-info__status-student {
+	display: inline-block;
+	padding: 0.25rem 0.55rem;
+	border-radius: var(--radius-sm);
+	background: color-mix(in oklab, var(--primary-5) 6%, var(--bg-card) 94%);
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	border: 1px solid color-mix(in oklab, var(--border-subtle) 60%, transparent 40%);
+}
+
+.hold-info__countdown {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 0.85rem;
+	border-radius: var(--radius-md);
+	background: linear-gradient(
+		180deg,
+		rgba(255, 255, 255, 0.6),
+		rgba(255, 255, 255, 0.3)
+	);
+	border: 1px dashed color-mix(in oklab, var(--primary-5) 18%, var(--border-subtle) 82%);
+}
+
+.countdown__label {
+	font-size: 0.8rem;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--text-secondary);
+	opacity: 0.8;
+}
+
+.countdown__clock {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 4.5rem;
+	padding: 0.65rem 0.95rem;
+	border-radius: var(--radius-md);
+	background: linear-gradient(135deg, var(--primary-5) 0%, color-mix(in oklab, var(--primary-5) 88%, black 12%) 100%);
+	font-family: 'Monaco', 'Courier New', monospace;
+	font-size: 1.75rem;
+	font-weight: 900;
+	letter-spacing: 0.08em;
+	color: white;
+	box-shadow:
+		0 0 0 1px rgba(190, 21, 46, 0.2),
+		0 8px 18px rgba(190, 21, 46, 0.2),
+		0 2px 6px rgba(0, 0, 0, 0.1) inset;
+	animation: countdown-pulse 1s ease-in-out infinite;
+	will-change: transform, box-shadow;
+}
+
+@keyframes countdown-pulse {
+	0%, 100% {
+		transform: scale(1);
+		box-shadow:
+			0 0 0 1px rgba(190, 21, 46, 0.2),
+			0 8px 18px rgba(190, 21, 46, 0.2),
+			0 2px 6px rgba(0, 0, 0, 0.1) inset;
+	}
+	50% {
+		transform: scale(1.02);
+		box-shadow:
+			0 0 0 1px rgba(190, 21, 46, 0.3),
+			0 12px 26px rgba(190, 21, 46, 0.28),
+			0 2px 6px rgba(0, 0, 0, 0.1) inset;
+	}
+}
+
+.countdown__note {
+	grid-column: 1 / -1;
+	padding: 0.65rem;
+	border-radius: calc(var(--radius-sm));
+	background: color-mix(in oklab, var(--primary-5) 6%, transparent 94%);
+	border-left: 3px solid var(--primary-5);
+	font-size: 0.78rem;
+	line-height: 1.4;
+	color: var(--text-secondary);
+}
+
+.countdown__note strong {
+	color: var(--text-primary);
+	font-weight: 700;
+}
+
+.schedule-students__actions-btns {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
 }
 
 .schedule-students__submit {
@@ -836,6 +1199,48 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 	box-shadow: none;
 }
 
+.schedule-students__cancel-hold {
+	border: 1.5px solid color-mix(in oklab, var(--primary-5) 34%, var(--border-subtle) 66%);
+	border-radius: var(--radius-pill);
+	padding: 0.75rem 1.1rem;
+	min-height: 44px;
+	background: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--bg-card) 96%, white 4%),
+		color-mix(in oklab, var(--bg-elevated) 92%, white 8%)
+	);
+	color: var(--primary-5);
+	font-size: 14px;
+	font-weight: 700;
+	cursor: pointer;
+	box-shadow:
+		0 1px 0 rgba(255, 255, 255, 0.6) inset,
+		0 8px 16px rgba(190, 21, 46, 0.08);
+	transition:
+		transform var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard),
+		opacity var(--duration-fast) var(--ease-standard);
+}
+
+.schedule-students__cancel-hold:hover:not(:disabled) {
+	transform: translateY(-1px);
+	border-color: var(--primary-5);
+	box-shadow:
+		0 1px 0 rgba(255, 255, 255, 0.6) inset,
+		0 12px 22px rgba(190, 21, 46, 0.12);
+}
+
+.schedule-students__cancel-hold:active:not(:disabled) {
+	transform: translateY(0);
+}
+
+.schedule-students__cancel-hold:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	box-shadow: none;
+}
+
 .schedule-students__status,
 .schedule-students__message {
 	position: relative;
@@ -849,6 +1254,11 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 
 .schedule-students__status strong {
 	color: var(--text-primary);
+}
+
+.schedule-students__actions.schedule-students__field--full.footer {
+	display: flex;
+	align-items: center;
 }
 
 .schedule-students-transition {
@@ -920,7 +1330,7 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 	}
 }
 
-/* ≥ 640px — 2-column form */
+/* ≥ 640px — 2-column form, reduced time slot columns */
 @media (min-width: 640px) {
 	.schedule-students__form {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -933,12 +1343,192 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 	.schedule-students__form > .schedule-students__field--full:last-child {
 		grid-column: 1 / -1;
 	}
+
+	.schedule-students__timeslot-grid {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 0.8rem;
+	}
+
+	.schedule-students__timeslot-btn {
+		gap: 0.5rem;
+		padding: 0.9rem 0.85rem 0.82rem;
+	}
+
+	.schedule-students__timeslot-btn-start {
+		font-size: 1.02rem;
+	}
+
+	.schedule-students__timeslot-btn-end {
+		font-size: 0.92rem;
+	}
+
+	.schedule-students__timeslot-btn-separator {
+		height: 1.55rem;
+	}
+
+	.schedule-students__timeslot-btn-range,
+	.schedule-students__timeslot-btn-meta {
+		font-size: 0.74rem;
+	}
+
+	.schedule-students__actions {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		gap: 0.9rem;
+		padding-top: 0.3rem;
+	}
+
+	.schedule-students__actions-btns {
+		display: flex;
+		gap: 0.8rem;
+		width: 100%;
+		justify-content: center;
+	}
+
+	.schedule-students__hold-info {
+		padding: 1.2rem 1.35rem;
+		gap: 0.85rem;
+	}
+
+	.hold-info__countdown {
+		grid-auto-flow: column;
+		grid-auto-columns: auto;
+		gap: 1.5rem;
+		padding: 0.95rem 1.15rem;
+	}
+
+	.countdown__clock {
+		font-size: 1.95rem;
+		padding: 0.75rem 1.15rem;
+	}
 }
 
-/* ≥ 768px — standard padding */
+/* ≥ 768px — medium screens, 6 time slots */
 @media (min-width: 768px) {
 	.schedule-students__surface {
 		padding: clamp(1rem, 1.4vw, 1.35rem);
+	}
+
+	.schedule-students__timeslot-grid {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+		gap: 0.8rem;
+	}
+
+	.schedule-students__timeslot-btn {
+		padding: 0.85rem 0.8rem 0.78rem;
+	}
+
+	.schedule-students__timeslot-btn-start {
+		font-size: 0.96rem;
+	}
+
+	.schedule-students__timeslot-btn-meta {
+		font-size: 0.75rem;
+	}
+
+	.schedule-students__timeslot-btn-range {
+		font-size: 0.71rem;
+	}
+
+	.schedule-students__timeslot-btn-separator {
+		height: 1.35rem;
+	}
+
+	.schedule-students__submit,
+	.schedule-students__cancel-hold {
+		min-height: 44px;
+		padding: 0.9rem 1.8rem;
+		font-size: 15px;
+	}
+
+	.schedule-students__actions-btns {
+		gap: 1rem;
+	}
+
+	.schedule-students__duration-options {
+		gap: 0.85rem;
+		padding: 0.5rem;
+	}
+
+	.schedule-students__duration-btn {
+		padding: 0.5rem 2.2rem;
+	}
+}
+
+/* ≥ 1024px — desktop, full 9 time slots */
+@media (min-width: 1024px) {
+	.schedule-students__surface {
+		/* allow the surface to fill its parent container on desktop */
+		max-width: none;
+		width: 100%;
+		margin: 0;
+		padding: clamp(1rem, 1.4vw, 1.35rem);
+	}
+
+	.schedule-students__timeslot-grid {
+		/* allow slots to adapt to available width instead of forcing 9 fixed columns */
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		gap: 0.75rem;
+		overflow-x: visible;
+		align-items: start;
+	}
+
+	.schedule-students__timeslot-btn {
+		padding: 0.9rem 0.9rem 0.82rem;
+	}
+
+	.schedule-students__timeslot-btn-start {
+		font-size: 1rem;
+	}
+
+	.schedule-students__timeslot-btn-meta {
+		font-size: 0.78rem;
+	}
+
+	.schedule-students__timeslot-btn-range {
+		font-size: 0.74rem;
+	}
+
+	.schedule-students__timeslot-btn-separator {
+		height: 1.45rem;
+	}
+
+	.schedule-students__form-wrap {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.schedule-students__submit,
+	.schedule-students__cancel-hold {
+		min-height: 46px;
+		padding: 1rem 2.2rem;
+		font-size: 15px;
+	}
+
+	.schedule-students__actions-btns {
+		gap: 1.1rem;
+	}
+
+	.schedule-students__duration-options {
+		gap: 1rem;
+		padding: 0.6rem;
+	}
+}
+
+/* ≥ 1280px — large desktop */
+@media (min-width: 1280px) {
+	.schedule-students__surface {
+		/* keep filling the container at large desktop sizes */
+		max-width: none;
+		width: 100%;
+		margin: 0;
+	}
+
+	.schedule-students__timeslot-grid {
+		gap: 0.85rem;
+	}
+
+	.schedule-students__form {
+		gap: clamp(1rem, 1.5vw, 1.3rem);
 	}
 }
 
@@ -968,11 +1558,11 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 		padding: 0.78rem 0.85rem;
 	}
 
-		.schedule-students__timeslot-grid {
-			grid-template-columns: 1fr;
-			gap: 0.6rem;
-			grid-auto-rows: minmax(3.5rem, auto);
-		}
+	.schedule-students__timeslot-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.6rem;
+		grid-auto-rows: minmax(3.5rem, auto);
+	}
 
 	.schedule-students__timeslot-btn {
 		padding: 0.8rem 0.82rem 0.74rem;
@@ -1058,6 +1648,56 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 		padding: 0.78rem 0.82rem 0.72rem;
 	}
 
+	.schedule-students__timeslot-timeblock {
+		gap: 0.22rem;
+	}
+
+	.schedule-students__timeslot-btn-start {
+		font-size: 0.92rem;
+	}
+
+	.schedule-students__timeslot-btn-end {
+		font-size: 0.82rem;
+	}
+
+	.schedule-students__timeslot-btn-separator {
+		height: 1.25rem;
+	}
+
+	.schedule-students__timeslot-status {
+		font-size: 0.64rem;
+	}
+
+	.schedule-students__timeslot-btn-range,
+	.schedule-students__timeslot-btn-meta {
+		font-size: 0.68rem;
+	}
+
+	.schedule-students__timeslot-timeblock {
+		gap: 0.2rem;
+	}
+
+	.schedule-students__timeslot-btn-start {
+		font-size: 0.9rem;
+	}
+
+	.schedule-students__timeslot-btn-end {
+		font-size: 0.8rem;
+	}
+
+	.schedule-students__timeslot-btn-separator {
+		height: 1.15rem;
+	}
+
+	.schedule-students__timeslot-status {
+		font-size: 0.63rem;
+	}
+
+	.schedule-students__timeslot-btn-range,
+	.schedule-students__timeslot-btn-meta {
+		font-size: 0.66rem;
+	}
+
 	.schedule-students__field textarea {
 		min-height: clamp(3.75rem, 15vh, 5rem);
 	}
@@ -1076,6 +1716,27 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 	.schedule-students__date-menu {
 		max-height: min(19rem, 72vh);
 		overflow-y: auto;
+	}
+
+	.schedule-students__hold-info {
+		padding: 0.95rem 1rem;
+		gap: 0.65rem;
+	}
+
+	.hold-info__countdown {
+		grid-auto-flow: row;
+		gap: 0.65rem;
+		padding: 0.75rem;
+	}
+
+	.countdown__clock {
+		font-size: 1.5rem;
+		min-width: 4rem;
+		padding: 0.55rem 0.85rem;
+	}
+
+	.countdown__note {
+		font-size: 0.75rem;
 	}
 }
 
@@ -1141,6 +1802,23 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 	.schedule-students-page--content-hidden .schedule-students__message,
 	.schedule-students-page--content-visible .page-header,
 	.schedule-students-page--content-visible .schedule-students__surface,
+	.hold-info__countdown,
+	.countdown__clock {
+		animation: none !important;
+		transition: none !important;
+	}
+
+	.schedule-students__hold-info {
+		animation: none !important;
+	}
+
+	.countdown__clock {
+		box-shadow:
+			0 0 0 1px rgba(190, 21, 46, 0.2),
+			0 8px 18px rgba(190, 21, 46, 0.2),
+			0 2px 6px rgba(0, 0, 0, 0.1) inset !important;
+	}
+
 	.schedule-students-page--content-visible .schedule-students__status,
 	.schedule-students-page--content-visible .schedule-students__message,
 	.schedule-students__menu,
@@ -1149,4 +1827,38 @@ to { opacity: 1; transform: translateY(0) scale(1); }
 		animation: none !important;
 		transition: none !important;
 	}
+}
+
+/* Unified control height for inputs, date picker, and duration picker */
+:root {
+	--schedule-control-height: 55px;
+}
+
+/* Apply uniform height and vertical centering to key controls */
+.schedule-students__menu-field input,
+.schedule-students__menu-trigger,
+.schedule-students__duration-options {
+	min-height: var(--schedule-control-height);
+	height: var(--schedule-control-height);
+	display: inline-flex;
+	align-items: center;
+}
+
+/* Ensure duration segments fill the control height */
+.schedule-students__duration-segments,
+.schedule-students__duration-segment {
+	height: 100%;
+}
+
+/* Remove extra vertical padding that could alter visual height */
+.schedule-students__menu-field input,
+.schedule-students__menu-trigger {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+/* Keep internal spacing for duration segment labels while centering */
+.schedule-students__duration-segment {
+	padding-left: 0.75rem;
+	padding-right: 0.75rem;
 }
