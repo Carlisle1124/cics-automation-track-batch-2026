@@ -10,6 +10,7 @@ import {
 import PageHeader from '../../shared/components/PageHeader';
 import { formatTimeRange } from '../../shared/utils/datetime';
 import './Profile.css';
+import { supabase } from '../../data/supabaseClient.js';
 
 function formatDate(dateValue) {
 	if (!dateValue) return 'N/A';
@@ -36,6 +37,9 @@ function getInitials(name) {
 
 export default function Profile() {
 	const [user, setUser] = useState(null);
+	const [reservationCount, setReservationCount] = useState(0);
+	const [hoursBooked, setHoursBooked] = useState(0);
+	const [spentHours, setspentHours] = useState(0);
 
 	useEffect(() => {
 		let active = true;
@@ -55,6 +59,66 @@ export default function Profile() {
 		};
 	}, []);
 
+	useEffect(() => {
+	if (!user) return;
+
+	const fetchReservationCount = async () => {
+		const { data, error } = await supabase.rpc(
+			'user_reservation_count',
+			{ p_user_id: user.id }
+		);
+
+		if (error) {
+			console.error('Error fetching reservation count:', error);
+			return;
+		}
+
+		setReservationCount(data);
+	};
+
+	fetchReservationCount();
+}, [user]);
+
+	useEffect(() => {
+	if (!user) return;
+
+	const fetchBookedHours = async () => {
+		const { data, error } = await supabase.rpc(
+			'user_booked_reservation_hours',
+			{ p_user_id: user.id }
+		);
+
+		if (error) {
+			console.error(error);
+			return;
+		}
+
+		setHoursBooked(data);
+	};
+
+	fetchBookedHours();
+	}, [user]);
+
+	useEffect(() => {
+	if (!user) return;
+
+	const fetchPastHours = async () => {
+		const { data, error } = await supabase.rpc(
+			'user_past_reservation_hours',
+			{ p_user_id: user.id }
+		);
+
+		if (error) {
+			console.error(error);
+			return;
+		}
+
+		setspentHours(data);
+	};
+
+	fetchPastHours();
+	}, [user]);
+
 	const stats = useMemo(() => {
 		if (!user) return null;
 
@@ -71,14 +135,15 @@ export default function Profile() {
 
 		const completedReservations = userReservations.filter((item) => item.status === 'completed').length;
 
-		const reservationsMade = userReservations.length;
-		const bookedHours = userReservations.reduce((total, item) => total + (item.slotIds?.length ?? 0), 0);
+		const reservationsMade = reservationCount;
+		const bookedHours = hoursBooked;
+		const hoursSpent = spentHours;
 
 		const occupancyRecords = OCCUPANCY.filter((entry) => entry.userId === user.id);
 		const checkIns = occupancyRecords.length;
 
 		// Fallback to completed+checked_in slot count if occupancy logs are sparse in mock data.
-		const hoursSpent = userReservations
+		const fallbackhoursSpent = userReservations
 			.filter((item) => ['completed', 'checked_in'].includes(item.status))
 			.reduce((total, item) => total + (item.slotIds?.length ?? 0), 0);
 
@@ -95,7 +160,7 @@ export default function Profile() {
 			activeAlerts,
 			unreadNotifications,
 		};
-	}, [user]);
+	}, [user, reservationCount, hoursBooked, spentHours]);
 
 	if (!user || !stats) {
 		return (
