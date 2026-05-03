@@ -304,7 +304,7 @@ export default function Profile() {
 						</div>
 						<div className="profile-row">
 							<span className="profile-row__label">Member Since</span>
-							<span className="profile-row__value">{formatDate(user.createdAt)}</span>
+							<span className="profile-row__value">{formatDate(user.created_at)}</span>
 						</div>
 					</div>
 				</article>

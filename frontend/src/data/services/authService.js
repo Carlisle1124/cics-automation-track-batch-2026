@@ -6,7 +6,7 @@ export async function getCurrentUser() {
 
 	const { data, error } = await supabase
 		.from('users')
-		.select('id, full_name, role, email, student_id')
+		.select('id, full_name, role, email, student_id, created_at')
 		.eq('id', session.user.id)
 		.single();
 
