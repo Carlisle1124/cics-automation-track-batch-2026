@@ -40,6 +40,7 @@ export default function Profile() {
 	const [reservationCount, setReservationCount] = useState(0);
 	const [hoursBooked, setHoursBooked] = useState(0);
 	const [spentHours, setspentHours] = useState(0);
+	const [checkinCount, setCheckinCount] = useState(0);
 
 	useEffect(() => {
 		let active = true;
@@ -119,6 +120,26 @@ export default function Profile() {
 	fetchPastHours();
 	}, [user]);
 
+	useEffect(() => {
+	if (!user) return;
+
+	const fetchCheckinCount = async () => {
+		const { data, error } = await supabase.rpc(
+			'user_check_in_count',
+			{ p_user_id: user.id }
+		);
+
+		if (error) {
+			console.error('Error fetching check-in count:', error);
+			return;
+		}
+
+		setCheckinCount(data);
+	};
+
+	fetchCheckinCount();
+}, [user]);
+
 	const stats = useMemo(() => {
 		if (!user) return null;
 
@@ -138,9 +159,7 @@ export default function Profile() {
 		const reservationsMade = reservationCount;
 		const bookedHours = hoursBooked;
 		const hoursSpent = spentHours;
-
-		const occupancyRecords = OCCUPANCY.filter((entry) => entry.userId === user.id);
-		const checkIns = occupancyRecords.length;
+		const checkIns = checkinCount;
 
 		// Fallback to completed+checked_in slot count if occupancy logs are sparse in mock data.
 		const fallbackhoursSpent = userReservations
@@ -160,7 +179,7 @@ export default function Profile() {
 			activeAlerts,
 			unreadNotifications,
 		};
-	}, [user, reservationCount, hoursBooked, spentHours]);
+	}, [user, reservationCount, hoursBooked, spentHours, checkinCount]);
 
 	if (!user || !stats) {
 		return (
