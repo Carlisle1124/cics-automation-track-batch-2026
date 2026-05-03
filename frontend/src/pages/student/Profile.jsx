@@ -41,6 +41,8 @@ export default function Profile() {
 	const [hoursBooked, setHoursBooked] = useState(0);
 	const [spentHours, setspentHours] = useState(0);
 	const [checkinCount, setCheckinCount] = useState(0);
+	const [upcomingResCount, setUpcomingResCount] = useState(0);
+	const [completedResCount, setCompletedResCount] = useState(0);
 
 	useEffect(() => {
 		let active = true;
@@ -140,6 +142,46 @@ export default function Profile() {
 	fetchCheckinCount();
 }, [user]);
 
+	useEffect(() => {
+	if (!user) return;
+
+	const fetchUpcomingResCount = async () => {
+		const { data, error } = await supabase.rpc(
+			'user_upcoming_res_count',
+			{ p_user_id: user.id }
+		);
+
+		if (error) {
+			console.error(error);
+			return;
+		}
+
+		setUpcomingResCount(data);
+	};
+
+	fetchUpcomingResCount();
+	}, [user]);
+
+	useEffect(() => {
+	if (!user) return;
+
+	const fetchCompletedResCount = async () => {
+		const { data, error } = await supabase.rpc(
+			'user_completed_res_count',
+			{ p_user_id: user.id }
+		);
+
+		if (error) {
+			console.error(error);
+			return;
+		}
+
+		setCompletedResCount(data);
+	};
+
+	fetchCompletedResCount();
+	}, [user]);
+
 	const stats = useMemo(() => {
 		if (!user) return null;
 
@@ -147,19 +189,21 @@ export default function Profile() {
 		today.setHours(0, 0, 0, 0);
 
 		const userReservations = RESERVATIONS.filter((item) => item.userId === user.id);
-		const upcomingReservations = userReservations.filter((item) => {
-			const reservationDate = new Date(item.date);
-			reservationDate.setHours(0, 0, 0, 0);
-
-			return reservationDate >= today && ['pending', 'confirmed', 'checked_in'].includes(item.status);
-		}).length;
-
-		const completedReservations = userReservations.filter((item) => item.status === 'completed').length;
+//		const upcomingReservations = userReservations.filter((item) => {
+//			const reservationDate = new Date(item.date);
+//			reservationDate.setHours(0, 0, 0, 0);
+//
+//			return reservationDate >= today && ['pending', 'confirmed', 'checked_in'].includes(item.status);
+//		}).length;
+//		const completedReservations = userReservations.filter((item) => item.status === 'completed').length;
+//		^ not sure what this is for, pero iwan ko na muna dito in case needed sya     - Cath
 
 		const reservationsMade = reservationCount;
 		const bookedHours = hoursBooked;
 		const hoursSpent = spentHours;
 		const checkIns = checkinCount;
+		const upcomingReservations = upcomingResCount;
+		const completedReservations = completedResCount;
 
 		// Fallback to completed+checked_in slot count if occupancy logs are sparse in mock data.
 		const fallbackhoursSpent = userReservations
@@ -179,7 +223,7 @@ export default function Profile() {
 			activeAlerts,
 			unreadNotifications,
 		};
-	}, [user, reservationCount, hoursBooked, spentHours, checkinCount]);
+	}, [user, reservationCount, hoursBooked, spentHours, checkinCount, upcomingResCount, completedResCount]);
 
 	if (!user || !stats) {
 		return (
