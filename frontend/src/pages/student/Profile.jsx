@@ -299,10 +299,6 @@ export default function Profile() {
 							<span className="profile-row__value">{user.student_id ?? 'Not assigned'}</span>
 						</div>
 						<div className="profile-row">
-							<span className="profile-row__label">Remember Me</span>
-							<span className="profile-row__value">{user.rememberMe ? 'Enabled' : 'Disabled'}</span>
-						</div>
-						<div className="profile-row">
 							<span className="profile-row__label">Member Since</span>
 							<span className="profile-row__value">{formatDate(user.created_at)}</span>
 						</div>
