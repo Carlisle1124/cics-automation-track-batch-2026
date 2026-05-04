@@ -4,6 +4,7 @@ import {
     CalendarDots,
     ChartLineUp,
     ClipboardText,
+    Fingerprint,
     House,
     IdentificationCard,
     List,
@@ -30,6 +31,7 @@ const adminLinks = [
 const staffLinks = [
     { to: '/staff', label: 'Pending Requests', icon: ClipboardText, end: true },
     { to: '/staff/schedule-for-students', label: 'Schedule for Students', icon: CalendarDots },
+    { to: '/staff/check-in', label: 'Check In / Out', icon: Fingerprint },
 ];
 
 export default function Navbar({ role }) {

@@ -1,0 +1,575 @@
+.check-in-page {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	flex: 0 0 auto;
+	width: 100%;
+	max-width: 100%;
+	height: auto;
+	box-sizing: border-box;
+	padding: clamp(0.75rem, 1.2vw, 1rem);
+	padding-bottom: calc(clamp(0.75rem, 1.2vw, 1rem) + env(safe-area-inset-bottom));
+	gap: clamp(0.55rem, 0.9vw, 0.8rem);
+	border-radius: var(--radius-xl);
+	overflow: visible;
+}
+
+/* ── Page-enter animation ────────────────────────────────────────────────── */
+.check-in-page--hidden .page-header,
+.check-in-page--hidden .check-in__clock-shell,
+.check-in-page--hidden .check-in__slot-shell,
+.check-in-page--hidden .check-in__panels {
+	opacity: 0;
+	transform: translateY(1.25rem);
+	pointer-events: none;
+}
+
+.check-in-page--visible .page-header,
+.check-in-page--visible .check-in__clock-shell,
+.check-in-page--visible .check-in__slot-shell,
+.check-in-page--visible .check-in__panels {
+	opacity: 1;
+	transform: translateY(0);
+	transition:
+		opacity 420ms var(--ease-standard),
+		transform 560ms var(--ease-standard);
+}
+
+.check-in-page--visible .page-header        { transition-delay: 40ms; }
+.check-in-page--visible .check-in__clock-shell { transition-delay: 70ms; }
+.check-in-page--visible .check-in__slot-shell  { transition-delay: 100ms; }
+.check-in-page--visible .check-in__panels      { transition-delay: 130ms; }
+
+/* ── Clock ───────────────────────────────────────────────────────────────── */
+.check-in__clock-shell {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.35rem;
+	padding: clamp(1.25rem, 3vw, 2rem) clamp(1rem, 3vw, 2.5rem);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-xl);
+	background: linear-gradient(
+		160deg,
+		color-mix(in oklab, var(--bg-card) 94%, white 6%),
+		color-mix(in oklab, var(--bg-elevated) 90%, white 10%)
+	);
+	box-shadow: 0 8px 18px rgba(122, 0, 20, 0.04);
+	text-align: center;
+}
+
+.check-in__clock {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	line-height: 1;
+}
+
+.check-in__clock-time {
+	font-size: clamp(2.8rem, 10vw, 5rem);
+	font-weight: 800;
+	letter-spacing: -0.03em;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-primary);
+}
+
+.check-in__clock-period {
+	font-size: clamp(1rem, 3vw, 1.6rem);
+	font-weight: 700;
+	color: var(--primary-5);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	align-self: flex-end;
+	padding-bottom: 0.2em;
+}
+
+.check-in__clock-date {
+	font-size: clamp(0.8rem, 2vw, 1rem);
+	color: var(--text-secondary);
+	font-weight: 500;
+	letter-spacing: 0.01em;
+}
+
+/* ── Error banner ────────────────────────────────────────────────────────── */
+.check-in__error {
+	padding: 0.75rem 1rem;
+	background: color-mix(in oklab, #be152e 10%, white 90%);
+	border: 1px solid color-mix(in oklab, #be152e 30%, transparent 70%);
+	border-radius: var(--radius-md);
+	color: #8f001a;
+	font-size: 0.875rem;
+	font-weight: 600;
+}
+
+/* ── Shared section headers ──────────────────────────────────────────────── */
+.check-in__section-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.check-in__section-label {
+	font-size: 0.72rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-secondary);
+}
+
+.check-in__section-count {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--text-secondary);
+}
+
+/* ── Schedule slot grid ──────────────────────────────────────────────────── */
+.check-in__slot-shell {
+	padding: clamp(0.9rem, 1.5vw, 1.25rem);
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-xl);
+	background: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--bg-card) 96%, white 4%),
+		color-mix(in oklab, var(--bg-elevated) 92%, white 8%)
+	);
+	box-shadow: 0 8px 18px rgba(122, 0, 20, 0.03);
+}
+
+.check-in__slot-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 0.4rem;
+}
+
+.check-in__slot {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3rem;
+	padding: 0.55rem 0.4rem;
+	border-radius: var(--radius-md);
+	border: 1px solid var(--border-subtle);
+	background: color-mix(in oklab, var(--bg-elevated) 80%, transparent 20%);
+	transition: background var(--duration-fast) var(--ease-standard);
+	min-width: 0;
+}
+
+.check-in__slot {
+	cursor: pointer;
+}
+
+.check-in__slot:focus-visible {
+	outline: 2px solid var(--primary-5);
+	outline-offset: 2px;
+}
+
+.check-in__slot--now {
+	border-color: color-mix(in oklab, var(--primary-5) 40%, transparent 60%);
+	background: color-mix(in oklab, var(--primary-5) 6%, var(--bg-elevated) 94%);
+	box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary-5) 15%, transparent 85%);
+}
+
+.check-in__slot--selected {
+	border-color: var(--primary-5);
+	background: color-mix(in oklab, var(--primary-5) 10%, var(--bg-elevated) 90%);
+	box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary-5) 25%, transparent 75%);
+}
+
+.check-in__slot--selected .check-in__slot-hour {
+	color: var(--primary-5);
+}
+
+.check-in__slot--active {
+	background: color-mix(in oklab, var(--bg-elevated) 60%, var(--bg-card) 40%);
+}
+
+.check-in__slot-hour {
+	font-size: 0.7rem;
+	font-weight: 700;
+	color: var(--text-secondary);
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+}
+
+.check-in__slot--now .check-in__slot-hour {
+	color: var(--primary-5);
+}
+
+.check-in__slot-body {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.2rem;
+	width: 100%;
+}
+
+.check-in__slot-dash {
+	font-size: 0.75rem;
+	color: color-mix(in oklab, var(--text-secondary) 40%, transparent 60%);
+}
+
+.check-in__slot-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.15rem 0.45rem;
+	border-radius: 999px;
+	font-size: 0.62rem;
+	font-weight: 700;
+	white-space: nowrap;
+	line-height: 1.3;
+}
+
+.check-in__slot-badge--pending {
+	background: color-mix(in oklab, #6b7280 12%, white 88%);
+	color: #374151;
+	border: 1px solid color-mix(in oklab, #6b7280 28%, transparent 72%);
+}
+
+.check-in__slot-badge--approved {
+	background: color-mix(in oklab, #f59e0b 14%, white 86%);
+	color: #92400e;
+	border: 1px solid color-mix(in oklab, #f59e0b 30%, transparent 70%);
+}
+
+.check-in__slot-badge--in {
+	background: color-mix(in oklab, #10b981 14%, white 86%);
+	color: #064e35;
+	border: 1px solid color-mix(in oklab, #10b981 30%, transparent 70%);
+}
+
+.check-in__slot-badge--completed {
+	background: color-mix(in oklab, #3b82f6 12%, white 88%);
+	color: #1e3a8a;
+	border: 1px solid color-mix(in oklab, #3b82f6 28%, transparent 72%);
+}
+
+/* ── Two-panel grid ─────────────────────────────────────────────────────── */
+.check-in__panels {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: clamp(0.55rem, 0.9vw, 0.8rem);
+}
+
+.check-in__panel {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-xl);
+	background: linear-gradient(
+		180deg,
+		color-mix(in oklab, var(--bg-card) 96%, white 4%),
+		color-mix(in oklab, var(--bg-elevated) 92%, white 8%)
+	);
+	box-shadow: 0 8px 18px rgba(122, 0, 20, 0.03);
+	overflow: hidden;
+}
+
+.check-in__panel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.85rem 1rem 0.6rem;
+	border-bottom: 1px solid var(--border-subtle);
+}
+
+.check-in__panel-count {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--text-secondary);
+}
+
+/* ── Panel search bar ───────────────────────────────────────────────────── */
+.check-in__panel-search {
+	position: relative;
+	display: flex;
+	align-items: center;
+	padding: 0.5rem 0.75rem;
+	border-bottom: 1px solid var(--border-subtle);
+	background: color-mix(in oklab, var(--bg-elevated) 50%, transparent 50%);
+}
+
+.check-in__panel-search-icon {
+	flex-shrink: 0;
+	color: var(--text-secondary);
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+.check-in__panel-search-input {
+	flex: 1;
+	border: none;
+	background: transparent;
+	outline: none;
+	font-size: 0.8rem;
+	color: var(--text-primary);
+	padding: 0.15rem 0.5rem;
+	min-width: 0;
+}
+
+.check-in__panel-search-input::placeholder {
+	color: var(--text-secondary);
+	opacity: 0.6;
+}
+
+.check-in__panel-search-input::-webkit-search-cancel-button {
+	display: none;
+}
+
+.check-in__panel-search-clear {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	border: none;
+	background: color-mix(in oklab, var(--text-secondary) 18%, transparent 82%);
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: 0;
+	transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.check-in__panel-search-clear:hover {
+	background: color-mix(in oklab, var(--text-secondary) 28%, transparent 72%);
+}
+
+/* ── Student rows ────────────────────────────────────────────────────────── */
+.check-in__list {
+	display: flex;
+	flex-direction: column;
+}
+
+.check-in__empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem 1rem;
+	font-size: 0.9rem;
+	color: var(--text-secondary);
+}
+
+.check-in__row {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.75rem 1rem;
+	border-bottom: 1px solid var(--border-subtle);
+	transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.check-in__row:last-child {
+	border-bottom: none;
+}
+
+.check-in__row:hover {
+	background: color-mix(in oklab, var(--bg-elevated) 60%, transparent 40%);
+}
+
+.check-in__row--inside {
+	background: color-mix(in oklab, #10b981 3%, transparent 97%);
+}
+
+.check-in__row--inside:hover {
+	background: color-mix(in oklab, #10b981 6%, var(--bg-elevated) 94%);
+}
+
+.check-in__row-avatar {
+	flex-shrink: 0;
+	color: var(--text-secondary);
+	opacity: 0.7;
+}
+
+.check-in__row-avatar--inside {
+	color: #10b981;
+	opacity: 1;
+}
+
+.check-in__row-info {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.check-in__row-name {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.check-in__row-time {
+	font-size: 0.78rem;
+	color: var(--text-secondary);
+	font-weight: 500;
+}
+
+.check-in__row-meta {
+	font-size: 0.72rem;
+	color: #10b981;
+	font-weight: 600;
+}
+
+/* ── Action buttons ──────────────────────────────────────────────────────── */
+.check-in__action-btn {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.45rem 0.9rem;
+	border-radius: 999px;
+	font-size: 0.8rem;
+	font-weight: 700;
+	cursor: pointer;
+	border: 1px solid transparent;
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard),
+		opacity var(--duration-fast) var(--ease-standard);
+	white-space: nowrap;
+}
+
+.check-in__action-btn:hover:not(:disabled) {
+	transform: translateY(-1px);
+}
+
+.check-in__action-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	transform: none;
+}
+
+.check-in__action-btn--in {
+	background: linear-gradient(180deg, #c91c35 0%, #8f001a 100%);
+	color: #fff;
+	box-shadow: 0 4px 12px rgba(143, 0, 26, 0.25);
+}
+
+.check-in__action-btn--in:hover:not(:disabled) {
+	box-shadow: 0 6px 18px rgba(143, 0, 26, 0.35);
+}
+
+.check-in__action-btn--out {
+	background: color-mix(in oklab, #10b981 12%, white 88%);
+	color: #064e35;
+	border-color: color-mix(in oklab, #10b981 35%, transparent 65%);
+	box-shadow: 0 4px 10px rgba(16, 185, 129, 0.12);
+}
+
+.check-in__action-btn--out:hover:not(:disabled) {
+	background: color-mix(in oklab, #10b981 20%, white 80%);
+	box-shadow: 0 6px 14px rgba(16, 185, 129, 0.2);
+}
+
+/* ── Loading overlay ─────────────────────────────────────────────────────── */
+.check-in-page-transition {
+	position: fixed;
+	inset: 0;
+	z-index: 9999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(122, 18, 39, 0.14);
+	backdrop-filter: blur(12px) saturate(1.04);
+	-webkit-backdrop-filter: blur(12px) saturate(1.04);
+}
+
+.check-in-page-transition__card {
+	width: min(88vw, 228px);
+	padding: 22px 20px;
+	border: 1px solid rgba(123, 0, 20, 0.12);
+	border-radius: 1rem;
+	background: linear-gradient(
+		180deg,
+		rgba(255, 255, 255, 0.94) 0%,
+		rgba(247, 241, 233, 0.98) 100%
+	);
+	box-shadow: 0 22px 44px rgba(90, 0, 16, 0.16);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+}
+
+.check-in-page-transition__logo {
+	width: 86px;
+	height: auto;
+	display: block;
+	filter: drop-shadow(0 10px 18px rgba(90, 0, 16, 0.08));
+}
+
+.check-in-page-transition__loader {
+	width: 128px;
+	height: 6px;
+	border-radius: 999px;
+	background: rgba(190, 21, 46, 0.1);
+	overflow: hidden;
+}
+
+.check-in-page-transition__loader span {
+	display: block;
+	width: 42%;
+	height: 100%;
+	border-radius: 999px;
+	background: linear-gradient(90deg, #8f001a 0%, #c91c35 65%, #e5c27a 100%);
+	animation: checkin-loader-move 1.15s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes checkin-loader-move {
+	0%   { transform: translateX(-120%); }
+	50%  { transform: translateX(120%); }
+	100% { transform: translateX(320%); }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (min-width: 480px) {
+	.check-in__slot-grid {
+		grid-template-columns: repeat(5, 1fr);
+	}
+}
+
+@media (min-width: 640px) {
+	.check-in__slot-grid {
+		grid-template-columns: repeat(7, 1fr);
+	}
+}
+
+@media (min-width: 768px) {
+	.check-in__panels {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.check-in__slot-grid {
+		grid-template-columns: repeat(7, 1fr);
+	}
+}
+
+@media (min-width: 1024px) {
+	.check-in__slot-grid {
+		grid-template-columns: repeat(14, 1fr);
+	}
+}
+
+@media (max-width: 400px) {
+	.check-in__clock-time {
+		font-size: 2.4rem;
+	}
+
+	.check-in__action-btn {
+		padding: 0.4rem 0.6rem;
+		font-size: 0.72rem;
+	}
+
+	.check-in__action-btn svg {
+		display: none;
+	}
+}

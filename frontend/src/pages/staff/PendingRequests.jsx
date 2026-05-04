@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, MagnifyingGlass, X } from '@phosphor-icons/react';
 import { supabase } from '../../data/supabaseClient';
 import PageHeader from '../../shared/components/PageHeader';
@@ -120,6 +120,9 @@ export default function PendingRequests() {
 	const [acceptedIds, setAcceptedIds] = useState(new Set());
 	const [dismissingIds, setDismissingIds] = useState(new Set());
 
+	const [autoAccept, setAutoAccept] = useState(false);
+	const [autoAcceptLoading, setAutoAcceptLoading] = useState(false);
+
 	const [denyModal, setDenyModal] = useState(null);
 	const [denyReason, setDenyReason] = useState('');
 	const [denySubmitting, setDenySubmitting] = useState(false);
@@ -190,6 +193,53 @@ export default function PendingRequests() {
 		document.addEventListener('keydown', handler);
 		return () => document.removeEventListener('keydown', handler);
 	}, [denyModal]);
+
+	// Fetch auto-accept state from backend on mount
+	useEffect(() => {
+		const backendUrl = import.meta.env.VITE_BACKEND_URL;
+		fetch(`${backendUrl}/api/settings/auto-accept`)
+			.then((r) => r.json())
+			.then((body) => { if (body.ok) setAutoAccept(body.enabled); })
+			.catch(() => {});
+	}, []);
+
+	// Real-time: remove cards when backend approves/denies them
+	const quietRefresh = useCallback(async () => {
+		const [pendingResult, resolvedResult] = await Promise.all([
+			supabase
+				.from('reservations')
+				.select('id, user_id, reservation_date, start_time, end_time, status, created_at')
+				.eq('status', 'pending')
+				.order('created_at', { ascending: false }),
+			supabase
+				.from('reservations')
+				.select('id, user_id, reservation_date, start_time, end_time, status, created_at')
+				.in('status', ['approved', 'denied', 'auto_cancelled', 'no_show', 'completed'])
+				.order('created_at', { ascending: false })
+				.limit(100),
+		]);
+
+		const allRows = [...(pendingResult.data ?? []), ...(resolvedResult.data ?? [])];
+		const userIds = [...new Set(allRows.map((r) => r.user_id).filter(Boolean))];
+		const usersMap = {};
+		if (userIds.length > 0) {
+			const { data: usersData } = await supabase
+				.from('users').select('id, full_name, email').in('id', userIds);
+			(usersData ?? []).forEach((u) => { usersMap[u.id] = u; });
+		}
+		if (pendingResult.data) setAllPending(pendingResult.data.map((r) => enrichRow(r, usersMap)));
+		if (resolvedResult.data) setRecentlyResolved(resolvedResult.data.map((r) => enrichRow(r, usersMap)));
+	}, []);
+
+	useEffect(() => {
+		const channel = supabase
+			.channel('pending-requests-live')
+			.on('postgres_changes', { event: '*', schema: 'public', table: 'reservations' }, () => {
+				quietRefresh();
+			})
+			.subscribe();
+		return () => supabase.removeChannel(channel);
+	}, [quietRefresh]);
 
 	const todayStr = getTodayStr();
 	const { mondayStr, sundayStr } = getWeekBounds();
@@ -298,10 +348,18 @@ export default function PendingRequests() {
 				subtitle="Approve or decline requests submitted by students."
 			/>
 
-			<div className="pending-requests__cards-shell">
+			<div className={`pending-requests__cards-shell${autoAccept ? ' pending-requests__cards-shell--auto-active' : ''}`}>
 				<div className="pending-requests__section-header">
 					<div className="pending-requests__section-copy">
-						<div className="pending-requests__section-label">Pending Queue</div>
+						<div className="pending-requests__section-label">
+							Pending Queue
+							{autoAccept && (
+								<span className="pending-requests__auto-badge">
+									<span className="pending-requests__auto-badge-dot" />
+									Auto-Accepting
+								</span>
+							)}
+						</div>
 						<div className="pending-requests__section-description">
 							Review, approve, or decline requests submitted by students.
 						</div>
@@ -310,6 +368,39 @@ export default function PendingRequests() {
 						<div className="pending-requests__section-count">
 							{filteredPending.length} request{filteredPending.length === 1 ? '' : 's'} pending
 						</div>
+						<label className={`pending-requests__auto-toggle${autoAcceptLoading ? ' pending-requests__auto-toggle--loading' : ''}`} aria-label="Toggle auto-accept">
+							<span className="pending-requests__auto-toggle-label">
+								Auto-Accept
+							</span>
+							<span className={`pending-requests__auto-toggle-track${autoAccept ? ' pending-requests__auto-toggle-track--on' : ''}`}>
+								<input
+									type="checkbox"
+									className="pending-requests__auto-toggle-input"
+									checked={autoAccept}
+									disabled={autoAcceptLoading}
+									onChange={async (e) => {
+										const next = e.target.checked;
+										setAutoAcceptLoading(true);
+										try {
+											const backendUrl = import.meta.env.VITE_BACKEND_URL;
+											const res = await fetch(`${backendUrl}/api/settings/auto-accept`, {
+												method: 'POST',
+												headers: { 'Content-Type': 'application/json' },
+												body: JSON.stringify({ enabled: next }),
+											});
+											const body = await res.json();
+											if (body.ok) setAutoAccept(next);
+										} catch (err) {
+											console.error('[PendingRequests] auto-accept toggle failed:', err.message);
+										} finally {
+											setAutoAcceptLoading(false);
+										}
+									}}
+									aria-label="Auto-accept pending requests"
+								/>
+								<span className="pending-requests__auto-toggle-thumb" />
+							</span>
+						</label>
 					</div>
 				</div>
 

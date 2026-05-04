@@ -21,6 +21,7 @@ import Users from '../pages/admin/Users';
 //staff pages
 import PendingRequests from '../pages/staff/PendingRequests';
 import ScheduleForStudents from '../pages/staff/ScheduleForStudents';
+import CheckIn from '../pages/staff/CheckIn';
 
 //auth pages
 import Login from '../pages/auth/Login';
@@ -55,6 +56,7 @@ export default function App() {
                 <Route path="/staff" element={<ProtectedRoute requiredRole="staff"><StaffLayout /></ProtectedRoute>}>
                     <Route index element={<PendingRequests />} />
                     <Route path="schedule-for-students" element={<ScheduleForStudents />} />
+                    <Route path="check-in" element={<CheckIn />} />
                 </Route>
 
                 <Route path="/auth/login" element={<Login />} />

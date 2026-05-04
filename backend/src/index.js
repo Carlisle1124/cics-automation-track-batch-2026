@@ -4,6 +4,7 @@ const cron = require('node-cron');
 const { runAutoCancellation } = require('./jobs/autoCancellation');
 const { runHoldCleanup } = require('./jobs/holdCleanup');
 const { runExtensionNotifier } = require('./jobs/extensionNotifier');
+const { runAutoAccept } = require('./jobs/autoAccept');
 
 const { startApiServer } = require('./apiServer');
 
@@ -29,6 +30,13 @@ cron.schedule('* * * * *', () => {
 cron.schedule('* * * * *', () => {
 	runExtensionNotifier().catch((err) => {
 		console.error('[server] Unhandled error in extensionNotifier job:', err);
+	});
+});
+
+// Auto-approves all pending reservations when the setting is enabled
+cron.schedule('* * * * *', () => {
+	runAutoAccept().catch((err) => {
+		console.error('[server] Unhandled error in autoAccept job:', err);
 	});
 });
 

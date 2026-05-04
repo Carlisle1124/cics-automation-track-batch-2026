@@ -52,6 +52,58 @@ async function handleRelease(reservationId, res) {
 	res.end(JSON.stringify({ ok: !!data?.length, deleted: data?.length ?? 0 }));
 }
 
+async function handleGetAutoAccept(res) {
+	const { data, error } = await supabaseAdmin
+		.from('settings')
+		.select('auto_accept_reservations')
+		.eq('id', 1)
+		.single();
+
+	if (error) {
+		res.writeHead(500);
+		res.end(JSON.stringify({ ok: false, error: error.message }));
+		return;
+	}
+
+	res.writeHead(200);
+	res.end(JSON.stringify({ ok: true, enabled: !!data?.auto_accept_reservations }));
+}
+
+async function handleSetAutoAccept(enabled, res) {
+	const { error: upsertError } = await supabaseAdmin
+		.from('settings')
+		.update({ auto_accept_reservations: !!enabled })
+		.eq('id', 1);
+
+	if (upsertError) {
+		console.error('[auto-accept] upsert error:', upsertError.message, upsertError.code);
+		res.writeHead(500);
+		res.end(JSON.stringify({ ok: false, error: upsertError.message }));
+		return;
+	}
+
+	let approved = 0;
+	if (enabled) {
+		const { data: pending } = await supabaseAdmin
+			.from('reservations')
+			.select('id')
+			.eq('status', 'pending');
+
+		if (pending && pending.length > 0) {
+			const ids = pending.map((r) => r.id);
+			await supabaseAdmin
+				.from('reservations')
+				.update({ status: 'approved' })
+				.in('id', ids);
+			approved = ids.length;
+			console.log(`[auto-accept] Enabled — immediately approved ${approved} pending reservation(s).`);
+		}
+	}
+
+	res.writeHead(200);
+	res.end(JSON.stringify({ ok: true, approved }));
+}
+
 async function handleDecline(reservationId, reason, res) {
 	console.log('[decline] START id=%s reason="%s"', reservationId, reason?.slice(0, 40));
 
@@ -212,6 +264,27 @@ function startApiServer(port = process.env.PORT || 3000) {
 		if (url === '/health') {
 			res.writeHead(200);
 			res.end(JSON.stringify({ ok: true }));
+			return;
+		}
+
+		if (url === '/api/settings/auto-accept' && req.method === 'GET') {
+			try {
+				await handleGetAutoAccept(res);
+			} catch (err) {
+				res.writeHead(500);
+				res.end(JSON.stringify({ ok: false, error: err.message }));
+			}
+			return;
+		}
+
+		if (url === '/api/settings/auto-accept' && req.method === 'POST') {
+			try {
+				const body = await readBody(req);
+				await handleSetAutoAccept(!!body.enabled, res);
+			} catch (err) {
+				res.writeHead(500);
+				res.end(JSON.stringify({ ok: false, error: err.message }));
+			}
 			return;
 		}
 
