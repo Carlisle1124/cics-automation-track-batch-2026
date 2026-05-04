@@ -1,5 +1,4 @@
 import { supabase } from '../supabaseClient';
-import { USERS } from '../mock/mockData';
 
 function normalizeUser(user) {
 	if (!user) return user;

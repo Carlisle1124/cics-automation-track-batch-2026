@@ -7,7 +7,7 @@ import {
 } from '@phosphor-icons/react';
 import PageHeader from '../../shared/components/PageHeader';
 import cicsLogo from '../../assets/CICS-Logo.webp';
-import { generateAnalyticsData } from './analytics/analyticsData';
+import { getAnalyticsData } from '../../data/services/analyticsService';
 import KPICard from './analytics/KPICard';
 import ReservationTrendChart from './analytics/ReservationTrendChart';
 import TimeSlotChart from './analytics/TimeSlotChart';
@@ -25,25 +25,27 @@ export default function Analytics() {
 	const [loading, setLoading] = useState(true);
 	const [range, setRange] = useState('week');
 
-	const loadData = useCallback((selectedRange) => {
+	const loadData = useCallback(async (selectedRange) => {
 		setLoading(true);
-		// Simulate network delay for skeleton loader UX
-		const timer = setTimeout(() => {
-			setData(generateAnalyticsData(selectedRange));
+		try {
+			const analyticsData = await getAnalyticsData(selectedRange);
+			setData(analyticsData);
+		} catch (error) {
+			console.error('Error loading analytics data:', error);
+			setData(null);
+		} finally {
 			setLoading(false);
-		}, 1200);
-		return timer;
+		}
 	}, []);
 
 	useEffect(() => {
 		const previousTitle = document.title;
 		document.title = 'Analytics - UST CICS Learning Common Room';
 
-		const timer = loadData(range);
+		loadData(range);
 
 		return () => {
 			document.title = previousTitle;
-			clearTimeout(timer);
 		};
 	}, [range, loadData]);
 
@@ -105,8 +107,8 @@ export default function Analytics() {
 					</div>
 
 					<div className="analytics-page__charts">
-						<ReservationTrendChart data={data.hourlyTrend} />
-						<TimeSlotChart data={data.timeSlotDistribution} />
+						<ReservationTrendChart data={data.reservationTrend} range={range} />
+					<TimeSlotChart data={data.timeSlotDistribution} range={range} />
 						<UserActivityChart data={data.userActivity} />
 					</div>
 				</div>
