@@ -3,6 +3,7 @@ import { getCurrentUser, getUsers } from '../../data/services/authService';
 import {
   approveHeldReservation,
   releaseSlot,
+  isSlotDisabledByDuration,
 } from '../../data/services/reservationService';
 import { getAvailabilityByDate } from '../../data/services/availabilityService';
 import { supabase } from '../../data/supabaseClient';
@@ -89,6 +90,7 @@ export default function ScheduleForStudents() {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const [timeSlots, setTimeSlots] = useState([]);
+  const [closingTime, setClosingTime] = useState('17:00');
 
   const [selectedSlotId, setSelectedSlotId] = useState(null);
   const [duration, setDuration] = useState(1);
@@ -185,6 +187,12 @@ export default function ScheduleForStudents() {
       const mapped = mapAvailabilitySlots(avail, new Date(), dateStr);
 
       setTimeSlots(mapped);
+      // Capture the closing time from availability data
+      if (avail.room?.closeTime) {
+        // Normalize time format to HH:mm
+        const closeStr = avail.room.closeTime.slice(0, 5);
+        setClosingTime(closeStr);
+      }
     } catch (err) {
       console.warn('Availability error:', err?.message ?? err);
       setTimeSlots([]);
@@ -325,9 +333,23 @@ export default function ScheduleForStudents() {
     if (index === -1 || !isSlotAvailableByDuration(index)) {
       setSelectedSlotId(null);
     }
-  }, [duration, sortedSlots, selectedSlotId]);
+  }, [duration, sortedSlots, selectedSlotId, closingTime]);
 
   function isSlotAvailableByDuration(index) {
+    const startSlot = sortedSlots[index];
+    if (!startSlot) return false;
+
+    // Check if slot + duration would exceed closing time
+    if (
+      isSlotDisabledByDuration({
+        slotStartTime: startSlot.start,
+        durationHours: duration,
+        closingTime,
+      })
+    ) {
+      return false;
+    }
+
     const needed = sortedSlots.slice(index, index + duration);
     if (needed.length < duration) return false;
 

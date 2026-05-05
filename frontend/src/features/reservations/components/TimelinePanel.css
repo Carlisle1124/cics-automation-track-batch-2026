@@ -173,6 +173,11 @@
   cursor: not-allowed;
 }
 
+.timeline__slot--disabled-duration {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Slot time label */
 .timeline__slot-time {
   font-size: 0.85rem;

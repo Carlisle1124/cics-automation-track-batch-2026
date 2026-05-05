@@ -34,6 +34,54 @@ function mapReservationRow(row) {
 	};
 }
 
+/* =========================
+   SLOT DURATION VALIDATION
+========================= */
+
+/**
+ * Convert time string (HH:mm) to minutes since midnight
+ * @param {string} timeStr - Time in format "HH:mm" or "HH:mm:ss"
+ * @returns {number} Minutes since midnight
+ */
+function toMinutes(timeStr) {
+	if (!timeStr) return 0;
+	const [hours, minutes] = timeStr.split(':').map(Number);
+	return hours * 60 + minutes;
+}
+
+/**
+ * Determine if a slot should be disabled based on reservation duration
+ * Checks if adding the duration to the slot start time would exceed the closing time
+ * 
+ * @param {Object} params
+ * @param {string} params.slotStartTime - Slot start time in "HH:mm" format (e.g. "16:00")
+ * @param {number} params.durationHours - Reservation duration in hours (e.g. 2)
+ * @param {string} params.closingTime - Facility closing time in "HH:mm" format (e.g. "17:00")
+ * @returns {boolean} True if slot should be disabled, false otherwise
+ * 
+ * @example
+ * isSlotDisabledByDuration({
+ *   slotStartTime: "16:00",
+ *   durationHours: 2,
+ *   closingTime: "17:00"
+ * }); // returns true (slot would end at 18:00, past closing)
+ */
+export function isSlotDisabledByDuration({
+	slotStartTime,
+	durationHours,
+	closingTime,
+}) {
+	if (!slotStartTime || !closingTime || !Number.isFinite(durationHours)) {
+		return false;
+	}
+
+	const start = toMinutes(slotStartTime);
+	const end = start + durationHours * 60;
+	const closing = toMinutes(closingTime);
+
+	return end > closing;
+}
+
 export async function getReservationsByUser(userId) {
 	if (!userId) return [[], null];
 

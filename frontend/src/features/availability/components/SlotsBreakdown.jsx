@@ -52,6 +52,7 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
   const [hoveredSlotId, setHoveredSlotId] = useState(null);
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [closingTime, setClosingTime] = useState('17:00');
 
   const [currentUser, setCurrentUser] = useState(null);
   const [holdDuration, setHoldDuration] = useState(1);
@@ -115,6 +116,12 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
         available: slot.available ?? (CAPACITY - (slot.reservedCount || 0)),
       }));
       setSlots(mappedSlots);
+      // Capture the closing time from availability data
+      if (availability.room?.closeTime) {
+        // Normalize time format to HH:mm
+        const closeStr = availability.room.closeTime.slice(0, 5);
+        setClosingTime(closeStr);
+      }
     } catch (error) {
       console.error('Failed to load slots:', error);
       setSlots([]);
@@ -439,6 +446,7 @@ export default function SlotsBreakdown({ onSlotSelect = null }) {
           currentHour={currentHour}
           activeHold={activeHold}
           holdDuration={holdDuration}
+          closingTime={closingTime}
           onSlotClick={handleSlotClick}
           onHoveredSlotChange={setHoveredSlotId}
           onDurationChange={setHoldDuration}

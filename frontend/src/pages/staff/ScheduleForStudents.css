@@ -201,7 +201,6 @@ span.schedule-students__timeslot-btn-separator {
 	border-left: 1.8px dotted var(--neutral-6);
 	/* base dot color follows this container's color so pseudo-elements use it */
 	color: var(--tertiary-4);
-	opacity: 0.9;
 }
 
 /* Top and bottom dots using pseudo-elements. Use currentColor so state selectors can recolor both line and dots. */

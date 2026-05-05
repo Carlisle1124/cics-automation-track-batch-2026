@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Minus, Plus } from '@phosphor-icons/react';
 import './TimelinePanel.css';
 import { CheckFatIcon } from '@phosphor-icons/react';
+import { isSlotDisabledByDuration } from '../../../data/services/reservationService';
 
 export default function TimelinePanel({
   slots = [],
@@ -14,6 +15,7 @@ export default function TimelinePanel({
   currentHour = 0,
   activeHold = null,
   holdDuration = 1,
+  closingTime = '17:00',
   onSlotClick = () => {},
   onHoveredSlotChange = () => {},
   onDurationChange = () => {},
@@ -42,7 +44,15 @@ export default function TimelinePanel({
         (isSelectedDateToday &&
           (slotHour < currentHour ||
             (slotHour === currentHour && now.getMinutes() > 0)));
-      if (!isPast) {
+      
+      // Check if slot is disabled due to duration exceeding closing time
+      const isDisabledByDuration = isSlotDisabledByDuration({
+        slotStartTime: slot.start,
+        durationHours: holdDuration,
+        closingTime,
+      });
+      
+      if (!isPast && !isDisabledByDuration) {
         onSlotClick(slotId);
       }
     }
@@ -99,6 +109,13 @@ export default function TimelinePanel({
                 (slotHour < currentHour ||
                 (slotHour === currentHour && now.getMinutes() > 0)));
 
+            // Check if slot is disabled due to duration exceeding closing time
+            const isDisabledByDuration = isSlotDisabledByDuration({
+              slotStartTime: slot.start,
+              durationHours: holdDuration,
+              closingTime,
+            });
+
             return (
             <div key={slot.id} className='timeline-slot__wrapper'>
                 <div
@@ -113,17 +130,21 @@ export default function TimelinePanel({
                         ${ isPast ? 'timeline__slot--past' 
                             : ''
                         }
+                        ${ isDisabledByDuration ? 'timeline__slot--disabled-duration' 
+                            : ''
+                        }
                         ${statusClassName}
                     }`}
                     onMouseEnter={() => handleMouseEnter(slot.id)}
                     onMouseLeave={handleMouseLeave}
-                    onClick={() => !isPast && handleSlotSelect(slot.id)}
+                    onClick={() => !isPast && !isDisabledByDuration && handleSlotSelect(slot.id)}
                     role="button"
-                    tabIndex={isPast ? -1 : 0}
+                    tabIndex={isPast || isDisabledByDuration ? -1 : 0}
                     onKeyDown={(e) => {
-                    if (!isPast && (e.key === 'Enter' || e.key === ' '))
+                    if (!isPast && !isDisabledByDuration && (e.key === 'Enter' || e.key === ' '))
                         handleSlotSelect(slot.id);
                     }}
+                    title={isDisabledByDuration ? 'Not enough time remaining for selected duration' : ''}
                 >
                     <div className="timeline__slot-time">
                     {slot.hour}
