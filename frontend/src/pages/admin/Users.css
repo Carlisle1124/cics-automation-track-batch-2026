@@ -30,20 +30,6 @@
   color: #3a1119;
 }
 
-/* ── Header ─────────────────────────────────────────── */
-.admin-users__header {
-  padding: clamp(0.2rem, 0.6vw, 0.4rem);
-  margin-bottom: 0;
-}
-
-.admin-users__header .page-header__title {
-  font-size: clamp(1rem, 2.5vw, 1.2rem);
-}
-
-.admin-users__header .page-header__subtitle {
-  font-size: 13px;
-}
-
 /* ── Table shell ─────────────────────────────────────── */
 .admin-users__table-shell {
   display: flex;

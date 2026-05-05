@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from '../shared/components/Navbar';
 import Topbar from '../shared/components/Topbar';
+import Card from '../shared/components/Card';
 import '../shared/styles/LayoutShell.css';
 
 export default function StaffLayout() {
@@ -15,17 +16,17 @@ export default function StaffLayout() {
 			}${isStaffScheduleForStudents ? ' app-shell--staff-schedule-entry' : ''}`}
 		>
 			<Navbar role="staff" />
-			<main className="app-main">
-				<div className="app-main__surface">
+			<main className="app-shell__main">
+				<div className="app-shell__surface">
 					<Topbar
 						title="Staff Dashboard"
 						subtitle="Review pending requests and support student reservations."
 					/>
-					<div className="app-main__wrapper">
-						<div className="app-main__content">
+					<Card as="div" className="app-shell__panel layout-card" padding="0">
+						<div className="app-shell__content">
 							<Outlet />
 						</div>
-					</div>
+					</Card>
 				</div>
 			</main>
 		</div>

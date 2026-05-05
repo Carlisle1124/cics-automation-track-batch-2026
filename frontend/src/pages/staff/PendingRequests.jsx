@@ -343,7 +343,7 @@ export default function PendingRequests() {
 			}`}
 		>
 			<PageHeader
-				className="pending-requests-page__header"
+				className="page-header--sticky"
 				title="Pending Requests"
 				subtitle="Approve or decline requests submitted by students."
 			/>

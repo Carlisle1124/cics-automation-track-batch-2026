@@ -55,29 +55,6 @@
 	transition-delay: 100ms;
 }
 
-.student-reservations .page-header--student-sticky {
-	position: relative;
-	top: auto;
-	z-index: 1;
-	background: transparent;
-	padding: clamp(0.2rem, 0.6vw, 0.4rem);
-	margin-bottom: 0;
-}
-
-.student-reservations .page-header--student-sticky::after {
-	display: none;
-}
-
-.student-reservations .page-header__title {
-	font-size: clamp(1rem, 2.5vw, 1.2rem);
-	line-height: 1.2;
-}
-
-.student-reservations .page-header__subtitle {
-	font-size: 14px;
-	line-height: 1.5;
-}
-
 .student-reservations__toggle-view {
 	display: inline-flex;
 	align-items: center;
@@ -223,10 +200,6 @@
 
 	.student-reservations__view-toggle {
 		flex: 1 1 0;
-	}
-
-	.student-reservations .page-header--student-sticky {
-		padding: 0.1rem 0.05rem 0;
 	}
 
 	.student-reservations__table-shell {

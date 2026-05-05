@@ -57,21 +57,6 @@
 	transition-delay: 120ms;
 }
 
-.pending-requests-page__header {
-	padding: clamp(0.2rem, 0.6vw, 0.4rem);
-	margin-bottom: 0;
-}
-
-.pending-requests-page__header .page-header__title {
-	font-size: clamp(1rem, 2.5vw, 1.2rem);
-	line-height: 1.2;
-}
-
-.pending-requests-page__header .page-header__subtitle {
-	font-size: 14px;
-	line-height: 1.45;
-}
-
 .pending-requests__cards-shell {
 	border: 1px solid var(--border-subtle);
 	border-radius: var(--radius-xl);
@@ -918,10 +903,6 @@
 }
 
 @media (max-width: 380px) and (orientation: portrait) {
-	.pending-requests-page__header .page-header__subtitle {
-		font-size: 13px;
-	}
-
 	.pending-requests-page__table-shell .reservations-table__wrapper {
 		max-height: clamp(10rem, 38vh, 22rem);
 	}
@@ -962,19 +943,6 @@
 		padding: 0.55rem;
 		padding-bottom: calc(0.9rem + env(safe-area-inset-bottom));
 		gap: 0.5rem;
-	}
-
-	.pending-requests-page__header {
-		padding: 0.05rem 0.05rem 0;
-	}
-
-	.pending-requests-page__header .page-header__title {
-		font-size: clamp(0.95rem, 2vw, 1.1rem);
-	}
-
-	.pending-requests-page__header .page-header__subtitle {
-		font-size: 13px;
-		line-height: 1.35;
 	}
 
 	.pending-requests-page__table-shell {
@@ -1064,10 +1032,6 @@
 }
 
 @media (max-width: 767px) and (max-height: 390px) and (orientation: landscape) {
-	.pending-requests-page__header .page-header__subtitle {
-		display: none;
-	}
-
 	.pending-requests-page__table-shell .reservations-table__header {
 		padding: 0.6rem 0.75rem;
 	}

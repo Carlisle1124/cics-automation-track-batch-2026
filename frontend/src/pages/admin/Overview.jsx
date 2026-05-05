@@ -83,7 +83,6 @@ export default function Overview() {
 			}`}
 		>
 			<PageHeader
-				className="admin-overview__header"
 				title="Admin Overview"
 				subtitle="High-level operational snapshot for the learning commons."
 			/>

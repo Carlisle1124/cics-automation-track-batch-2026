@@ -27,12 +27,11 @@ function formatDate(dateValue) {
 function getInitials(name) {
 	if (!name) return 'ST';
 
-	return name
-		.split(' ')
-		.filter(Boolean)
-		.slice(0, 2)
-		.map((chunk) => chunk[0].toUpperCase())
-		.join('');
+	const nameParts = name.split(' ').filter(Boolean);
+	const firstInitial = nameParts[0]?.[0]?.toUpperCase() ?? 'S';
+	const lastInitial = nameParts.at(-1)?.[0]?.toUpperCase() ?? firstInitial;
+
+	return firstInitial === lastInitial ? firstInitial : `${firstInitial}${lastInitial}`;
 }
 
 export default function Profile() {
@@ -238,7 +237,7 @@ export default function Profile() {
 	return (
 		<section className="profile-page">
 			<PageHeader
-				className="page-header--student-sticky"
+				className="page-header--sticky"
 				title="Profile"
 				subtitle="Review your account details, reservation activity, and learning commons insights."
 			/>

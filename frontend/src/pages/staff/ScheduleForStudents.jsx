@@ -678,6 +678,7 @@ const resetForm = async () => {
         />
 
       <PageHeader
+        className="page-header--sticky"
         title="Create Reservation for Students"
         subtitle="Create a reservation on behalf of students who request scheduling help."
       />

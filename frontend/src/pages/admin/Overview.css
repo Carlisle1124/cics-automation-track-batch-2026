@@ -58,19 +58,6 @@
   transition-delay: 260ms;
 }
 
-.admin-overview__header {
-  padding: clamp(0.2rem, 0.6vw, 0.4rem);
-  margin-bottom: 0;
-}
-
-.admin-overview__header .page-header__title {
-  font-size: clamp(1rem, 2.5vw, 1.2rem);
-}
-
-.admin-overview__header .page-header__subtitle {
-  font-size: 14px;
-}
-
 .admin-overview__metrics {
   flex: 0 0 auto;
   display: grid;

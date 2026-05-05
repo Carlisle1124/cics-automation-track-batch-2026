@@ -13,7 +13,7 @@ export default function Schedule() {
 	return (
 		<section className="dashboard-page schedule-page">
 			<PageHeader
-				className="page-header--student-sticky"
+				className="page-header--sticky"
 				title="Schedule"
 				subtitle="Browse available time slots and reserve a spot for today."
 			/>

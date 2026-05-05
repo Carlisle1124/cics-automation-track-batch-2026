@@ -79,7 +79,7 @@ export default function Reservations() {
 			}`}
 		>
 			<PageHeader
-				className="page-header--student-sticky"
+				className="page-header--sticky"
 				title="My Reservations"
 				subtitle={user ? `Review upcoming and past bookings for ${user.full_name}.` : 'Review upcoming and past bookings here.'}
 			/>

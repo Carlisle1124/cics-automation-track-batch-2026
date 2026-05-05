@@ -191,6 +191,7 @@ export default function CheckIn() {
 			}`}
 		>
 			<PageHeader
+				className="page-header--sticky"
 				title="Check In / Out"
 				subtitle="Manually check students in and out of the Learning Commons."
 			/>

@@ -60,7 +60,6 @@ export default function Overview() {
             }`}
         >
             <PageHeader
-                className="student-overview__header"
                 title={`Welcome, ${user?.name ?? 'Student'}`}
             />
 

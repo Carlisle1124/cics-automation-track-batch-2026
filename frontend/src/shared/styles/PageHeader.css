@@ -19,7 +19,7 @@
 	color: var(--text-secondary);
 }
 
-.page-header--student-sticky {
+.page-header--sticky {
 	position: sticky;
 	top: 0;
 	z-index: 12;
@@ -29,7 +29,7 @@
 	margin-bottom: var(--space-4);
 }
 
-.page-header--student-sticky::after {
+.page-header--sticky::after {
 	content: '';
 	position: absolute;
 	left: 0;

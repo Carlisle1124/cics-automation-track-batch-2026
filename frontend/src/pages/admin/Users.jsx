@@ -827,7 +827,7 @@ export default function Users() {
 	return (
 		<section className="dashboard-page admin-users">
 			<PageHeader
-				className="admin-users__header"
+				className="page-header--sticky"
 				title="Account Management"
 				subtitle="View, add, edit, and remove user accounts."
 			/>

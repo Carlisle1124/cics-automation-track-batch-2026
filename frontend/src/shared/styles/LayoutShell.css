@@ -1,7 +1,6 @@
 /* ============================================================
-   Layout Shell — Mobile-first
-   Mobile: single column with top padding for mobile header
-   Desktop (≥768px): sidebar + main content grid
+   Unified Layout Shell
+   Mobile-first baseline shared by Student, Staff, and Admin
    ============================================================ */
 
 .app-shell {
@@ -10,446 +9,153 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
-}
-
-.app-shell--admin {
-  height: 100vh;
-  height: 100svh;
-  height: 100dvh;
   overflow: hidden;
 }
 
-.app-main {
+.app-shell__main {
+  flex: 1 1 auto;
   min-width: 0;
-  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
-  /* Leave room for the fixed mobile header */
+  overflow: hidden;
   padding-top: 3.5rem;
 }
 
-.app-main__surface {
-  flex: 1;
+.app-shell__surface {
+  flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
-  width: 100%;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  gap: var(--space-4);
+  overflow: hidden;
   background: var(--bg-card);
   padding: var(--space-3);
   padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
 }
 
-.app-main__content {
-  flex: 1;
-  min-height: 0;
+.app-shell__panel {
+  flex: 1 1 auto;
   min-width: 0;
-  overflow: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  padding-bottom: calc(6.25rem + env(safe-area-inset-bottom));
-  scrollbar-width: none;
-}
-
-.app-main__content-card {
-  flex: 1;
   min-height: 0;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
 }
 
-.app-main__content-scroll {
-  flex: 1;
+.layout-panel {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.layout-card {
   min-height: 0;
+}
+
+.app-shell__content {
+  flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  overscroll-behavior: contain;
-  padding-bottom: calc(6.25rem + env(safe-area-inset-bottom));
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
   scrollbar-width: none;
 }
 
-.app-main__content-scroll::-webkit-scrollbar {
+.app-shell__content::-webkit-scrollbar {
   display: none;
 }
 
-.app-main__content-no-scroll {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-}
-
-/* Student-only reset to avoid double-card visuals from global section defaults. */
-.app-shell .app-main__content-scroll > .dashboard-page,
-.app-shell .app-main__content-scroll > .profile-page,
-.app-shell .app-main__content-no-scroll > .dashboard-page,
-.app-shell .app-main__content-no-scroll > .profile-page {
+/* Prevent nested page shells from creating a second visual card. */
+.app-shell .app-shell__content > .dashboard-page,
+.app-shell .app-shell__content > .profile-page {
   background: transparent;
   border: 0;
   border-radius: 0;
   box-shadow: none;
 }
 
-/* Student Overview and Student Reservations only: removes double padding and lets each page handle its own spacing. */
-.app-shell--student-overview-entry .app-main__content-card.ui-card--pad-md,
-.app-shell--student-reservations-entry .app-main__content-card.ui-card--pad-md {
+/* Student pages own their spacing inside the card. */
+.app-shell--student-overview-entry .layout-card.ui-card--pad-md,
+.app-shell--student-reservations-entry .layout-card.ui-card--pad-md,
+.app-shell--student-schedule-entry .layout-card.ui-card--pad-md {
   padding: 0;
 }
 
-.app-shell--student-overview-entry .app-main__content-scroll--student-overview {
-  height: 100%;
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-  overflow-y: auto;
-  overflow-x: hidden;
-  touch-action: pan-y;
-  scrollbar-width: none;
-}
-
-.app-shell--student-reservations-entry .app-main__content-scroll--student-reservations {
-  height: 100%;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  touch-action: pan-y;
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-  scrollbar-width: none;
-}
-
-.app-shell--student-reservations-entry .app-main__content-scroll--student-reservations::-webkit-scrollbar {
-  display: none;
-}
-
-.app-shell--student-overview-entry .app-main__content-scroll--student-overview::-webkit-scrollbar {
-  display: none;
-}
-
-.app-main__wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-/* Staff Pending Requests only: makes mobile and landscape layouts vertically scrollable */
-.app-shell--staff-pending-entry .app-main__wrapper {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.app-shell--staff-pending-entry .app-main__content {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-  scrollbar-width: none;
-}
-
-.app-shell--staff-pending-entry .app-main__content::-webkit-scrollbar {
-  display: none;
-}
-
-/* Staff Schedule for Students only: keeps the page scrollable on mobile, landscape, and compact viewports */
-.app-shell--staff-schedule-entry .app-main__wrapper {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.app-shell--staff-schedule-entry .app-main__content {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-  scrollbar-width: none;
-}
-
-.app-shell--staff-schedule-entry .app-main__content::-webkit-scrollbar {
-  display: none;
-}
-
-/* Student Schedule only: makes mobile and tablet layouts vertically scrollable */
-.app-shell--student-schedule-entry .app-main__wrapper {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.app-shell--student-schedule-entry .app-main__content-scroll--student-schedule {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-  scrollbar-width: none;
-}
-
-.app-shell--student-schedule-entry .app-main__content-scroll--student-schedule::-webkit-scrollbar {
-  display: none;
-}
-
-.app-shell--admin .app-main {
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
-}
-
-.app-shell--admin .app-main__surface {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.app-shell--admin .app-main__wrapper {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.app-shell--admin .app-main__content {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+/* Admin pages should use the full available height with no extra bottom padding. */
+.app-shell--admin .app-shell__content {
   padding-bottom: 0;
-  scrollbar-width: none;
-}
-
-.app-shell--admin .app-main__content::-webkit-scrollbar {
-  display: none;
 }
 
 @media (max-width: 767px) {
-  .app-shell--staff-pending-entry {
-    overflow: hidden;
-  }
-
-  .app-shell--staff-pending-entry .app-main {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--staff-pending-entry .app-main__surface {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--staff-pending-entry .app-main__wrapper {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--staff-pending-entry .app-main__content {
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .app-shell--staff-schedule-entry {
-    overflow: hidden;
-  }
-
-  .app-shell--staff-schedule-entry .app-main {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--staff-schedule-entry .app-main__surface {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--staff-schedule-entry .app-main__wrapper {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--staff-schedule-entry .app-main__content {
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .app-shell--student-schedule-entry {
-    overflow: hidden;
-  }
-
-  .app-shell--student-schedule-entry .app-main {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--student-schedule-entry .app-main__surface {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--student-schedule-entry .app-main__wrapper {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--student-schedule-entry .app-main__content-scroll--student-schedule {
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .app-shell--student-overview-entry {
-    overflow: hidden;
-  }
-
-  .app-shell--student-overview-entry .app-main {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--student-overview-entry .app-main__surface {
-    min-height: 0;
-    overflow: hidden;
-  }
-  
-  .app-shell--student-overview-entry .app-main__content-card {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--student-overview-entry .app-main__content-scroll--student-overview {
-    min-height: 0;
-    overflow-x: hidden;
-  }
-
-  .app-shell--student-reservations-entry {
-    overflow: hidden;
-  }
-
-  .app-shell--student-reservations-entry .app-main {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--student-reservations-entry .app-main__surface {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--student-reservations-entry .app-main__content-card {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell--student-reservations-entry .app-main__content-scroll--student-reservations {
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-  }
-
-  /* Ensure a single, scrollable layout for all pages on tablet & mobile */
   .app-shell {
     height: 100dvh;
+  }
+
+  .app-shell--staff-pending-entry,
+  .app-shell--staff-schedule-entry,
+  .app-shell--student-schedule-entry,
+  .app-shell--student-overview-entry,
+  .app-shell--student-reservations-entry {
     overflow: hidden;
-  }
-
-  .app-shell .app-main {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell .app-main__surface {
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .app-shell .app-main__content,
-  .app-shell .app-main__content-card {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-shell .app-main__content-card {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .app-shell .app-main__content-scroll {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    overscroll-behavior-y: contain;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-    scrollbar-width: none;
-  }
-
-  .app-shell .app-main__content-scroll::-webkit-scrollbar {
-    display: none;
   }
 }
 
 @media (max-width: 767px) and (max-height: 430px) and (orientation: landscape) {
-  .app-shell .app-main__surface,
-  .app-shell .app-main__content-card {
-    overflow: hidden;
-  }
-
-  .app-shell--staff-pending-entry .app-mobile-header {
+  .app-shell--staff-pending-entry .app-mobile-header,
+  .app-shell--staff-schedule-entry .app-mobile-header,
+  .app-shell--student-overview-entry .app-mobile-header,
+  .app-shell--student-reservations-entry .app-mobile-header,
+  .app-shell--student-schedule-entry .app-mobile-header {
     height: 3rem;
     padding-inline: 0.9rem;
   }
 
-  .app-shell--staff-pending-entry .app-mobile-header__hamburger {
+  .app-shell--staff-pending-entry .app-mobile-header__hamburger,
+  .app-shell--staff-schedule-entry .app-mobile-header__hamburger,
+  .app-shell--student-overview-entry .app-mobile-header__hamburger,
+  .app-shell--student-reservations-entry .app-mobile-header__hamburger,
+  .app-shell--student-schedule-entry .app-mobile-header__hamburger {
     width: 2.55rem;
     height: 2.55rem;
     min-width: 42px;
     min-height: 42px;
   }
 
-  .app-shell--staff-pending-entry .app-main {
+  .app-shell--staff-pending-entry .app-shell__main,
+  .app-shell--staff-schedule-entry .app-shell__main,
+  .app-shell--student-overview-entry .app-shell__main,
+  .app-shell--student-reservations-entry .app-shell__main,
+  .app-shell--student-schedule-entry .app-shell__main {
     padding-top: 3rem;
   }
 
-  .app-shell--staff-pending-entry .app-main__surface {
+  .app-shell--staff-pending-entry .app-shell__surface,
+  .app-shell--staff-schedule-entry .app-shell__surface,
+  .app-shell--student-overview-entry .app-shell__surface,
+  .app-shell--student-reservations-entry .app-shell__surface,
+  .app-shell--student-schedule-entry .app-shell__surface {
     padding: 0.75rem;
     padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
   }
 
-  .app-shell--staff-pending-entry .app-topbar {
+  .app-shell--student-overview-entry .app-shell__content,
+  .app-shell--student-reservations-entry .app-shell__content,
+  .app-shell--student-schedule-entry .app-shell__content {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
+
+  .app-shell--staff-pending-entry .app-topbar,
+  .app-shell--staff-schedule-entry .app-topbar,
+  .app-shell--student-overview-entry .app-topbar,
+  .app-shell--student-reservations-entry .app-topbar,
+  .app-shell--student-schedule-entry .app-topbar {
     position: relative;
     gap: 0.5rem;
     margin-bottom: 0.6rem;
@@ -457,270 +163,80 @@
     border-radius: var(--radius-lg);
   }
 
-  .app-shell--staff-pending-entry .app-topbar__eyebrow {
+  .app-shell--staff-pending-entry .app-topbar__eyebrow,
+  .app-shell--staff-schedule-entry .app-topbar__eyebrow,
+  .app-shell--student-overview-entry .app-topbar__eyebrow,
+  .app-shell--student-reservations-entry .app-topbar__eyebrow,
+  .app-shell--student-schedule-entry .app-topbar__eyebrow {
     font-size: 0.65rem;
   }
 
-  .app-shell--staff-pending-entry .app-topbar__title {
+  .app-shell--staff-pending-entry .app-topbar__title,
+  .app-shell--staff-schedule-entry .app-topbar__title,
+  .app-shell--student-overview-entry .app-topbar__title,
+  .app-shell--student-reservations-entry .app-topbar__title,
+  .app-shell--student-schedule-entry .app-topbar__title {
     font-size: 1rem;
   }
 
-  .app-shell--staff-pending-entry .app-topbar__subtitle {
+  .app-shell--staff-pending-entry .app-topbar__subtitle,
+  .app-shell--staff-schedule-entry .app-topbar__subtitle,
+  .app-shell--student-overview-entry .app-topbar__subtitle,
+  .app-shell--student-reservations-entry .app-topbar__subtitle,
+  .app-shell--student-schedule-entry .app-topbar__subtitle {
     font-size: 13px;
     line-height: 1.35;
   }
 
-  .app-shell--staff-pending-entry .app-topbar__user {
+  .app-shell--staff-pending-entry .app-topbar__user,
+  .app-shell--staff-schedule-entry .app-topbar__user,
+  .app-shell--student-overview-entry .app-topbar__user,
+  .app-shell--student-reservations-entry .app-topbar__user,
+  .app-shell--student-schedule-entry .app-topbar__user {
     padding: 0.36rem 0.62rem;
     font-size: 13px;
   }
 
-  .app-shell--staff-pending-entry .app-topbar__logout {
-    min-height: 40px;
-    padding: 0.4rem 0.75rem;
-    font-size: 13px;
-  }
-
-  .app-shell--staff-schedule-entry .app-mobile-header {
-    height: 3rem;
-    padding-inline: 0.9rem;
-  }
-
-  .app-shell--staff-schedule-entry .app-mobile-header__hamburger {
-    width: 2.55rem;
-    height: 2.55rem;
-    min-width: 42px;
-    min-height: 42px;
-  }
-
-  .app-shell--staff-schedule-entry .app-main {
-    padding-top: 3rem;
-  }
-
-  .app-shell--staff-schedule-entry .app-main__surface {
-    padding: 0.75rem;
-    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-  }
-
-  .app-shell--staff-schedule-entry .app-topbar {
-    position: relative;
-    gap: 0.5rem;
-    margin-bottom: 0.6rem;
-    padding: 0.65rem 0.9rem;
-    border-radius: var(--radius-lg);
-  }
-
-  .app-shell--staff-schedule-entry .app-topbar__eyebrow {
-    font-size: 0.65rem;
-  }
-
-  .app-shell--staff-schedule-entry .app-topbar__title {
-    font-size: 1rem;
-  }
-
-  .app-shell--staff-schedule-entry .app-topbar__subtitle {
-    font-size: 13px;
-    line-height: 1.35;
-  }
-
-  .app-shell--staff-schedule-entry .app-topbar__user {
-    padding: 0.36rem 0.62rem;
-    font-size: 13px;
-  }
-
-  .app-shell--staff-schedule-entry .app-topbar__logout {
-    min-height: 40px;
-    padding: 0.4rem 0.75rem;
-    font-size: 13px;
-  }
-
-  .app-shell--student-overview-entry .app-mobile-header {
-    height: 3rem;
-    padding-inline: 0.9rem;
-  }
-
-  .app-shell--student-overview-entry .app-mobile-header__hamburger {
-    width: 2.55rem;
-    height: 2.55rem;
-    min-width: 42px;
-    min-height: 42px;
-  }
-
-  .app-shell--student-overview-entry .app-main {
-    padding-top: 3rem;
-  }
-
-  .app-shell--student-overview-entry .app-main__surface {
-    padding: 0.75rem;
-    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-  }
-
-  .app-shell--student-overview-entry .app-main__content-scroll--student-overview {
-    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-  }
-
-  .app-shell--student-overview-entry .app-topbar {
-    position: relative;
-    gap: 0.5rem;
-    margin-bottom: 0.6rem;
-    padding: 0.65rem 0.9rem;
-    border-radius: var(--radius-lg);
-  }
-
-  .app-shell--student-overview-entry .app-topbar__eyebrow {
-    font-size: 0.65rem;
-  }
-
-  .app-shell--student-overview-entry .app-topbar__title {
-    font-size: 1rem;
-  }
-
-  .app-shell--student-overview-entry .app-topbar__subtitle {
-    font-size: 13px;
-    line-height: 1.35;
-  }
-
-  .app-shell--student-overview-entry .app-topbar__user {
-    padding: 0.36rem 0.62rem;
-    font-size: 13px;
-  }
-
-  .app-shell--student-overview-entry .app-topbar__logout {
-    min-height: 40px;
-    padding: 0.4rem 0.75rem;
-    font-size: 13px;
-  }
-
-  .app-shell--student-reservations-entry .app-mobile-header {
-    height: 3rem;
-    padding-inline: 0.9rem;
-  }
-
-  .app-shell--student-reservations-entry .app-mobile-header__hamburger {
-    width: 2.55rem;
-    height: 2.55rem;
-    min-width: 42px;
-    min-height: 42px;
-  }
-
-  .app-shell--student-reservations-entry .app-main {
-    padding-top: 3rem;
-  }
-
-  .app-shell--student-reservations-entry .app-main__surface {
-    padding: 0.75rem;
-    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-  }
-
-  .app-shell--student-reservations-entry .app-topbar {
-    position: relative;
-    gap: 0.5rem;
-    margin-bottom: 0.6rem;
-    padding: 0.65rem 0.9rem;
-    border-radius: var(--radius-lg);
-  }
-
-  .app-shell--student-reservations-entry .app-topbar__eyebrow {
-    font-size: 0.65rem;
-  }
-
-  .app-shell--student-reservations-entry .app-topbar__title {
-    font-size: 1rem;
-  }
-
-  .app-shell--student-reservations-entry .app-topbar__subtitle {
-    font-size: 13px;
-    line-height: 1.35;
-  }
-
-  .app-shell--student-reservations-entry .app-topbar__user {
-    padding: 0.36rem 0.62rem;
-    font-size: 13px;
-  }
-
-  .app-shell--student-reservations-entry .app-topbar__logout {
+  .app-shell--staff-pending-entry .app-topbar__logout,
+  .app-shell--staff-schedule-entry .app-topbar__logout,
+  .app-shell--student-overview-entry .app-topbar__logout,
+  .app-shell--student-reservations-entry .app-topbar__logout,
+  .app-shell--student-schedule-entry .app-topbar__logout {
     min-height: 40px;
     padding: 0.4rem 0.75rem;
     font-size: 13px;
   }
 }
 
-/* Desktop: constrain student schedule content to prevent outer scroll */
-@media (min-width: 1024px) {
-  .app-shell--student-schedule-entry .app-main__content-scroll--student-schedule {
-    overflow: hidden;
-    overflow-y: auto;
-  }
-}
-
-/* ============================================================
-   Desktop (≥768px): sidebar grid layout
-   ============================================================ */
 @media (min-width: 768px) {
   .app-shell {
     height: 100vh;
-    flex-direction: row;
     display: grid;
     grid-template-columns: 5.5rem minmax(0, 1fr);
-    overflow: hidden;
+    flex-direction: row;
   }
 
-  .app-main {
+  .app-shell__main {
     height: 100vh;
     padding-top: 0;
-    overflow: hidden;
   }
 
-  .app-main__surface {
+  .app-shell__surface {
     padding: var(--space-4);
     padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
-    overflow: hidden;
   }
 
-  .app-main__wrapper {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  .app-main__content,
-  .app-main__content-scroll {
-    height: 100%;
+  .app-shell__content {
     padding-bottom: calc(6.75rem + env(safe-area-inset-bottom));
   }
 
-  .app-shell--admin .app-main__content {
+  .app-shell--admin .app-shell__content {
     padding-bottom: 0;
-  }
-
-  .app-shell--student-overview-entry .app-main__content-card {
-    height: 100%;
-    min-height: 0;
-  }
-
-  .app-shell--student-overview-entry .app-main__content-scroll--student-overview {
-    height: 100%;
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-  }
-
-  .app-shell--student-reservations-entry .app-main__content-card {
-    height: 100%;
-    min-height: 0;
-  }
-
-  .app-shell--student-reservations-entry .app-main__content-scroll--student-reservations {
-    height: 100%;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
   }
 }
 
-/* Large desktop (≥1280px): keep same icon-only sidebar width */
-
 /* ============================================================
-   Admin Overview — page-only entrance motion
+   Shared role/page entrance motion
    ============================================================ */
 .app-shell--admin-overview-entry .app-mobile-header,
 .app-shell--admin-reservations-entry .app-mobile-header,
@@ -728,13 +244,14 @@
 .app-shell--staff-pending-entry .app-mobile-header,
 .app-shell--staff-schedule-entry .app-mobile-header,
 .app-shell--student-overview-entry .app-mobile-header,
-.app-shell--student-reservations-entry .app-mobile-header {
-  animation: admin-overview-topbar-reveal 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.app-shell--student-reservations-entry .app-mobile-header,
+.app-shell--student-schedule-entry .app-mobile-header {
+  animation: app-shell-topbar-reveal 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .app-shell--admin-overview-entry .reserve-fab,
 .app-shell--student-overview-entry .reserve-fab {
-  animation: admin-overview-reserve-reveal 700ms cubic-bezier(0.22, 1, 0.36, 1) 280ms both;
+  animation: app-shell-reserve-reveal 700ms cubic-bezier(0.22, 1, 0.36, 1) 280ms both;
   transform-origin: bottom right;
 }
 
@@ -745,8 +262,9 @@
   .app-shell--staff-pending-entry .app-sidebar,
   .app-shell--staff-schedule-entry .app-sidebar,
   .app-shell--student-overview-entry .app-sidebar,
-  .app-shell--student-reservations-entry .app-sidebar {
-    animation: admin-overview-sidebar-reveal 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  .app-shell--student-reservations-entry .app-sidebar,
+  .app-shell--student-schedule-entry .app-sidebar {
+    animation: app-shell-sidebar-reveal 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   .app-shell--admin-overview-entry .app-topbar,
@@ -755,75 +273,24 @@
   .app-shell--staff-pending-entry .app-topbar,
   .app-shell--staff-schedule-entry .app-topbar,
   .app-shell--student-overview-entry .app-topbar,
-  .app-shell--student-reservations-entry .app-topbar {
-    animation: admin-overview-topbar-reveal 620ms cubic-bezier(0.22, 1, 0.36, 1) 70ms both;
-  }
-
-  .app-shell--admin-overview-entry .app-sidebar__brand,
-  .app-shell--admin-reservations-entry .app-sidebar__brand,
-  .app-shell--admin-analytics-entry .app-sidebar__brand,
-  .app-shell--staff-pending-entry .app-sidebar__brand,
-  .app-shell--staff-schedule-entry .app-sidebar__brand,
-  .app-shell--student-overview-entry .app-sidebar__brand,
-  .app-shell--student-reservations-entry .app-sidebar__brand {
-    animation: admin-overview-fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) 110ms both;
-  }
-
-  .app-shell--admin-overview-entry .app-sidebar__link:nth-child(1),
-  .app-shell--admin-reservations-entry .app-sidebar__link:nth-child(1),
-  .app-shell--admin-analytics-entry .app-sidebar__link:nth-child(1),
-  .app-shell--staff-pending-entry .app-sidebar__link:nth-child(1),
-  .app-shell--staff-schedule-entry .app-sidebar__link:nth-child(1),
-  .app-shell--student-overview-entry .app-sidebar__link:nth-child(1),
-  .app-shell--student-reservations-entry .app-sidebar__link:nth-child(1) {
-    animation: admin-overview-fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) 150ms both;
-  }
-
-  .app-shell--admin-overview-entry .app-sidebar__link:nth-child(2),
-  .app-shell--admin-reservations-entry .app-sidebar__link:nth-child(2),
-  .app-shell--admin-analytics-entry .app-sidebar__link:nth-child(2),
-  .app-shell--staff-pending-entry .app-sidebar__link:nth-child(2),
-  .app-shell--staff-schedule-entry .app-sidebar__link:nth-child(2),
-  .app-shell--student-overview-entry .app-sidebar__link:nth-child(2),
-  .app-shell--student-reservations-entry .app-sidebar__link:nth-child(2) {
-    animation: admin-overview-fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) 210ms both;
-  }
-
-  .app-shell--admin-overview-entry .app-sidebar__link:nth-child(3),
-  .app-shell--admin-reservations-entry .app-sidebar__link:nth-child(3),
-  .app-shell--admin-analytics-entry .app-sidebar__link:nth-child(3),
-  .app-shell--student-overview-entry .app-sidebar__link:nth-child(3),
-  .app-shell--student-reservations-entry .app-sidebar__link:nth-child(3) {
-    animation: admin-overview-fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) 270ms both;
-  }
-
-  .app-shell--admin-overview-entry .app-sidebar__link:nth-child(4),
-  .app-shell--admin-reservations-entry .app-sidebar__link:nth-child(4),
-  .app-shell--admin-analytics-entry .app-sidebar__link:nth-child(4),
-  .app-shell--student-overview-entry .app-sidebar__link:nth-child(4),
-  .app-shell--student-reservations-entry .app-sidebar__link:nth-child(4) {
-    animation: admin-overview-fade-up 480ms cubic-bezier(0.22, 1, 0.36, 1) 330ms both;
+  .app-shell--student-reservations-entry .app-topbar,
+  .app-shell--student-schedule-entry .app-topbar {
+    animation: app-shell-topbar-reveal 620ms cubic-bezier(0.22, 1, 0.36, 1) 70ms both;
   }
 
   .app-shell--admin-overview-entry .app-sidebar__role,
   .app-shell--admin-reservations-entry .app-sidebar__role,
   .app-shell--admin-analytics-entry .app-sidebar__role,
   .app-shell--staff-pending-entry .app-sidebar__role,
+  .app-shell--staff-schedule-entry .app-sidebar__role,
   .app-shell--student-overview-entry .app-sidebar__role,
-  .app-shell--student-reservations-entry .app-sidebar__role {
-    animation: admin-overview-role-reveal 480ms cubic-bezier(0.22, 1, 0.36, 1) 390ms both;
-  }
-
-  .app-shell--staff-schedule-entry .app-sidebar__role {
-    animation: admin-overview-role-reveal 480ms cubic-bezier(0.22, 1, 0.36, 1) 270ms both;
+  .app-shell--student-reservations-entry .app-sidebar__role,
+  .app-shell--student-schedule-entry .app-sidebar__role {
+    animation: app-shell-role-reveal 480ms cubic-bezier(0.22, 1, 0.36, 1) 390ms both;
   }
 }
 
-.app-shell--staff-schedule-entry .app-mobile-header {
-  animation: admin-overview-topbar-reveal 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@keyframes admin-overview-sidebar-reveal {
+@keyframes app-shell-sidebar-reveal {
   from {
     opacity: 0;
     transform: translateX(-18px);
@@ -834,7 +301,7 @@
   }
 }
 
-@keyframes admin-overview-topbar-reveal {
+@keyframes app-shell-topbar-reveal {
   from {
     opacity: 0;
     transform: translateY(-14px);
@@ -845,7 +312,7 @@
   }
 }
 
-@keyframes admin-overview-reserve-reveal {
+@keyframes app-shell-reserve-reveal {
   from {
     opacity: 0;
     transform: translateY(16px) scale(0.94);
@@ -856,7 +323,7 @@
   }
 }
 
-@keyframes admin-overview-role-reveal {
+@keyframes app-shell-role-reveal {
   from {
     opacity: 0;
     transform: translateY(10px) rotate(180deg);
@@ -875,6 +342,7 @@
   .app-shell--staff-schedule-entry .app-mobile-header,
   .app-shell--student-overview-entry .app-mobile-header,
   .app-shell--student-reservations-entry .app-mobile-header,
+  .app-shell--student-schedule-entry .app-mobile-header,
 
   .app-shell--admin-overview-entry .app-sidebar,
   .app-shell--admin-reservations-entry .app-sidebar,
@@ -883,6 +351,7 @@
   .app-shell--staff-schedule-entry .app-sidebar,
   .app-shell--student-overview-entry .app-sidebar,
   .app-shell--student-reservations-entry .app-sidebar,
+  .app-shell--student-schedule-entry .app-sidebar,
 
   .app-shell--admin-overview-entry .app-topbar,
   .app-shell--admin-reservations-entry .app-topbar,
@@ -891,25 +360,10 @@
   .app-shell--staff-schedule-entry .app-topbar,
   .app-shell--student-overview-entry .app-topbar,
   .app-shell--student-reservations-entry .app-topbar,
+  .app-shell--student-schedule-entry .app-topbar,
 
   .app-shell--admin-overview-entry .reserve-fab,
   .app-shell--student-overview-entry .reserve-fab,
-
-  .app-shell--admin-overview-entry .app-sidebar__brand,
-  .app-shell--admin-reservations-entry .app-sidebar__brand,
-  .app-shell--admin-analytics-entry .app-sidebar__brand,
-  .app-shell--staff-pending-entry .app-sidebar__brand,
-  .app-shell--staff-schedule-entry .app-sidebar__brand,
-  .app-shell--student-overview-entry .app-sidebar__brand,
-  .app-shell--student-reservations-entry .app-sidebar__brand,
-
-  .app-shell--admin-overview-entry .app-sidebar__link,
-  .app-shell--admin-reservations-entry .app-sidebar__link,
-  .app-shell--admin-analytics-entry .app-sidebar__link,
-  .app-shell--staff-pending-entry .app-sidebar__link,
-  .app-shell--staff-schedule-entry .app-sidebar__link,
-  .app-shell--student-overview-entry .app-sidebar__link,
-  .app-shell--student-reservations-entry .app-sidebar__link,
 
   .app-shell--admin-overview-entry .app-sidebar__role,
   .app-shell--admin-reservations-entry .app-sidebar__role,
@@ -917,7 +371,8 @@
   .app-shell--staff-pending-entry .app-sidebar__role,
   .app-shell--staff-schedule-entry .app-sidebar__role,
   .app-shell--student-overview-entry .app-sidebar__role,
-  .app-shell--student-reservations-entry .app-sidebar__role {
+  .app-shell--student-reservations-entry .app-sidebar__role,
+  .app-shell--student-schedule-entry .app-sidebar__role {
     animation: none !important;
   }
 }

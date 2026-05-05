@@ -61,7 +61,6 @@ export default function Analytics() {
 		>
 			<div className="analytics-page__header">
 				<PageHeader
-					className="analytics-page__page-header"
 					title="Analytics"
 					subtitle="Reservation insights and capacity metrics for Learning Common Rooms."
 				/>

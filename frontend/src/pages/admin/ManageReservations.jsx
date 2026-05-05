@@ -168,7 +168,7 @@ export default function ManageReservations() {
 			}`}
 		>
 			<PageHeader
-				className="admin-manage-reservations__header"
+				className="page-header--sticky"
 				title="Manage Reservations"
 				subtitle="Review, approve, or cancel reservations here."
 			/>
