@@ -42,6 +42,19 @@
   will-change: transform, opacity;
 }
 
+@media (max-width: 479px) {
+  .days-grid {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  button.day-btn,
+  button.day-btn__selected {
+    width: 100%;
+    max-width: 220px;
+  }
+}
+
 @media (min-width: 1025px) {
   .days-grid {
     grid-template-columns: repeat(5, 1fr);
@@ -143,6 +156,14 @@ line-height: 1;
   height: 2.5rem;
   font-weight: 500;
   padding: 0.5rem 1rem;
+}
+
+@media (max-width: 479px) {
+  .action {
+    min-height: 3.5rem;
+    height: auto;
+    padding: 0.75rem 1rem;
+  }
 }
 
 .today-btn {
