@@ -5,15 +5,17 @@ import Topbar from '../shared/components/Topbar';
 import Card from '../shared/components/Card';
 import '../shared/styles/LayoutShell.css';
 
+import ReserveButton from '../features/reservations/components/ReserveButton';
+
 const QADebugPanel = import.meta.env.DEV
 	? lazy(() => import('../features/qa/QADebugPanel'))
 	: null;
 
 export default function StudentLayout() {
     const location = useLocation();
-    const isStudentOverview = location.pathname === '/student';
-    const isStudentReservations = location.pathname === '/student/reservations';
-    const isStudentSchedule = location.pathname === '/student/schedule';
+    const isStudentOverview = location.pathname === '/dashboard';
+    const isStudentReservations = location.pathname === '/dashboard/reservations';
+    const isStudentSchedule = location.pathname === '/dashboard/schedule';
 
     return (
         <div
@@ -42,6 +44,7 @@ export default function StudentLayout() {
                     <QADebugPanel />
                 </Suspense>
             )}
+            {!isStudentSchedule && <ReserveButton />}
         </div>
     );
 }

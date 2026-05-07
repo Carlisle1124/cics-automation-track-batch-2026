@@ -251,7 +251,9 @@
 
 .app-shell--admin-overview-entry .reserve-fab,
 .app-shell--student-overview-entry .reserve-fab {
-  animation: app-shell-reserve-reveal 700ms cubic-bezier(0.22, 1, 0.36, 1) 280ms both;
+  animation: 
+    app-shell-reserve-reveal 700ms cubic-bezier(0.22, 1, 0.36, 1) 280ms both,
+    reserve-fab-indicator 2s cubic-bezier(0.4, 0, 0.6, 1) 980ms infinite;
   transform-origin: bottom right;
 }
 

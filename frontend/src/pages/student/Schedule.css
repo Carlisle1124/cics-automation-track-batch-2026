@@ -25,18 +25,49 @@
   color: #3a1119;
 }
 
+.schedule-page__header {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(0.75rem, 1.2vw, 1rem);
+}
+
 .schedule-page__content {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
   height: auto;
-  margin-top: clamp(0.5rem, 0.9vw, 0.85rem);
+  margin-top: clamp(0.35rem, 0.7vw, 0.65rem);
 }
 
 .schedule-page > .slots-breakdown {
   flex: 1;
   min-height: 0;
+}
+
+/* ── Booking Rules Card ──────────────────────────────────── */
+.booking-rules {
+	padding: clamp(0.9rem, 1.4vw, 1.2rem);
+	border-radius: var(--radius-md);
+	border: 1px solid var(--border-subtle);
+	background:
+    radial-gradient(140% 120% at 95% 110%, rgba(255, 214, 102, 0.22) 0%, rgba(255, 214, 102, 0) 40%),
+    linear-gradient(135deg, #5f0010 0%, #8f001b 46%, #b3132b 100%);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.booking-rules h3 {
+  margin: 0 0 clamp(0.75rem, 1vw, 0.875rem) 0;
+	font-size: clamp(1rem, 1.3vw, 1.125rem);
+	font-weight: 600;
+	line-height: 1.25;
+  color: var(--text-inverse);
+}
+
+.booking-rules > div:last-child {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+	gap: clamp(1rem, 2vw, 1.5rem);
 }
 
 @media (max-width: 639px) {
@@ -45,8 +76,26 @@
     gap: 0.55rem;
   }
 
+  .schedule-page__header {
+    gap: clamp(0.6rem, 1vw, 0.85rem);
+  }
+
   .schedule-page__content {
     margin-top: 0.4rem;
+  }
+
+  .booking-rules {
+    padding: clamp(0.75rem, 1.1vw, 0.95rem);
+  }
+
+  .booking-rules h3 {
+    margin: 0 0 clamp(0.6rem, 0.8vw, 0.75rem) 0;
+    font-size: clamp(0.95rem, 1.1vw, 1rem);
+  }
+
+  .booking-rules > div:last-child {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    gap: clamp(0.85rem, 1.6vw, 1.15rem);
   }
 }
 
@@ -63,17 +112,45 @@
   }
 }
 
-@media (max-height: 560px) and (orientation: landscape) {
-  .schedule-page {
-    height: auto;
-    min-height: 100%;
-    padding: 0.6rem;
-    gap: 0.55rem;
-    overflow: visible;
+@media (max-width: 380px) {
+  .booking-rules {
+    padding: clamp(0.65rem, 1vw, 0.8rem);
   }
 
-  .schedule-page__content {
-    margin-top: 0.4rem;
+  .booking-rules h3 {
+    font-size: clamp(0.9rem, 1vw, 0.95rem);
+    margin: 0 0 0.5rem 0;
+  }
+
+  .booking-rules > div:last-child {
+    grid-template-columns: 1fr;
+    gap: clamp(0.7rem, 1.3vw, 0.95rem);
+  }
+}
+
+@media (max-width: 360px) {
+  .booking-rules h3 {
+    font-size: 0.9rem;
+    margin: 0 0 0.45rem 0;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .schedule-page__header {
+    gap: clamp(0.55rem, 0.8vw, 0.7rem);
+  }
+
+  .booking-rules {
+    padding: clamp(0.7rem, 1.1vw, 0.9rem);
+  }
+
+  .booking-rules h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: clamp(0.95rem, 1.1vw, 1rem);
+  }
+
+  .booking-rules > div:last-child {
+    gap: clamp(0.8rem, 1.5vw, 1rem);
   }
 }
 
