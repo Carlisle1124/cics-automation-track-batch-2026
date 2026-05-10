@@ -9,12 +9,6 @@ import './AuthPages.css';
 const UST_DOMAIN = '@ust.edu.ph';
 const MOCK_OTP = '123456';
 
-const QUICK_LOGIN_ACCOUNTS = {
-	student: { email: 'juan.delacruz.cics@ust.edu.ph', password: 'password123' },
-	admin: { email: 'admin.cics@ust.edu.ph', password: 'password123' },
-	staff: { email: 'staff.cics@ust.edu.ph', password: 'password123' },
-};
-
 function formatCountdown(targetDate) {
 	if (!targetDate) return '';
 
@@ -185,31 +179,6 @@ const setStatus = useCallback((message, type = 'info') => {
 		setErrorModalOpen(true);
 	}
 
-	async function handleQuickLogin(role) {
-		const account = QUICK_LOGIN_ACCOUNTS[role];
-		setEmail(account.email);
-		setPassword(account.password);
-		setHasSubmitted(false);
-		setIsSubmitting(true);
-		setStatus('Signing you in...', 'info');
-
-		try {
-			const user = await login(account.email, account.password);
-			setCurrentUser(user);
-			setStatus(`Welcome back, ${user.full_name}. Redirecting...`, 'success');
-			navigate(getRoleRoute(user.role));
-		} catch (err) {
-			setStatus('Sign in failed.', 'error');
-			if (err?.code === 'ACCOUNT_SUSPENDED' || String(err?.message || '').toLowerCase().includes('suspended')) {
-				showSuspensionInfo(err);
-				return;
-			}
-			showErrorModal(err.message || 'Invalid email or password. Please try again.');
-		} finally {
-			setIsSubmitting(false);
-		}
-	}
-
 	async function handleSubmit(event) {
 		event.preventDefault();
 		setHasSubmitted(true);
@@ -374,15 +343,6 @@ const setStatus = useCallback((message, type = 'info') => {
 						) : 'Sign In'}
 					</button>
 				</form>
-
-				<div className="auth-panel__quick-actions">
-					<span className="auth-panel__quick-label">Quick mock sessions</span>
-					<div className="auth-panel__quick-buttons">
-						<button type="button" onClick={() => handleQuickLogin('student')}>Student</button>
-						<button type="button" onClick={() => handleQuickLogin('admin')}>Admin</button>
-						<button type="button" onClick={() => handleQuickLogin('staff')}>Staff</button>
-					</div>
-				</div>
 
 				<p className={`auth-status-message auth-status-message--${statusType}`}>{statusMessage}</p>
 				{suspensionInfo ? (

@@ -650,45 +650,6 @@
   to { transform: rotate(360deg); }
 }
 
-.auth-panel__quick-actions {
-  margin-top: 0.35rem;
-}
-
-.auth-panel__quick-label {
-  font-size: 0.74rem;
-  color: #7a7272;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 650;
-}
-
-.auth-panel__quick-buttons {
-  margin-top: 0.48rem;
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.auth-panel__quick-buttons button {
-  border: 1px solid rgba(80, 69, 69, 0.25);
-  border-radius: 0.7rem;
-  background: #fff;
-  color: #3f3535;
-  padding: 0.45rem 0.65rem;
-  cursor: pointer;
-  font-size: 0.84rem;
-  font-weight: 600;
-  min-height: 44px;
-  flex: 1;
-  min-width: 5rem;
-  transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
-}
-
-.auth-panel__quick-buttons button:hover {
-  border-color: var(--primary-5);
-  color: var(--primary-5);
-}
-
 /* --- Status messages with colour variants --- */
 .auth-status-message {
   font-size: 0.88rem;
@@ -792,10 +753,6 @@
     justify-content: space-between;
     align-items: center;
   }
-
-  .auth-panel__quick-buttons button {
-    flex: none;
-  }
 }
 
 @media (max-width: 720px) {
@@ -852,10 +809,6 @@
   .auth-form__row {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .auth-panel__quick-buttons {
-    flex-wrap: wrap;
   }
 
   .auth-register-transition__card {
@@ -1321,7 +1274,6 @@
 .auth-page--login .auth-checkbox,
 .auth-page--login .auth-link-btn,
 .auth-page--login .auth-primary-btn,
-.auth-page--login .auth-panel__quick-buttons button,
 .auth-page--login .auth-status-message,
 .auth-page--login .auth-session-message,
 .auth-page--login .auth-panel__footer,
@@ -1342,7 +1294,6 @@
 }
 
 .auth-page--login .auth-field > span,
-.auth-page--login .auth-panel__quick-label,
 .auth-page--login .auth-showcase__org,
 .auth-page--login .auth-showcase__subtitle,
 .auth-page--login .auth-showcase__metric-label,
@@ -1435,7 +1386,6 @@
 
 .auth-page--login .auth-checkbox,
 .auth-page--login .auth-link-btn,
-.auth-page--login .auth-panel__quick-buttons button,
 .auth-page--login .auth-panel__footer a,
 .auth-page--register .auth-panel__footer a {
   transition:
@@ -1464,14 +1414,6 @@
   color: var(--primary-6);
   transform: translateY(-1px);
   text-shadow: 0 6px 14px rgba(190, 21, 46, 0.12);
-}
-
-.auth-page--login .auth-panel__quick-buttons button:hover {
-  transform: translateY(-1px);
-  border-color: rgba(190, 21, 46, 0.36);
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 12px 24px rgba(123, 0, 20, 0.08);
-  color: var(--primary-6);
 }
 
 .auth-page--login .auth-showcase__desc,
