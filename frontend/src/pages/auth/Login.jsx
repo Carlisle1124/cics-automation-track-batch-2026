@@ -195,7 +195,7 @@ const setStatus = useCallback((message, type = 'info') => {
 		setStatus('Signing you in...', 'info');
 
 		try {
-			const user = await login(email, password);
+			const user = await login(email, password, rememberMe);
 			setCurrentUser(user);
 			setStatus(`Welcome back, ${user.full_name}. Redirecting...`, 'success');
 			navigate(getRoleRoute(user.role));

@@ -1,4 +1,4 @@
-import { supabase } from '../supabaseClient';
+import { supabase, REMEMBER_ME_KEY } from '../supabaseClient';
 import { unsuspendUserIfExpired } from './userService';
 
 export async function getCurrentUser() {
@@ -15,7 +15,11 @@ export async function getCurrentUser() {
 	return { ...data, name: data.full_name };
 }
 
-export async function login(email, password) {
+export async function login(email, password, rememberMe = true) {
+	// Must be set before signInWithPassword so the storage adapter routes the
+	// token to the correct storage (localStorage vs sessionStorage).
+	localStorage.setItem(REMEMBER_ME_KEY, String(rememberMe));
+
 	const { data, error } = await supabase.auth.signInWithPassword({
 		email,
 		password,
