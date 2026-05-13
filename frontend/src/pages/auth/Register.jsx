@@ -304,7 +304,7 @@ export default function Register() {
 					</label>
 
 					<label className={getFieldClassName(registerErrors.studentId)}>
-						<span>Student Number</span>
+						<span>Student/Faculty ID</span>
 						<div className="auth-field__input-wrap">
 							<svg className="auth-field__icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
 								<rect x="3" y="4" width="14" height="12" rx="2" />
