@@ -298,7 +298,7 @@ export default function CheckIn() {
 								<input
 									type="search"
 									className="check-in__panel-search-input"
-									placeholder="Search by name or student ID…"
+									placeholder="Search by name or ID…"
 									value={awaitingSearch}
 									onChange={(e) => setAwaitingSearch(e.target.value)}
 									aria-label="Search awaiting check-in"
@@ -361,7 +361,7 @@ export default function CheckIn() {
 								<input
 									type="search"
 									className="check-in__panel-search-input"
-									placeholder="Search by name or student ID…"
+									placeholder="Search by name or ID…"
 									value={insideSearch}
 									onChange={(e) => setInsideSearch(e.target.value)}
 									aria-label="Search currently inside"
