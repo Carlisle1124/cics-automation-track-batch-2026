@@ -83,6 +83,12 @@
 	gap: clamp(0.75rem, 1.2vw, 1rem);
 }
 
+.analytics-page__title-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
 .analytics-page__controls {
 	display: flex;
 	flex-wrap: wrap;
@@ -204,6 +210,19 @@
 	box-shadow:
 		0 1px 0 rgba(255, 255, 255, 0.58) inset,
 		0 12px 22px rgba(122, 0, 20, 0.08);
+}
+
+.analytics-period-label {
+	margin: 0;
+	font-size: var(--text-sm);
+	color: var(--text-secondary);
+	line-height: 1.35;
+	white-space: normal;
+}
+
+.analytics-period-label strong {
+	color: var(--text-primary);
+	font-weight: 600;
 }
 
 /* ── KPI Grid ────────────────────────────────────────────── */
