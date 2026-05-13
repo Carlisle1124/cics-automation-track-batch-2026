@@ -13,6 +13,20 @@ function normalizeUser(user) {
 	};
 }
 
+export async function unsuspendUserIfExpired(user) {
+	if (!user?.id || !user?.suspended_until) return user;
+
+	const suspendedUntil = new Date(user.suspended_until);
+	if (Number.isNaN(suspendedUntil.getTime()) || suspendedUntil > new Date()) {
+		return user;
+	}
+
+	return updateUser(user.id, {
+		is_account_suspended: false,
+		suspended_until: null,
+	});
+}
+
 export async function getAllUsers() {
 	const { data, error } = await supabase
 		.from('users')

@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient';
+import { unsuspendUserIfExpired } from './userService';
 
 export async function getCurrentUser() {
 	const { data: { session } } = await supabase.auth.getSession();
@@ -24,7 +25,7 @@ export async function login(email, password) {
 
 	const userId = data.user.id;
 
-	const { data: userData, error: userError } = await supabase
+	let { data: userData, error: userError } = await supabase
 		.from('users')
 		.select('id, full_name, role, email, is_account_suspended, suspended_until')
 		.eq('id', userId)
@@ -35,6 +36,8 @@ export async function login(email, password) {
 		await supabase.auth.signOut();
 		throw new Error('Profile fetch error');
 	}
+
+	userData = await unsuspendUserIfExpired(userData);
 
 	const now = new Date();
 	const suspendedUntil = userData.suspended_until
