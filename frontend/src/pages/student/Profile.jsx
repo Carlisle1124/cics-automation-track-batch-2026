@@ -294,7 +294,7 @@ export default function Profile() {
 							<span className="profile-row__value">{user.email}</span>
 						</div>
 						<div className="profile-row">
-							<span className="profile-row__label">Student ID</span>
+							<span className="profile-row__label">ID</span>
 							<span className="profile-row__value">{user.student_id ?? 'Not assigned'}</span>
 						</div>
 						<div className="profile-row">

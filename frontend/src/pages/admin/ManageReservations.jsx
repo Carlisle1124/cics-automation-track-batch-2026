@@ -193,7 +193,7 @@ export default function ManageReservations() {
 			<PageHeader
 				className="page-header--sticky"
 				title="Manage Reservations"
-				subtitle="Review, approve, or cancel reservations here."
+				subtitle="Review reservations history here."
 			/>
 
 			<div className="reservations-table admin-manage-reservations__table-shell">
