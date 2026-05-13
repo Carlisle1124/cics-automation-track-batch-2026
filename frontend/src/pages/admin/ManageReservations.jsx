@@ -18,6 +18,7 @@ export default function ManageReservations() {
 	const [reservations, setReservations] = useState([]);
 	const [activeTab, setActiveTab] = useState('all');
 	const [sortBy, setSortBy] = useState('Latest First');
+	const [searchQuery, setSearchQuery] = useState('');
 	const [currentPage, setCurrentPage] = useState(1);
 	const [isPageLoading, setIsPageLoading] = useState(true);
 	const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
@@ -63,7 +64,7 @@ export default function ManageReservations() {
 	useEffect(() => {
 		setCurrentPage(1);
 		setIsSortMenuOpen(false);
-	}, [activeTab, sortBy]);
+	}, [activeTab, sortBy, searchQuery]);
 
 	// Set up real-time subscription for reservation changes
 	useEffect(() => {
@@ -91,12 +92,30 @@ export default function ManageReservations() {
 	}, []);
 
 	const filteredReservations = useMemo(() => {
+		const normalizedSearch = searchQuery.trim().toLowerCase();
+
 		const scopedReservations = reservations.filter((reservation) => {
 			if (activeTab === 'all') return true;
 			return reservation.status === activeTab;
 		});
 
-		const sortedReservations = [...scopedReservations];
+		const searchedReservations = normalizedSearch
+			? scopedReservations.filter((reservation) => {
+				const searchableFields = [
+					reservation.user_name,
+					reservation.reservation_date,
+					reservation.start_time,
+					reservation.end_time,
+					reservation.status,
+				];
+
+				return searchableFields.some((value) =>
+					String(value ?? '').toLowerCase().includes(normalizedSearch)
+				);
+			})
+			: scopedReservations;
+
+		const sortedReservations = [...searchedReservations];
 
 		if (sortBy === 'Latest First') {
 			sortedReservations.sort(
@@ -115,7 +134,7 @@ export default function ManageReservations() {
 		}
 
 		return sortedReservations;
-	}, [reservations, activeTab, sortBy]);
+	}, [reservations, activeTab, sortBy, searchQuery]);
 
 	const totalItems = filteredReservations.length;
 	const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
@@ -131,6 +150,10 @@ export default function ManageReservations() {
 	function handleSortSelect(option) {
 		setSortBy(option);
 		setIsSortMenuOpen(false);
+	}
+
+	function handleSearchChange(event) {
+		setSearchQuery(event.target.value);
 	}
 
 	useEffect(() => {
@@ -189,6 +212,20 @@ export default function ManageReservations() {
 					</div>
 
 					<div className="reservations-table__controls">
+						<div className="admin-manage-reservations__search-control">
+							<label htmlFor="admin-manage-reservations-search" className="admin-manage-reservations__search-label">
+								Search reservations
+							</label>
+							<input
+								id="admin-manage-reservations-search"
+								type="search"
+								className="admin-manage-reservations__search-input"
+								placeholder="Search by name, date, time, status"
+								value={searchQuery}
+								onChange={handleSearchChange}
+							/>
+						</div>
+
 						<div className="admin-manage-reservations__sort-control" ref={sortMenuRef}>
 							<button
 								type="button"
