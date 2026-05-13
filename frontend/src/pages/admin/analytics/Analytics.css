@@ -97,6 +97,40 @@
 	min-width: 0;
 }
 
+.analytics-history-filter {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	min-height: 44px;
+	padding: 0.18rem 0.25rem 0.18rem 0.55rem;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-md);
+	background: var(--bg-card);
+}
+
+.analytics-history-filter__label {
+	font-size: var(--text-sm);
+	font-weight: 600;
+	color: var(--text-secondary);
+	white-space: nowrap;
+}
+
+.analytics-history-filter__input {
+	min-height: 36px;
+	padding: 0.35rem 0.5rem;
+	border: 1px solid var(--border-subtle);
+	border-radius: calc(var(--radius-md) - 0.1rem);
+	background: var(--bg-elevated);
+	color: var(--text-primary);
+	font-family: var(--font-sans);
+	font-size: var(--text-sm);
+}
+
+.analytics-history-filter__input:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 0.15rem var(--focus-ring);
+}
+
 /* ── Filter Buttons ──────────────────────────────────────── */
 .analytics-filter-group {
 	display: inline-flex;

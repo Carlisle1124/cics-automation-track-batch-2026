@@ -8,7 +8,7 @@ import {
 import { jsPDF } from 'jspdf';
 import PageHeader from '../../shared/components/PageHeader';
 import cicsLogo from '../../assets/CICS-Logo.webp';
-import { getAnalyticsData } from '../../data/services/analyticsService';
+import { getHistoricalAnalyticsData } from '../../data/services/analyticsService';
 import KPICard from './analytics/KPICard';
 import ReservationTrendChart from './analytics/ReservationTrendChart';
 import TimeSlotChart from './analytics/TimeSlotChart';
@@ -39,12 +39,33 @@ function getRangeDates(range, referenceDate = new Date()) {
 	return { start, end };
 }
 
+function getDefaultReferenceDateValue() {
+	return new Date().toISOString().slice(0, 10);
+}
+
+function parseReferenceDate(value) {
+	if (!value) return new Date();
+	const [year, month, day] = value.split('-').map(Number);
+	if (year && month && day) {
+		return new Date(year, month - 1, day);
+	}
+
+	return new Date(value);
+}
+
 function formatDisplayDate(date) {
 	return date.toLocaleDateString('en-US', {
 		year: 'numeric',
 		month: 'short',
 		day: 'numeric',
 	});
+}
+
+function formatDateKey(date) {
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+	const day = String(date.getDate()).padStart(2, '0');
+	return `${year}-${month}-${day}`;
 }
 
 function getAnalyzedPeriodLabel(range, referenceDate = new Date()) {
@@ -250,14 +271,16 @@ function drawGroupedBarChart(doc, { title, subtitle, labels, seriesA, seriesB, l
 	return legendY + 8;
 }
 
-function exportAnalyticsPdf(range, data) {
+function exportAnalyticsPdf(range, data, referenceDateValue) {
 	const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 	const margin = 14;
 	const pageWidth = doc.internal.pageSize.getWidth();
 	const contentWidth = pageWidth - margin * 2;
 	const generatedAt = new Date();
-	const fileName = `analytics-${range}-${generatedAt.toISOString().slice(0, 10)}.pdf`;
-	const analyzedPeriod = getAnalyzedPeriodLabel(range, generatedAt);
+	const referenceDate = parseReferenceDate(referenceDateValue);
+	const { start: periodStart } = getRangeDates(range, referenceDate);
+	const fileName = `analytics-${range}-${formatDateKey(periodStart)}.pdf`;
+	const analyzedPeriod = getAnalyzedPeriodLabel(range, referenceDate);
 	let y = margin;
 
 	doc.setFont('helvetica', 'bold');
@@ -342,12 +365,13 @@ export default function Analytics() {
 	const [data, setData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [range, setRange] = useState('week');
-	const analyzedPeriodLabel = getAnalyzedPeriodLabel(range);
+ 	const [referenceDateValue, setReferenceDateValue] = useState(getDefaultReferenceDateValue());
+	const analyzedPeriodLabel = getAnalyzedPeriodLabel(range, parseReferenceDate(referenceDateValue));
 
-	const loadData = useCallback(async (selectedRange) => {
+	const loadData = useCallback(async (selectedRange, selectedReferenceDate) => {
 		setLoading(true);
 		try {
-			const analyticsData = await getAnalyticsData(selectedRange);
+			const analyticsData = await getHistoricalAnalyticsData(selectedRange, selectedReferenceDate);
 			setData(analyticsData);
 		} catch (error) {
 			console.error('Error loading analytics data:', error);
@@ -361,21 +385,25 @@ export default function Analytics() {
 		const previousTitle = document.title;
 		document.title = 'Analytics - UST CICS Learning Common Room';
 
-		loadData(range);
+		loadData(range, referenceDateValue);
 
 		return () => {
 			document.title = previousTitle;
 		};
-	}, [range, loadData]);
+	}, [range, referenceDateValue, loadData]);
 
 	function handleRangeChange(value) {
 		setRange(value);
 	}
 
+	function handleReferenceDateChange(event) {
+		setReferenceDateValue(event.target.value);
+	}
+
 	function handleExport() {
 		if (!data) return;
 
-		exportAnalyticsPdf(range, data);
+		exportAnalyticsPdf(range, data, referenceDateValue);
 	}
 
 	return (
@@ -395,6 +423,16 @@ export default function Analytics() {
 					</p>
 				</div>
 				<div className="analytics-page__controls">
+					<label className="analytics-history-filter" htmlFor="analytics-reference-date">
+						<span className="analytics-history-filter__label">As of</span>
+						<input
+							id="analytics-reference-date"
+							type="date"
+							className="analytics-history-filter__input"
+							value={referenceDateValue}
+							onChange={handleReferenceDateChange}
+						/>
+					</label>
 					<div className="analytics-filter-group">
 						{DATE_RANGES.map((r) => (
 							<button

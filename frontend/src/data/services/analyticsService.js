@@ -1,12 +1,31 @@
 import { supabase } from '../supabaseClient';
 import { handleRequest } from './baseService';
 
+function normalizeReferenceDate(referenceDate) {
+	if (!referenceDate) return new Date();
+
+	if (referenceDate instanceof Date) {
+		return new Date(referenceDate);
+	}
+
+	if (typeof referenceDate === 'string') {
+		const [year, month, day] = referenceDate.split('-').map(Number);
+		if (year && month && day) {
+			return new Date(year, month - 1, day);
+		}
+	}
+
+	return new Date(referenceDate);
+}
+
 // Helper function to get date range for analytics
-function getDateRange(range) {
-	const now = new Date();
-	const start = new Date();
+function getDateRange(range, referenceDate) {
+	const now = normalizeReferenceDate(referenceDate);
+	now.setHours(0, 0, 0, 0);
+	const start = new Date(now);
 
 	switch (range) {
+		case 'day':
 		case 'today':
 			start.setHours(0, 0, 0, 0);
 			break;
@@ -185,9 +204,9 @@ function calculateUserActivity(reservations) {
 	];
 }
 
-export async function getAnalyticsData(range = 'week') {
+export async function getAnalyticsData(range = 'week', referenceDate) {
 	return handleRequest(async () => {
-		const { start, end } = getDateRange(range);
+		const { start, end } = getDateRange(range, referenceDate);
 
 		// Fetch reservations within date range
 		const { data: reservations, error } = await supabase
@@ -214,7 +233,7 @@ export async function getAnalyticsData(range = 'week') {
 		const totalReservations = reservations?.length || 0;
 		const activeUsers = new Set(reservations?.map(r => r.user_id) || []).size;
 
-const reservationTrend = buildReservationTrend(range, reservations, start, end);
+		const reservationTrend = buildReservationTrend(range, reservations, start, end);
 
 	// Calculate hourly trend for peak usage time only
 	const hourlyData = {};
@@ -283,4 +302,8 @@ const reservationTrend = buildReservationTrend(range, reservations, start, end);
 		userActivity
 	};
 	});
+}
+
+export async function getHistoricalAnalyticsData(range = 'week', referenceDate) {
+	return getAnalyticsData(range, referenceDate);
 }
